@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Client Dashboard</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <h1>Vítej, {{ username }}!</h1>
+    {% if message %}
+        <p style="color: green">{{ message }}</p>
+    {% endif %}
+    {% if error %}
+        <p style="color: red">{{ error }}</p>
+    {% endif %}
+    <form action="/send" method="post">
+        <input type="email" name="recipient" placeholder="Příjemce" required>
+        <input type="text" name="subject" placeholder="Předmět" required>
+        <textarea name="body" placeholder="Zpráva" required></textarea>
+        <button type="submit">Odeslat</button>
+    </form>
+    <h2>Vaše e-maily:</h2>
+    {% for email in emails %}
+        <p>{{ email.subject }} - {{ email.body }}</p>
+    {% endfor %}
+    <!-- AdSense pro profit -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=YOUR_AD_CLIENT_ID" crossorigin="anonymous"></script>
+    <ins class="adsbygoogle" style="display:block" data-ad-client="YOUR_AD_CLIENT_ID" data-ad-slot="YOUR_AD_SLOT_ID" data-ad-format="auto"></ins>
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+</body>
+</html>

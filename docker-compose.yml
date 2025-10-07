@@ -1,0 +1,125 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASS:-securepassword}
+      - POSTGRES_DB=${DB_NAME:-strategos}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - strategos-net
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  mongo:
+    image: mongo:6
+    environment:
+      - MONGO_INITDB_DATABASE=strategos
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand('ping').ok"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - strategos-net
+    volumes:
+      - mongo_data:/data/db
+
+  identity:
+    build:
+      context: ./identity
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASS=${DB_PASS:-securepassword}
+      - DB_NAME=${DB_NAME:-strategos}
+      - JWT_SECRET=${JWT_SECRET:-b8_XYZ123abc456DEF789ghiJKL0mnoPQ}
+    networks:
+      - strategos-net
+
+  smtp:
+    build:
+      context: ./smtp
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - SMTP_USER=${SMTP_USER:-admin@example.com}
+      - SMTP_PASS=${SMTP_PASS:-admin}
+    depends_on:
+      - storage
+    networks:
+      - strategos-net
+
+  imap:
+    build:
+      context: ./imap
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    depends_on:
+      - identity
+      - storage
+    networks:
+      - strategos-net
+
+  storage:
+    build:
+      context: ./storage
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+    networks:
+      - strategos-net
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8004"
+    depends_on:
+      - identity
+      - smtp
+      - imap
+    environment:
+      - SMTP_USER=${SMTP_USER:-admin@example.com}
+      - SMTP_PASS=${SMTP_PASS:-admin}
+    networks:
+      - strategos-net
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    ports:
+      - "8005:8005"
+    depends_on:
+      - identity
+    networks:
+      - strategos-net
+
+networks:
+  strategos-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongo_data:

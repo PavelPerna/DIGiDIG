@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+    <h2>Správa uživatelů</h2>
+    <form method="post" action="/manage-user">
+        <input type="hidden" name="token" value="{{ token }}">
+        <label>Uživatel: <input type="email" name="email"></label><br>
+        <label>Role: <input type="text" name="role"></label><br>
+        <button type="submit">Upravit</button>
+    </form>
+    <h2>Seznam uživatelů</h2>
+    <ul>
+        {% for user in users %}
+            <li>{{ user.email }} ({{ user.role }})</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
