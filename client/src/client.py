@@ -1,11 +1,13 @@
 from fastapi import FastAPI, Request, Form, Depends, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 import aiohttp
 import os
 from pydantic import BaseModel
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 class Email(BaseModel):
