@@ -56,12 +56,11 @@ async def init_db():
                     "INSERT INTO domains (name) VALUES ($1) ON CONFLICT DO NOTHING",
                     "example.com"
                 )
-                hashed_password = hashlib.sha256("admin".encode()).hexdigest()
-                await conn.execute(
-                    "INSERT INTO users (email, password, role) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
-                    "admin@example.com", hashed_password, "admin"
-                )
-                logger.info("Výchozí doména 'example.com' a admin uživatel 'admin@example.com' vytvořeni")
+                # NOTE: default admin creation moved out of init_db.
+                # The system should not create a production admin account with a hardcoded password.
+                # Use the provided management script `scripts/create_admin.py` during install/deploy
+                # to create an admin user if desired. This keeps initialization safe for production.
+                logger.info("Výchozí doména 'example.com' vytvořena. (Admin user creation disabled in init_db)")
             logger.info("Databáze úspěšně inicializována")
             return pool
         except Exception as e:
