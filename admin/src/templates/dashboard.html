@@ -75,7 +75,7 @@
     </div>
 
     <!-- Domain Modal -->
-    <div id="domainModal" class="modal">
+    <div id="domainModal" class="modal hidden">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2 id="domainModalTitle">Přidat doménu</h2>
@@ -92,7 +92,7 @@
     </div>
 
     <!-- User Modal -->
-    <div id="userModal" class="modal">
+    <div id="userModal" class="modal hidden">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2 id="userModalTitle">Přidat uživatele</h2>
@@ -294,28 +294,5 @@
             usersRow.style.display = displayStyle === "none" ? "table-row" : "none";
         }
     </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-</head>
-<body>
-    <h1>Admin Dashboard</h1>
-    <h2>Správa uživatelů</h2>
-    <form method="post" action="/manage-user">
-        <input type="hidden" name="token" value="{{ token }}">
-        <label>Uživatel: <input type="email" name="email"></label><br>
-        <label>Role: <input type="text" name="role"></label><br>
-        <button type="submit">Upravit</button>
-    </form>
-    <h2>Seznam uživatelů</h2>
-    <ul>
-        {% for user in users %}
-            <li>{{ user.email }} ({{ user.role }})</li>
-        {% endfor %}
-    </ul>
 </body>
 </html>
