@@ -56,11 +56,22 @@ async def init_db():
                     "INSERT INTO domains (name) VALUES ($1) ON CONFLICT DO NOTHING",
                     "example.com"
                 )
-                # NOTE: default admin creation moved out of init_db.
-                # The system should not create a production admin account with a hardcoded password.
-                # Use the provided management script `scripts/create_admin.py` during install/deploy
-                # to create an admin user if desired. This keeps initialization safe for production.
-                logger.info("Výchozí doména 'example.com' vytvořena. (Admin user creation disabled in init_db)")
+                # Create default admin user if it doesn't exist
+                default_admin_email = os.getenv("DEFAULT_ADMIN_EMAIL", "admin@example.com")
+                default_admin_password = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin")
+                hashed_password = hashlib.sha256(default_admin_password.encode()).hexdigest()
+                
+                try:
+                    await conn.execute("""
+                        INSERT INTO users (email, password, role) 
+                        VALUES ($1, $2, 'admin') 
+                        ON CONFLICT (email) DO NOTHING
+                    """, default_admin_email, hashed_password)
+                    logger.info(f"Výchozí admin uživatel {default_admin_email} vytvořen nebo již existuje")
+                except Exception as e:
+                    logger.error(f"Chyba při vytváření admin uživatele: {str(e)}")
+                
+                logger.info("Výchozí doména 'example.com' vytvořena")
             logger.info("Databáze úspěšně inicializována")
             return pool
         except Exception as e:
@@ -202,3 +213,20 @@ async def list_domains(authorization: str = Header(...)):
     except Exception as e:
         logger.error(f"Chyba při získávání domén: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Chyba při získávání domén: {str(e)}")
+
+@app.get("/users")
+async def list_users(authorization: str = Header(...)):
+    logger.info("Získávání seznamu uživatelů")
+    try:
+        token = authorization.split("Bearer ")[1]
+        payload = jwt.decode(token, os.getenv("JWT_SECRET", "b8_XYZ123abc456DEF789ghiJKL0mnoPQ"), algorithms=["HS256"])
+        if payload["role"] != "admin":
+            logger.error(f"Uživatel {payload['email']} nemá oprávnění zobrazit uživatele")
+            raise HTTPException(status_code=403, detail="Pouze admin může zobrazit uživatele")
+        async with app.state.db_pool.acquire() as conn:
+            users = await conn.fetch("SELECT email, role FROM users")
+            logger.info(f"Nalezeno {len(users)} uživatelů")
+            return [{"email": u["email"], "role": u["role"]} for u in users]
+    except Exception as e:
+        logger.error(f"Chyba při získávání uživatelů: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Chyba při získávání uživatelů: {str(e)}")
