@@ -1,0 +1,128 @@
+.datagrid {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.datagrid th, .datagrid td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.datagrid th {
+    background-color: rgba(255, 255, 255, 0.05);
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.datagrid tr:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.datagrid-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.datagrid-actions button {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+.datagrid-actions button.edit {
+    background-color: #0d9488;
+}
+
+.datagrid-actions button.edit:hover {
+    background-color: #0f766e;
+}
+
+.datagrid-actions button.delete {
+    background-color: #dc2626;
+}
+
+.datagrid-actions button.delete:hover {
+    background-color: #b91c1c;
+}
+
+.expand-button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 4px;
+    cursor: pointer;
+}
+
+.expand-button:hover {
+    color: var(--text-color);
+    background: none;
+    transform: none;
+}
+
+.domain-users {
+    padding-left: 2rem;
+    margin: 1rem 0;
+    border-left: 2px solid var(--border-color);
+}
+
+.domain-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.domain-header {
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.dialog {
+    background-color: var(--bg-color);
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    min-width: 400px;
+}
+
+.dialog h3 {
+    margin-top: 0;
+    color: var(--text-color);
+}
+
+.dialog-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+.add-button {
+    margin-bottom: 1rem;
+}
+
+.hidden {
+    display: none;
+}

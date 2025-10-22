@@ -1,4 +1,302 @@
 <!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/datagrid.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+
+        <!-- Domains Section -->
+        <div class="section domains">
+            <div class="header">
+                <h2>Domény</h2>
+                <button onclick="showDomainModal()" class="add-button">Přidat doménu</button>
+            </div>
+            <div class="datagrid">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Název domény</th>
+                            <th>Akce</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for domain in domains %}
+                        <tr>
+                            <td>{{ domain.name }}</td>
+                            <td class="actions">
+                                <button onclick="showDomainModal('{{ domain.name }}')" class="edit-button">Upravit</button>
+                                <button onclick="deleteDomain('{{ domain.name }}')" class="delete-button">Smazat</button>
+                                <button onclick="toggleUsers('{{ domain.name }}')" class="toggle-button">Uživatelé</button>
+                            </td>
+                        </tr>
+                        <!-- Users for this domain -->
+                        <tr class="users-row" id="users-{{ domain.name }}" style="display: none;">
+                            <td colspan="2">
+                                <div class="nested-grid">
+                                    <div class="header">
+                                        <h3>Uživatelé - {{ domain.name }}</h3>
+                                        <button onclick="showUserModal(null, '{{ domain.name }}')" class="add-button">Přidat uživatele</button>
+                                    </div>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Email</th>
+                                                <th>Role</th>
+                                                <th>Akce</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for user in users if user.email.endswith('@' + domain.name) %}
+                                            <tr>
+                                                <td>{{ user.email }}</td>
+                                                <td>{{ user.role }}</td>
+                                                <td class="actions">
+                                                    <button onclick="showUserModal('{{ user.email }}')" class="edit-button">Upravit</button>
+                                                    <button onclick="deleteUser('{{ user.email }}')" class="delete-button">Smazat</button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Domain Modal -->
+    <div id="domainModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="domainModalTitle">Přidat doménu</h2>
+            <form id="domainForm" onsubmit="handleDomainSubmit(event)">
+                <input type="hidden" id="oldDomainName" name="oldName">
+                <input type="hidden" name="token" value="{{ token }}">
+                <div class="form-group">
+                    <label for="domainName">Název domény:</label>
+                    <input type="text" id="domainName" name="name" required>
+                </div>
+                <button type="submit" class="submit-button">Uložit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="userModalTitle">Přidat uživatele</h2>
+            <form id="userForm" onsubmit="handleUserSubmit(event)">
+                <input type="hidden" id="originalEmail" name="originalEmail">
+                <input type="hidden" name="token" value="{{ token }}">
+                <div class="form-group">
+                    <label for="userEmail">Email:</label>
+                    <input type="email" id="userEmail" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="userRole">Role:</label>
+                    <select id="userRole" name="role" required>
+                        <option value="user">Uživatel</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="userPassword">Heslo:</label>
+                    <input type="password" id="userPassword" name="password">
+                    <small>Ponechte prázdné pro zachování stávajícího hesla při úpravě.</small>
+                </div>
+                <button type="submit" class="submit-button">Uložit</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Modal functionality
+        const domainModal = document.getElementById('domainModal');
+        const userModal = document.getElementById('userModal');
+        const spans = document.getElementsByClassName('close');
+
+        // Close modals when clicking (x)
+        for (let span of spans) {
+            span.onclick = function() {
+                domainModal.style.display = "none";
+                userModal.style.display = "none";
+            }
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target == domainModal) {
+                domainModal.style.display = "none";
+            }
+            if (event.target == userModal) {
+                userModal.style.display = "none";
+            }
+        }
+
+        // Domain functions
+        function showDomainModal(domainName = null) {
+            const modal = document.getElementById('domainModal');
+            const title = document.getElementById('domainModalTitle');
+            const form = document.getElementById('domainForm');
+            const nameInput = document.getElementById('domainName');
+            const oldNameInput = document.getElementById('oldDomainName');
+
+            if (domainName) {
+                title.textContent = 'Upravit doménu';
+                nameInput.value = domainName;
+                oldNameInput.value = domainName;
+            } else {
+                title.textContent = 'Přidat doménu';
+                nameInput.value = '';
+                oldNameInput.value = '';
+            }
+
+            modal.style.display = "block";
+        }
+
+        async function handleDomainSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            
+            try {
+                const response = await fetch('/manage-domain', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+
+                location.reload();
+            } catch (error) {
+                alert('Chyba: ' + error.message);
+            }
+        }
+
+        async function deleteDomain(name) {
+            if (!confirm(`Opravdu chcete smazat doménu ${name}?`)) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('domain_name', name);
+            formData.append('token', '{{ token }}');
+
+            try {
+                const response = await fetch('/delete-domain', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+
+                location.reload();
+            } catch (error) {
+                alert('Chyba: ' + error.message);
+            }
+        }
+
+        // User functions
+        function showUserModal(email = null, domain = null) {
+            const modal = document.getElementById('userModal');
+            const title = document.getElementById('userModalTitle');
+            const form = document.getElementById('userForm');
+            const emailInput = document.getElementById('userEmail');
+            const originalEmailInput = document.getElementById('originalEmail');
+            const roleInput = document.getElementById('userRole');
+            const passwordInput = document.getElementById('userPassword');
+
+            if (email) {
+                title.textContent = 'Upravit uživatele';
+                emailInput.value = email;
+                originalEmailInput.value = email;
+                const user = Array.from(document.querySelectorAll('tr')).find(row => 
+                    row.querySelector('td')?.textContent === email
+                );
+                if (user) {
+                    roleInput.value = user.children[1].textContent.trim();
+                }
+                passwordInput.required = false;
+            } else {
+                title.textContent = 'Přidat uživatele';
+                emailInput.value = domain ? '@' + domain : '';
+                originalEmailInput.value = '';
+                roleInput.value = 'user';
+                passwordInput.required = true;
+            }
+
+            modal.style.display = "block";
+        }
+
+        async function handleUserSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            
+            try {
+                const response = await fetch('/manage-user', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+
+                location.reload();
+            } catch (error) {
+                alert('Chyba: ' + error.message);
+            }
+        }
+
+        async function deleteUser(email) {
+            if (!confirm(`Opravdu chcete smazat uživatele ${email}?`)) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('email', email);
+            formData.append('token', '{{ token }}');
+
+            try {
+                const response = await fetch('/delete-user', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+
+                location.reload();
+            } catch (error) {
+                alert('Chyba: ' + error.message);
+            }
+        }
+
+        // Toggle users section
+        function toggleUsers(domainName) {
+            const usersRow = document.getElementById(`users-${domainName}`);
+            const displayStyle = usersRow.style.display;
+            usersRow.style.display = displayStyle === "none" ? "table-row" : "none";
+        }
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Admin Dashboard</title>
