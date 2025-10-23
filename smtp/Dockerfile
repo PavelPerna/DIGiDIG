@@ -2,10 +2,17 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+# Copy common module and config files (from project root)
+COPY common/ ./common/
+COPY config/ ./config/
+
+# Copy service-specific files
+COPY smtp/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY src/ .
+COPY smtp/src/ .
+
+ENV PYTHONPATH=/app:$PYTHONPATH
 
 EXPOSE 8000
 

@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:15
+    restart: unless-stopped
     environment:
       - POSTGRES_USER=${DB_USER:-postgres}
       - POSTGRES_PASSWORD=${DB_PASS:-securepassword}
@@ -20,6 +21,7 @@ services:
 
   mongo:
     image: mongo:6
+    restart: unless-stopped
     environment:
       - MONGO_INITDB_DATABASE=strategos
     ports:
@@ -37,42 +39,45 @@ services:
 
   identity:
     build:
-      context: ./identity
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./identity/Dockerfile
+    restart: unless-stopped
     ports:
       - "8001:8001"
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      - DB_HOST=postgres
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASS=${DB_PASS:-securepassword}
-      - DB_NAME=${DB_NAME:-strategos}
-      - JWT_SECRET=${JWT_SECRET:-b8_XYZ123abc456DEF789ghiJKL0mnoPQ}
+      - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
     networks:
       - strategos-net
 
   smtp:
     build:
-      context: ./smtp
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./smtp/Dockerfile
+    restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8000:8000"   # FastAPI REST API
+      - "2525:2525"   # SMTP server
     environment:
-      - SMTP_USER=${SMTP_USER:-admin@example.com}
-      - SMTP_PASS=${SMTP_PASS:-admin}
+      - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
+      - SMTP_SERVER_PORT=2525
     depends_on:
       - storage
+      - identity
     networks:
       - strategos-net
 
   imap:
     build:
-      context: ./imap
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./imap/Dockerfile
+    restart: unless-stopped
     ports:
       - "8003:8003"
+    environment:
+      - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
     depends_on:
       - identity
       - storage
@@ -81,44 +86,51 @@ services:
 
   storage:
     build:
-      context: ./storage
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./storage/Dockerfile
+    restart: unless-stopped
     ports:
       - "8002:8002"
     depends_on:
       mongo:
         condition: service_healthy
     environment:
-      - MONGO_URI=mongodb://mongo:27017
+      - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
     networks:
       - strategos-net
 
   client:
     build:
-      context: ./client
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./client/Dockerfile
+    restart: unless-stopped
     ports:
       - "8004:8004"
+    environment:
+      - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
     depends_on:
       - identity
       - smtp
       - imap
-    environment:
-      - SMTP_USER=${SMTP_USER:-admin@example.com}
-      - SMTP_PASS=${SMTP_PASS:-admin}
     networks:
       - strategos-net
 
   admin:
     build:
-      context: ./admin
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./admin/Dockerfile
+    restart: unless-stopped
     ports:
       - "8005:8005"
+    environment:
+      - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
     depends_on:
       - identity
     networks:
       - strategos-net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # Docker socket for restart functionality
+      - ./:/app/project:ro  # Mount project root for docker-compose.yml access
 
 networks:
   strategos-net:

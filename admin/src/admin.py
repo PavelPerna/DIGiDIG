@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 import aiohttp
 from pydantic import BaseModel
 import traceback
+import subprocess
 
 # Nastavení logování
 logging.basicConfig(
@@ -475,3 +476,211 @@ async def logout(request: Request):
     except Exception as e:
         logger.exception(f"Error during logout: {str(e)}")
         return format_identity_response(status=500, body={"error": str(e)})
+
+
+# Service Management Endpoints
+
+SERVICES = {
+    "smtp": "http://smtp:8000",
+    "imap": "http://imap:8003", 
+    "storage": "http://storage:8002",
+    "identity": "http://identity:8001"
+}
+
+@app.get("/services", response_class=HTMLResponse)
+async def services_page(request: Request, token: str = None):
+    """Service management page"""
+    logger.info("Načítání stránky pro správu služeb")
+    if not token:
+        token = request.cookies.get('access_token')
+    if not token:
+        logger.info("Žádný token, přesměrování na login")
+        return templates.TemplateResponse("login.html", {"request": request})
+    
+    try:
+        user = await get_user(token)
+        logger.info(f"Admin {user.get('username')} přistupuje ke správě služeb")
+        
+        # Get health status for all services
+        services_status = {}
+        async with aiohttp.ClientSession() as session:
+            for service_name, service_url in SERVICES.items():
+                try:
+                    async with session.get(f"{service_url}/api/health", timeout=aiohttp.ClientTimeout(total=5)) as response:
+                        if response.status == 200:
+                            services_status[service_name] = await response.json()
+                        else:
+                            services_status[service_name] = {"status": "unhealthy", "service_name": service_name}
+                except Exception as e:
+                    logger.error(f"Chyba při získávání zdraví služby {service_name}: {str(e)}")
+                    services_status[service_name] = {"status": "unreachable", "service_name": service_name, "error": str(e)}
+        
+        return templates.TemplateResponse("services.html", {
+            "request": request,
+            "token": token,
+            "services": services_status
+        })
+    except Exception as e:
+        logger.error(f"Chyba při načítání stránky služeb: {str(e)}")
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": f"Chyba: {str(e)}"
+        })
+
+@app.get("/api/services/{service_name}/health")
+async def get_service_health(service_name: str, token: str = None):
+    """Get health status of a specific service"""
+    if service_name not in SERVICES:
+        return JSONResponse(status_code=404, content={"error": "Service not found"})
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"{SERVICES[service_name]}/api/health", timeout=aiohttp.ClientTimeout(total=5)) as response:
+                return await response.json()
+    except Exception as e:
+        logger.error(f"Error getting health for {service_name}: {str(e)}")
+        return JSONResponse(status_code=500, content={"error": str(e), "status": "unreachable"})
+
+@app.get("/api/services/{service_name}/stats")
+async def get_service_stats(service_name: str, request: Request, token: str = None):
+    """Get statistics of a specific service"""
+    if not token:
+        token = request.cookies.get('access_token')
+    try:
+        await get_user(token)
+    except Exception as e:
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    
+    if service_name not in SERVICES:
+        return JSONResponse(status_code=404, content={"error": "Service not found"})
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"{SERVICES[service_name]}/api/stats", timeout=aiohttp.ClientTimeout(total=5)) as response:
+                return await response.json()
+    except Exception as e:
+        logger.error(f"Error getting stats for {service_name}: {str(e)}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.get("/api/services/{service_name}/config")
+async def get_service_config(service_name: str, request: Request, token: str = None):
+    """Get configuration of a specific service"""
+    if not token:
+        token = request.cookies.get('access_token')
+    try:
+        await get_user(token)
+    except Exception as e:
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    
+    if service_name not in SERVICES:
+        return JSONResponse(status_code=404, content={"error": "Service not found"})
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"{SERVICES[service_name]}/api/config", timeout=aiohttp.ClientTimeout(total=5)) as response:
+                return await response.json()
+    except Exception as e:
+        logger.error(f"Error getting config for {service_name}: {str(e)}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.put("/api/services/{service_name}/config")
+async def update_service_config(service_name: str, request: Request, token: str = Form(None)):
+    """Update configuration of a specific service"""
+    if not token:
+        token = request.cookies.get('access_token')
+    try:
+        await get_user(token)
+    except Exception as e:
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    
+    if service_name not in SERVICES:
+        return JSONResponse(status_code=404, content={"error": "Service not found"})
+    
+    try:
+        config = await request.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.put(
+                f"{SERVICES[service_name]}/api/config",
+                json=config,
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as response:
+                return await response.json()
+    except Exception as e:
+        logger.error(f"Error updating config for {service_name}: {str(e)}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.post("/api/services/smtp/restart")
+async def restart_smtp_service(request: Request, token: str = Form(None)):
+    """Restart SMTP service"""
+    if not token:
+        token = request.cookies.get('access_token')
+    try:
+        await get_user(token)
+    except Exception as e:
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{SERVICES['smtp']}/api/smtp/restart",
+                timeout=aiohttp.ClientTimeout(total=15)
+            ) as response:
+                return await response.json()
+    except Exception as e:
+        logger.error(f"Error restarting SMTP: {str(e)}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.post("/api/services/{service_name}/restart")
+async def restart_service(service_name: str, request: Request, token: str = None):
+    """Restart a specific service using docker compose"""
+    if not token:
+        token = request.cookies.get('access_token')
+    try:
+        await get_user(token)
+    except Exception as e:
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    
+    # List of valid services
+    valid_services = ["identity", "smtp", "imap", "storage", "admin", "client", "postgres", "mongo"]
+    
+    if service_name not in valid_services:
+        return JSONResponse(status_code=404, content={"error": f"Service '{service_name}' not found"})
+    
+    try:
+        logger.info(f"Restarting service: {service_name}")
+        # Use docker compose restart command
+        # docker-compose.yml is mounted at /app/project/
+        result = subprocess.run(
+            ["docker", "compose", "restart", service_name],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd="/app/project"  # Project root with docker-compose.yml
+        )
+        
+        if result.returncode == 0:
+            logger.info(f"Service {service_name} restarted successfully")
+            return JSONResponse(status_code=200, content={
+                "status": "success",
+                "message": f"Service '{service_name}' restarted successfully",
+                "output": result.stdout
+            })
+        else:
+            logger.error(f"Failed to restart {service_name}: {result.stderr}")
+            return JSONResponse(status_code=500, content={
+                "status": "error",
+                "message": f"Failed to restart service '{service_name}'",
+                "error": result.stderr
+            })
+    except subprocess.TimeoutExpired:
+        logger.error(f"Timeout restarting {service_name}")
+        return JSONResponse(status_code=504, content={
+            "status": "error",
+            "message": f"Restart timeout for service '{service_name}'"
+        })
+    except Exception as e:
+        logger.error(f"Error restarting {service_name}: {str(e)}")
+        return JSONResponse(status_code=500, content={
+            "status": "error",
+            "message": str(e)
+        })

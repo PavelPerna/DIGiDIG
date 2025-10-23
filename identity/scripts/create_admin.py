@@ -3,9 +3,7 @@
 Utility script to create an admin user in the Identity service database.
 
 This script is intended to be called during installation or by an operator.
-It reads ADMIN_EMAIL and ADMIN_PASSWORD from environment variables. If they are
-not provided, it exits with an error. It connects to Postgres using the same
-env vars used by the service (DB_HOST, DB_USER, DB_PASS, DB_NAME).
+It reads configuration from the config system with fallback to ENV variables.
 
 Usage (example):
   ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=s3cr3t DB_HOST=postgres python3 scripts/create_admin.py
@@ -15,6 +13,16 @@ import sys
 import asyncio
 import hashlib
 import asyncpg
+
+# Add parent directory to path for config_loader import
+sys.path.insert(0, '/app/src')
+
+try:
+    from config_loader import config
+    USE_CONFIG = True
+except ImportError:
+    USE_CONFIG = False
+    print("Warning: Config module not found, using ENV variables")
 
 
 def get_required_env(key: str) -> str:
@@ -26,24 +34,27 @@ def get_required_env(key: str) -> str:
 
 
 async def main():
-    admin_password = get_required_env("ADMIN_PASSWORD")
-    # Support ADMIN_EMAIL (legacy) or ADMIN_USERNAME + ADMIN_DOMAIN
-    admin_email = os.getenv("ADMIN_EMAIL")
-    admin_username = os.getenv("ADMIN_USERNAME")
-    admin_domain = os.getenv("ADMIN_DOMAIN")
-    if not admin_username:
-        if not admin_email:
-            print("Missing ADMIN_EMAIL or ADMIN_USERNAME")
-            sys.exit(2)
-        if "@" in admin_email:
-            admin_username, admin_domain = admin_email.split("@", 1)
-        else:
-            admin_username = admin_email
-
-    db_user = os.getenv("DB_USER", "postgres")
-    db_pass = os.getenv("DB_PASS", "securepassword")
-    db_name = os.getenv("DB_NAME", "strategos")
-    db_host = os.getenv("DB_HOST", "postgres")
+    if USE_CONFIG:
+        admin_password = config.ADMIN_PASSWORD
+        admin_email = config.ADMIN_EMAIL
+        db_user = config.DB_USER
+        db_pass = config.DB_PASS
+        db_name = config.DB_NAME
+        db_host = config.DB_HOST
+    else:
+        admin_password = get_required_env("ADMIN_PASSWORD")
+        admin_email = get_required_env("ADMIN_EMAIL")
+        db_user = os.getenv("DB_USER", "postgres")
+        db_pass = os.getenv("DB_PASS", "securepassword")
+        db_name = os.getenv("DB_NAME", "strategos")
+        db_host = os.getenv("DB_HOST", "postgres")
+    
+    # Extract username and domain from ADMIN_EMAIL
+    if "@" in admin_email:
+        admin_username, admin_domain = admin_email.split("@", 1)
+    else:
+        admin_username = admin_email
+        admin_domain = None
 
     hashed_password = hashlib.sha256(admin_password.encode()).hexdigest()
 

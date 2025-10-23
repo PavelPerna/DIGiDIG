@@ -5,7 +5,12 @@
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <h1>Vítej, {{ username }}!</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>Vítej, {{ username }}!</h1>
+        <form action="/logout" method="post" style="margin: 0;">
+            <button type="submit" style="background: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">Odhlásit</button>
+        </form>
+    </div>
     {% if message %}
         <p style="color: green">{{ message }}</p>
     {% endif %}
@@ -19,9 +24,20 @@
         <button type="submit">Odeslat</button>
     </form>
     <h2>Vaše e-maily:</h2>
-    {% for email in emails %}
-        <p>{{ email.subject }} - {{ email.body }}</p>
-    {% endfor %}
+    {% if emails %}
+        {% for email in emails %}
+            <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+                <strong>Od:</strong> {{ email.sender }}<br>
+                <strong>Předmět:</strong> {{ email.subject }}<br>
+                {% if email.timestamp %}
+                    <small>{{ email.timestamp }}</small><br>
+                {% endif %}
+                <p>{{ email.body }}</p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>Nemáte žádné e-maily.</p>
+    {% endif %}
     <!-- AdSense pro profit -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=YOUR_AD_CLIENT_ID" crossorigin="anonymous"></script>
     <ins class="adsbygoogle" style="display:block" data-ad-client="YOUR_AD_CLIENT_ID" data-ad-slot="YOUR_AD_SLOT_ID" data-ad-format="auto"></ins>

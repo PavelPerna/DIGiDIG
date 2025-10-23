@@ -1,6 +1,8 @@
 :root {
     --bg-color: #1a1a1a;
     --text-color: #e0e0e0;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
     --text-muted: #a0a0a0;
     --input-bg: #2d2d2d;
     --input-border: #404040;
@@ -8,6 +10,9 @@
     --button-hover: #1d4ed8;
     --border-color: #404040;
     --card-bg: rgba(255, 255, 255, 0.05);
+    --success-color: #4CAF50;
+    --danger-color: #f44336;
+    --warning-color: #ff9800;
 }
 
 body { 
@@ -80,6 +85,39 @@ button {
 button:hover { 
     background: var(--button-hover);
     transform: translateY(-1px);
+}
+
+/* Button variants */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: #2196F3;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1976D2;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #757575;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #616161;
+    transform: translateY(-2px);
 }
 
 ul { 

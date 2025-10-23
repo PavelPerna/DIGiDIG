@@ -2,7 +2,7 @@ import logging
 from fastapi import FastAPI, HTTPException, Header
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import jwt
 import os
 import asyncpg
@@ -10,6 +10,10 @@ from datetime import datetime, timedelta
 import uuid
 import hashlib
 import asyncio
+import time
+
+# Configuration (with backward compatibility)
+from config_loader import config
 
 # Logging
 logging.basicConfig(
@@ -32,6 +36,28 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Identity Microservice", lifespan=lifespan)
+
+# Global state for service management
+service_state = {
+    "start_time": time.time(),
+    "requests_total": 0,
+    "requests_successful": 0,
+    "requests_failed": 0,
+    "last_request_time": None,
+    "active_sessions": [],
+    "config": {
+        "hostname": config.IDENTITY_HOSTNAME,
+        "port": config.IDENTITY_PORT,
+        "enabled": True,
+        "timeout": config.IDENTITY_TIMEOUT,
+        "jwt_secret": config.JWT_SECRET,
+        "token_expiry": config.TOKEN_EXPIRY,
+        "refresh_token_expiry": config.REFRESH_TOKEN_EXPIRY,
+        "db_host": config.DB_HOST,
+        "db_name": config.DB_NAME,
+        "db_user": config.DB_USER
+    }
+}
 
 # Pydantic models
 class UserCreate(BaseModel):
@@ -71,10 +97,10 @@ async def init_db():
     for attempt in range(max_retries):
         try:
             pool = await asyncpg.create_pool(
-                user=os.getenv("DB_USER", "postgres"),
-                password=os.getenv("DB_PASS", "securepassword"),
-                database=os.getenv("DB_NAME", "strategos"),
-                host=os.getenv("DB_HOST", "postgres")
+                user=config.DB_USER,
+                password=config.DB_PASS,
+                database=config.DB_NAME,
+                host=config.DB_HOST
             )
             async with pool.acquire() as conn:
                 # Drop and recreate tables (user allowed destructive changes)
@@ -139,25 +165,36 @@ async def init_db():
                 await conn.execute("INSERT INTO roles (name) VALUES ($1) ON CONFLICT DO NOTHING", "admin")
 
                 # Create default admin user if not exists
-                default_admin_username = os.getenv("DEFAULT_ADMIN_USERNAME", "admin")
-                default_admin_password = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin")
-                hashed_password = hashlib.sha256(default_admin_password.encode()).hexdigest()
+                # Extract username and domain from ADMIN_EMAIL
+                admin_email = config.ADMIN_EMAIL
+                admin_password = config.ADMIN_PASSWORD
+                
+                # Split email to get username and domain
+                if "@" in admin_email:
+                    admin_username, admin_domain = admin_email.split("@", 1)
+                else:
+                    admin_username = admin_email
+                    admin_domain = "example.com"
+                
+                hashed_password = hashlib.sha256(admin_password.encode()).hexdigest()
 
-                # Ensure domain id
-                domain_row = await conn.fetchrow("SELECT id FROM domains WHERE name = $1", "example.com")
+                # Ensure domain exists
+                await conn.execute("INSERT INTO domains (name) VALUES ($1) ON CONFLICT DO NOTHING", admin_domain)
+                domain_row = await conn.fetchrow("SELECT id FROM domains WHERE name = $1", admin_domain)
                 domain_id = domain_row["id"] if domain_row else None
-                user_row = await conn.fetchrow("SELECT id FROM users WHERE username = $1", default_admin_username)
+                
+                user_row = await conn.fetchrow("SELECT id FROM users WHERE username = $1", admin_username)
                 if not user_row:
                     await conn.execute(
                         "INSERT INTO users (username, password, domain_id) VALUES ($1, $2, $3)",
-                        default_admin_username, hashed_password, domain_id
+                        admin_username, hashed_password, domain_id
                     )
                     # attach admin role
-                    u = await conn.fetchrow("SELECT id FROM users WHERE username = $1", default_admin_username)
+                    u = await conn.fetchrow("SELECT id FROM users WHERE username = $1", admin_username)
                     admin_role = await conn.fetchrow("SELECT id FROM roles WHERE name = $1", "admin")
                     if u and admin_role:
                         await conn.execute("INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", u["id"], admin_role["id"])
-                    logger.info(f"Default admin {default_admin_username} created")
+                    logger.info(f"Default admin {admin_username}@{admin_domain} created")
 
                 logger.info("DB initialized")
             return pool
@@ -176,7 +213,7 @@ app.state.db_pool = None
 def _encode_token(username: str, roles: List[str]):
     jti = str(uuid.uuid4())
     payload = {"username": username, "roles": roles, "exp": datetime.utcnow() + timedelta(hours=1), "jti": jti}
-    token = jwt.encode(payload, os.getenv("JWT_SECRET", "b8_XYZ123abc456DEF789ghiJKL0mnoPQ"), algorithm="HS256")
+    token = jwt.encode(payload, config.JWT_SECRET, algorithm="HS256")
     return token
 
 
@@ -187,7 +224,7 @@ def _generate_refresh_token():
 async def _decode_token(authorization: str):
     try:
         token = authorization.split("Bearer ")[1]
-        payload = jwt.decode(token, os.getenv("JWT_SECRET", "b8_XYZ123abc456DEF789ghiJKL0mnoPQ"), algorithms=["HS256"])
+        payload = jwt.decode(token, config.JWT_SECRET, algorithms=["HS256"])
         # check revocation by jti
         jti = payload.get('jti')
         if jti:
@@ -207,11 +244,15 @@ async def _decode_token(authorization: str):
 @app.post("/register")
 async def register(user: UserCreate):
     logger.info(f"Registering {user.username}")
+    service_state["requests_total"] += 1
+    service_state["last_request_time"] = datetime.utcnow().isoformat()
+    
     domain = user.domain if user.domain else ""
     async with app.state.db_pool.acquire() as conn:
         domain_row = await conn.fetchrow("SELECT id FROM domains WHERE name = $1", domain)
         if not domain_row:
             logger.error(f"Domain {domain} not registered")
+            service_state["requests_failed"] += 1
             raise HTTPException(status_code=400, detail="Domain not registered")
         hashed_password = hashlib.sha256(user.password.encode()).hexdigest()
         try:
@@ -223,12 +264,15 @@ async def register(user: UserCreate):
                 if role_row:
                     await conn.execute("INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", u["id"], role_row["id"])
             logger.info(f"User {user.username} created")
+            service_state["requests_successful"] += 1
             return {"status": "User registered"}
         except asyncpg.UniqueViolationError:
             logger.error(f"Username {user.username} exists")
+            service_state["requests_failed"] += 1
             raise HTTPException(status_code=400, detail="Username exists")
         except Exception as e:
             logger.error(f"Register error: {e}")
+            service_state["requests_failed"] += 1
             raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -237,7 +281,11 @@ async def login(payload: LoginRequest):
     # Accept either {"username","password"} or {"email","password"} for backward compatibility
     provided = payload.username or payload.email
     logger.info(f"Login attempt {provided}")
+    service_state["requests_total"] += 1
+    service_state["last_request_time"] = datetime.utcnow().isoformat()
+    
     if not provided:
+        service_state["requests_failed"] += 1
         raise HTTPException(status_code=400, detail="username or email required")
     hashed_password = hashlib.sha256(payload.password.encode()).hexdigest()
     async with app.state.db_pool.acquire() as conn:
@@ -265,6 +313,7 @@ async def login(payload: LoginRequest):
 
         if not row:
             logger.error(f"Invalid credentials for {provided}")
+            service_state["requests_failed"] += 1
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
         # fetch roles
@@ -276,6 +325,15 @@ async def login(payload: LoginRequest):
         # store refresh token
         exp = datetime.utcnow() + timedelta(days=14)
         await conn.execute('INSERT INTO refresh_tokens (token, username, expires_at) VALUES ($1, $2, $3)', refresh, row['username'], exp)
+        
+        # Track active session
+        service_state["active_sessions"].append({
+            "username": row["username"],
+            "logged_in_at": datetime.utcnow().isoformat(),
+            "roles": roles
+        })
+        
+        service_state["requests_successful"] += 1
         logger.info(f"User {row['username']} logged in")
         return {"access_token": token, "refresh_token": refresh, "token_type": "bearer"}
 
@@ -292,7 +350,7 @@ async def revoke_token(body: dict = None, authorization: str = Header(None)):
         tok = body.get('token')
         if not jti and tok:
             try:
-                payload = jwt.decode(tok, os.getenv("JWT_SECRET", "b8_XYZ123abc456DEF789ghiJKL0mnoPQ"), algorithms=["HS256"])
+                payload = jwt.decode(tok, config.JWT_SECRET, algorithms=["HS256"])
                 jti = payload.get('jti')
                 exp_ts = datetime.utcfromtimestamp(payload.get('exp')) if payload.get('exp') else None
             except Exception as e:
@@ -309,7 +367,7 @@ async def revoke_token(body: dict = None, authorization: str = Header(None)):
     if authorization and not jti:
         try:
             tok = authorization.split('Bearer ')[1]
-            payload = jwt.decode(tok, os.getenv("JWT_SECRET", "b8_XYZ123abc456DEF789ghiJKL0mnoPQ"), algorithms=["HS256"])
+            payload = jwt.decode(tok, config.JWT_SECRET, algorithms=["HS256"])
             jti = payload.get('jti')
             exp_ts = datetime.utcfromtimestamp(payload.get('exp')) if payload.get('exp') else None
         except Exception as e:
@@ -432,6 +490,14 @@ async def list_domains(authorization: str = Header(...)):
         return [{"id": r["id"], "name": r["name"]} for r in rows]
 
 
+@app.get("/api/domains/{domain}/exists")
+async def check_domain_exists(domain: str):
+    """Public endpoint to check if domain exists (for SMTP local delivery)"""
+    async with app.state.db_pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT id FROM domains WHERE name = $1", domain)
+        return {"exists": row is not None, "domain": domain}
+
+
 @app.get("/users")
 async def list_users(authorization: str = Header(...)):
     payload = await _decode_token(authorization)
@@ -515,3 +581,114 @@ async def delete_user(user_id: int, authorization: str = Header(...)):
         if res == "DELETE 0":
             raise HTTPException(status_code=404, detail="User not found")
         return {"status": "user deleted"}
+
+# REST API Endpoints for Service Management
+
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint"""
+    uptime = time.time() - service_state["start_time"]
+    
+    # Test database connection
+    try:
+        if app.state.db_pool:
+            async with app.state.db_pool.acquire() as conn:
+                await conn.fetchval("SELECT 1")
+            db_status = "connected"
+        else:
+            db_status = "no pool"
+    except Exception as e:
+        db_status = f"disconnected: {str(e)}"
+    
+    status = "healthy" if service_state["config"]["enabled"] and db_status == "connected" else "unhealthy"
+    
+    return {
+        "service_name": "identity",
+        "status": status,
+        "timestamp": datetime.utcnow().isoformat(),
+        "uptime_seconds": uptime,
+        "details": {
+            "enabled": service_state["config"]["enabled"],
+            "database_status": db_status,
+            "active_sessions": len(service_state["active_sessions"])
+        }
+    }
+
+@app.get("/api/config")
+async def get_config():
+    """Get current Identity service configuration"""
+    config = service_state["config"].copy()
+    # Don't expose sensitive data
+    if "jwt_secret" in config:
+        config["jwt_secret"] = "***"
+    return {
+        "service_name": "identity",
+        "config": config
+    }
+
+@app.put("/api/config")
+async def update_config(config: Dict[str, Any], authorization: str = Header(...)):
+    """Update Identity service configuration (admin only)"""
+    payload = await _decode_token(authorization)
+    if "admin" not in payload.get("roles", []):
+        raise HTTPException(status_code=403, detail="Admin required")
+    
+    try:
+        # Update configuration
+        for key, value in config.items():
+            if key in service_state["config"] and key != "jwt_secret":  # Don't allow JWT secret change via API
+                service_state["config"][key] = value
+        
+        logger.info(f"Configuration updated: {config}")
+        return {
+            "status": "success",
+            "message": "Configuration updated",
+            "config": service_state["config"]
+        }
+    except Exception as e:
+        logger.error(f"Error updating config: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/stats")
+async def get_stats():
+    """Get Identity service statistics"""
+    uptime = time.time() - service_state["start_time"]
+    
+    # Get user and domain count
+    try:
+        async with app.state.db_pool.acquire() as conn:
+            user_count = await conn.fetchval("SELECT COUNT(*) FROM users")
+            domain_count = await conn.fetchval("SELECT COUNT(*) FROM domains")
+            revoked_tokens = await conn.fetchval("SELECT COUNT(*) FROM revoked_tokens")
+            refresh_tokens = await conn.fetchval("SELECT COUNT(*) FROM refresh_tokens")
+    except Exception as e:
+        logger.error(f"Error getting DB stats: {str(e)}")
+        user_count = domain_count = revoked_tokens = refresh_tokens = 0
+    
+    return {
+        "service_name": "identity",
+        "uptime_seconds": uptime,
+        "requests_total": service_state["requests_total"],
+        "requests_successful": service_state["requests_successful"],
+        "requests_failed": service_state["requests_failed"],
+        "last_request_time": service_state["last_request_time"],
+        "custom_stats": {
+            "total_users": user_count,
+            "total_domains": domain_count,
+            "active_sessions": len(service_state["active_sessions"]),
+            "revoked_tokens": revoked_tokens,
+            "active_refresh_tokens": refresh_tokens
+        }
+    }
+
+@app.get("/api/identity/sessions")
+async def get_sessions(authorization: str = Header(...)):
+    """Get active Identity sessions (admin only)"""
+    payload = await _decode_token(authorization)
+    if "admin" not in payload.get("roles", []):
+        raise HTTPException(status_code=403, detail="Admin required")
+    
+    return {
+        "active_sessions": service_state["active_sessions"],
+        "count": len(service_state["active_sessions"])
+    }

@@ -3,3 +3,5 @@ uvicorn==0.30.6
 pydantic==2.9.2
 aiohttp==3.10.5
 aiosmtpd==1.4.4
+requests==2.31.0
+PyYAML>=6.0
