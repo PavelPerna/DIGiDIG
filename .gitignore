@@ -1,5 +1,7 @@
 # Python
 __pycache__/
+**/__pycache__/**
+
 *.py[cod]
 *.pyo
 *.pyd
@@ -13,7 +15,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/\n+lib64/
+lib/
+lib64/
 parts/
 sdist/
 var/
@@ -34,7 +37,6 @@ venv/
 # Docker
 **/venv/
 **/.venv/
-**/__pycache__/
 
 # Editor configs
 .vscode/
