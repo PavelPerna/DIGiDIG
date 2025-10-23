@@ -26,8 +26,19 @@ def get_required_env(key: str) -> str:
 
 
 async def main():
-    admin_email = get_required_env("ADMIN_EMAIL")
     admin_password = get_required_env("ADMIN_PASSWORD")
+    # Support ADMIN_EMAIL (legacy) or ADMIN_USERNAME + ADMIN_DOMAIN
+    admin_email = os.getenv("ADMIN_EMAIL")
+    admin_username = os.getenv("ADMIN_USERNAME")
+    admin_domain = os.getenv("ADMIN_DOMAIN")
+    if not admin_username:
+        if not admin_email:
+            print("Missing ADMIN_EMAIL or ADMIN_USERNAME")
+            sys.exit(2)
+        if "@" in admin_email:
+            admin_username, admin_domain = admin_email.split("@", 1)
+        else:
+            admin_username = admin_email
 
     db_user = os.getenv("DB_USER", "postgres")
     db_pass = os.getenv("DB_PASS", "securepassword")
@@ -39,11 +50,18 @@ async def main():
     try:
         pool = await asyncpg.create_pool(user=db_user, password=db_pass, database=db_name, host=db_host)
         async with pool.acquire() as conn:
+            # ensure domain exists
+            domain_id = None
+            if admin_domain:
+                await conn.execute("INSERT INTO domains (name) VALUES ($1) ON CONFLICT DO NOTHING", admin_domain)
+                row = await conn.fetchrow("SELECT id FROM domains WHERE name = $1", admin_domain)
+                domain_id = row["id"] if row else None
+
             await conn.execute(
-                "INSERT INTO users (email, password, role) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
-                admin_email, hashed_password, "admin"
+                "INSERT INTO users (username, password, domain_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+                admin_username, hashed_password, domain_id
             )
-            print(f"Admin user {admin_email} created or already exists.")
+            print(f"Admin user {admin_username}{('@' + admin_domain) if admin_domain else ''} created or already exists.")
         await pool.close()
     except Exception as e:
         print(f"Failed to create admin: {e}")
