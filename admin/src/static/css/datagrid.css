@@ -1,0 +1,506 @@
+.datagrid {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+/* Top pane layout */
+.top-pane {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+}
+.top-pane .top-left h1 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+.avatar-wrapper {
+    position: relative;
+}
+.avatar-button {
+    background: #4b5563; /* slate for avatar */
+    border: none;
+    padding: 6px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.avatar-dropdown {
+    position: absolute;
+    right: 0;
+    top: 40px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    min-width: 140px;
+    z-index: 1200;
+    padding: 8px 0;
+}
+.avatar-dropdown .dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    text-align: left;
+    color: var(--text-color);
+    cursor: pointer;
+}
+.avatar-dropdown .dropdown-item:hover {
+    background: rgba(255,255,255,0.02);
+}
+
+/* Main layout: left pane + right pane */
+.main-layout {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 20px;
+}
+.left-pane {
+    width: 220px;
+}
+.right-pane {
+    flex: 1 1 auto;
+}
+.menu {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+}
+.menu-item {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    background: none;
+    border: none;
+    text-align: left;
+    color: var(--text-color);
+    cursor: pointer;
+    border-radius: 6px;
+}
+.menu-item.active {
+    background: rgba(255,255,255,0.03);
+}
+
+.datagrid th, .datagrid td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.datagrid th {
+    background-color: rgba(255, 255, 255, 0.05);
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.datagrid tr:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.datagrid-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.datagrid-actions button {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Button icons */
+.button-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    vertical-align: middle;
+    fill: currentColor;
+}
+
+.datagrid-actions button.edit {
+    background-color: #0d9488;
+}
+
+.datagrid-actions button.edit:hover {
+    background-color: #0f766e;
+}
+
+.delete-button, .datagrid-actions button.delete {
+    background-color: #dc2626 !important;
+    color: white;
+}
+
+.delete-button:hover, .datagrid-actions button.delete:hover {
+    background-color: #b91c1c !important;
+}
+
+.expand-button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 4px;
+    cursor: pointer;
+}
+
+.expand-button:hover {
+    color: var(--text-color);
+    background: none;
+    transform: none;
+}
+
+.domain-users {
+    padding-left: 2rem;
+    margin: 1rem 0;
+    border-left: 2px solid var(--border-color);
+}
+
+.domain-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.domain-header {
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.dialog {
+    background-color: var(--bg-color);
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    min-width: 400px;
+}
+
+.dialog h3 {
+    margin-top: 0;
+    color: var(--text-color);
+}
+
+.dialog-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+.add-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin-bottom: 1rem;
+    background: #28a745; /* green CTA */
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.add-button:hover {
+    background: #218838;
+}
+
+/* Focus outline for keyboard users */
+.add-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(40,167,69,0.18);
+}
+
+/* ensure SVG icons inside add buttons inherit white color */
+.add-button .button-icon {
+    fill: currentColor;
+    color: inherit;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Modal (legacy .modal/.modal-content used in template) */
+.modal {
+    display: none; /* hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: var(--bg-color); /* dark background */
+    color: var(--text-color);
+    margin: auto;
+    padding: 20px;
+    width: 90%;
+    max-width: 520px;
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    border: 1px solid var(--border-color);
+}
+
+/* Close button: larger and red */
+.close {
+    position: absolute;
+    right: 12px;
+    top: 8px;
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    background: #dc3545; /* red */
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    line-height: 1;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.close:hover {
+    background: #c82333;
+}
+
+/* Submit / save button should be green */
+.submit-button {
+    display: inline-block;
+    padding: 10px 14px;
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.submit-button:hover {
+    background: #218838;
+}
+
+/* Form controls inside modal should match dark inputs */
+.modal-content input[type="text"],
+.modal-content input[type="email"],
+.modal-content input[type="password"],
+.modal-content select {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text-color);
+    border-radius: 6px;
+    margin-top: 6px;
+}
+
+
+
+.modal-content label {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* Slightly darker overlay for better contrast in dark mode */
+.modal {
+    background-color: rgba(0,0,0,0.65);
+}
+
+/* Password validation styles */
+.password-requirements {
+    display: block;
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 6px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+}
+
+.password-requirements h4 {
+    margin: 0 0 8px 0;
+    color: var(--text-color);
+    font-size: 0.95em;
+    font-weight: 500;
+}
+
+.password-requirements ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.password-requirements li {
+    margin: 6px 0;
+    padding-left: 25px;
+    position: relative;
+    font-size: 0.9em;
+    transition: color 0.2s ease;
+    color: #dc3545;
+    display: flex;
+    align-items: center;
+}
+
+.password-requirements li::before {
+    content: "×";
+    position: absolute;
+    left: 8px;
+    font-size: 1.2em;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.password-requirements li.valid {
+    color: #28a745;
+}
+
+.password-requirements li.valid::before {
+    content: "✓";
+}
+/* Password validation styles */
+.password-requirements {
+    display: block;
+    margin-top: 8px;
+    color: var(--text-muted);
+}
+
+.password-requirements ul {
+    margin: 5px 0 0 0;
+    padding-left: 20px;
+    font-size: 0.9em;
+}
+
+.password-requirements li {
+    margin: 3px 0;
+    position: relative;
+}
+
+.password-requirements li.valid {
+    color: #28a745;
+}
+
+.password-requirements li.valid::before {
+    content: "✓";
+    position: absolute;
+    left: -15px;
+    color: #28a745;
+}
+
+.password-requirements li.invalid {
+    color: #dc3545;
+}
+
+.password-requirements li.invalid::before {
+    content: "×";
+    position: absolute;
+    left: -15px;
+    color: #dc3545;
+}
+
+/* Styles for users section */
+.users-row > td {
+    padding: 0 !important;
+}
+
+.nested-grid {
+    padding: 1.5rem;
+    margin: 0.5rem 2rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.nested-grid .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.nested-grid h3 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nested-grid h3::before {
+    content: "";
+    display: block;
+    width: 4px;
+    height: 1.2em;
+    background: var(--text-muted);
+    border-radius: 2px;
+}
+
+.nested-grid table {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group.email-group,
+.form-group.username-group {
+    display: flex;
+    gap: 0;
+}
+
+.form-group.email-group input[type="text"],
+.form-group.username-group input[type="text"] {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    width: 60%;
+}
+
+.form-group.email-group input[disabled],
+.form-group.username-group input[disabled] {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    width: 40%;
+    background-color: var(--input-bg);
+    color: var(--text-muted);
+    border-left: none;
+    cursor: not-allowed;
+}

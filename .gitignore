@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/\n+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+*.egg
+
+# Pytest
+.pytest_cache/
+cache/
+
+# MyPy
+.mypy_cache/
+
+# Virtualenv
+venv/
+.venv/
+
+# Docker
+**/venv/
+**/.venv/
+**/__pycache__/
+
+# Editor configs
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage
+htmlcov/
+.coverage
