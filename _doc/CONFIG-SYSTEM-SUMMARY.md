@@ -158,10 +158,10 @@ DIGiDIG/
    echo "PyYAML>=6.0" >> identity/requirements.txt
    ```
 
-2. **Copy common module to services**:
+2. **Copy lib module to services**:
    ```dockerfile
    # In Dockerfile
-   COPY common/ /app/common/
+   COPY lib/ /app/lib/
    ENV PYTHONPATH=/app:$PYTHONPATH
    ```
 

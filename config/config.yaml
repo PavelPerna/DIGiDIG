@@ -48,6 +48,11 @@ services:
     host: client
     port: 8004
     url: http://client:8004
+  
+  sso:
+    host: sso
+    port: 8006
+    url: http://sso:8006
 
 # Security Configuration
 security:

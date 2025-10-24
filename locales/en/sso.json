@@ -1,0 +1,27 @@
+{
+  "login": {
+    "title": "DIGiDIG Login",
+    "subtitle": "Single Sign-On",
+    "username": "Username or Email",
+    "username_placeholder": "Enter your username or email",
+    "password": "Password", 
+    "password_placeholder": "Enter your password",
+    "submit": "Sign In",
+    "error": {
+      "invalid_credentials": "Invalid username or password",
+      "network_error": "Network error. Please try again.",
+      "server_error": "Server error. Please try again later."
+    },
+    "success": {
+      "logged_in": "Successfully logged in"
+    }
+  },
+  "logout": {
+    "success": "Successfully logged out",
+    "confirm": "Are you sure you want to logout?"
+  },
+  "session": {
+    "expired": "Your session has expired. Please login again.",
+    "invalid": "Invalid session. Please login again."
+  }
+}
