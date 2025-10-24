@@ -23,6 +23,10 @@ var/
 # Pytest
 .pytest_cache/
 cache/
+reports/
+pytest-report.*
+*.xml
+pytest_report.*
 
 # MyPy
 .mypy_cache/
@@ -30,6 +34,7 @@ cache/
 # Virtualenv
 venv/
 .venv/
+venv-test/
 
 # Docker
 **/venv/
@@ -46,11 +51,23 @@ venv/
 .env
 .env.local
 .env.*.local
+.env.staging
+.env.prod
+.env.production
 
 # Configuration files with secrets (keep templates only)
 config/config.prod.yaml
 config/config.local.yaml
 config/*.local.yaml
+
+# Deployment and backup files
+backups/
+*.backup
+*.dump
+
+# CI/CD logs and artifacts
+deploy.log
+health-check.log
 
 # OS files
 .DS_Store

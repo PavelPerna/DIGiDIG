@@ -40,7 +40,7 @@ services:
   identity:
     build:
       context: .
-      dockerfile: ./identity/Dockerfile
+      dockerfile: ./services/identity/Dockerfile
     restart: unless-stopped
     ports:
       - "8001:8001"
@@ -51,11 +51,15 @@ services:
       - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
     networks:
       - strategos-net
+    volumes:
+      - identity_data:/app/data
+      - app_logs:/app/logs
+      - test_data:/app/tests
 
   smtp:
     build:
       context: .
-      dockerfile: ./smtp/Dockerfile
+      dockerfile: ./services/smtp/Dockerfile
     restart: unless-stopped
     ports:
       - "8000:8000"   # FastAPI REST API
@@ -68,11 +72,15 @@ services:
       - identity
     networks:
       - strategos-net
+    volumes:
+      - smtp_data:/app/data
+      - app_logs:/app/logs
+      - test_data:/app/tests
 
   imap:
     build:
       context: .
-      dockerfile: ./imap/Dockerfile
+      dockerfile: ./services/imap/Dockerfile
     restart: unless-stopped
     ports:
       - "8003:8003"
@@ -83,11 +91,15 @@ services:
       - storage
     networks:
       - strategos-net
+    volumes:
+      - imap_data:/app/data
+      - app_logs:/app/logs
+      - test_data:/app/tests
 
   storage:
     build:
       context: .
-      dockerfile: ./storage/Dockerfile
+      dockerfile: ./services/storage/Dockerfile
     restart: unless-stopped
     ports:
       - "8002:8002"
@@ -98,11 +110,15 @@ services:
       - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
     networks:
       - strategos-net
+    volumes:
+      - storage_data:/app/data
+      - app_logs:/app/logs
+      - test_data:/app/tests
 
   client:
     build:
       context: .
-      dockerfile: ./client/Dockerfile
+      dockerfile: ./services/client/Dockerfile
     restart: unless-stopped
     ports:
       - "8004:8004"
@@ -114,11 +130,15 @@ services:
       - imap
     networks:
       - strategos-net
+    volumes:
+      - client_data:/app/data
+      - app_logs:/app/logs
+      - test_data:/app/tests
 
   admin:
     build:
       context: .
-      dockerfile: ./admin/Dockerfile
+      dockerfile: ./services/admin/Dockerfile
     restart: unless-stopped
     ports:
       - "8005:8005"
@@ -131,11 +151,14 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro  # Docker socket for restart functionality
       - ./:/app/project:ro  # Mount project root for docker-compose.yml access
+      - admin_data:/app/data
+      - app_logs:/app/logs
+      - test_data:/app/tests
 
   apidocs:
     build:
       context: .
-      dockerfile: ./apidocs/Dockerfile
+      dockerfile: ./services/apidocs/Dockerfile
     restart: unless-stopped
     ports:
       - "8010:8010"
@@ -156,11 +179,40 @@ services:
       - admin
     networks:
       - strategos-net
+    volumes:
+      - apidocs_data:/app/data
+      - app_logs:/app/logs
+      - test_data:/app/tests
 
 networks:
   strategos-net:
     driver: bridge
 
 volumes:
+  # Database volumes
   postgres_data:
+    driver: local
   mongo_data:
+    driver: local
+  
+  # Application data volumes
+  identity_data:
+    driver: local
+  smtp_data:
+    driver: local
+  imap_data:
+    driver: local
+  storage_data:
+    driver: local
+  client_data:
+    driver: local
+  admin_data:
+    driver: local
+  apidocs_data:
+    driver: local
+  
+  # Shared volumes
+  app_logs:
+    driver: local
+  test_data:
+    driver: local
