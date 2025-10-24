@@ -1,48 +1,301 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Client Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">Dashboard - DIGiDIG</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .language-selector select {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .compose-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .compose-section h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        .send-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .send-btn:hover {
+            background-color: #45a049;
+        }
+        .emails-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .email-item {
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+        .email-item strong {
+            color: #333;
+        }
+        .email-item .timestamp {
+            color: #999;
+            font-size: 12px;
+        }
+        .message, .error {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .no-emails {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+    </style>
 </head>
 <body>
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1>Vítej, {{ username }}!</h1>
-        <form action="/logout" method="post" style="margin: 0;">
-            <button type="submit" style="background: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">Odhlásit</button>
-        </form>
-    </div>
-    {% if message %}
-        <p style="color: green">{{ message }}</p>
-    {% endif %}
-    {% if error %}
-        <p style="color: red">{{ error }}</p>
-    {% endif %}
-    <form action="/send" method="post">
-        <input type="email" name="recipient" placeholder="Příjemce" required>
-        <input type="text" name="subject" placeholder="Předmět" required>
-        <textarea name="body" placeholder="Zpráva" required></textarea>
-        <button type="submit">Odeslat</button>
-    </form>
-    <h2>Vaše e-maily:</h2>
-    {% if emails %}
-        {% for email in emails %}
-            <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
-                <strong>Od:</strong> {{ email.sender }}<br>
-                <strong>Předmět:</strong> {{ email.subject }}<br>
-                {% if email.timestamp %}
-                    <small>{{ email.timestamp }}</small><br>
-                {% endif %}
-                <p>{{ email.body }}</p>
+    <div class="header">
+        <div class="header-left">
+            <h1 id="welcomeMsg">Welcome, {{ username }}!</h1>
+        </div>
+        <div class="header-right">
+            <div class="language-selector">
+                <select id="langSelect" onchange="changeLanguage(this.value)">
+                    <option value="en">English</option>
+                    <option value="cs">Čeština</option>
+                </select>
             </div>
-        {% endfor %}
-    {% else %}
-        <p>Nemáte žádné e-maily.</p>
-    {% endif %}
-    <!-- AdSense pro profit -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=YOUR_AD_CLIENT_ID" crossorigin="anonymous"></script>
-    <ins class="adsbygoogle" style="display:block" data-ad-client="YOUR_AD_CLIENT_ID" data-ad-slot="YOUR_AD_SLOT_ID" data-ad-format="auto"></ins>
+            <form action="/logout" method="post" style="margin: 0;">
+                <button type="submit" class="logout-btn" id="logoutBtn">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container">
+        {% if message %}
+            <div class="message">{{ message }}</div>
+        {% endif %}
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <div class="compose-section">
+            <h2 id="composeTitle">Compose Email</h2>
+            <form action="/send" method="post">
+                <div class="form-group">
+                    <label for="recipient" id="labelRecipient">Recipient</label>
+                    <input type="email" id="recipient" name="recipient" required>
+                </div>
+                <div class="form-group">
+                    <label for="subject" id="labelSubject">Subject</label>
+                    <input type="text" id="subject" name="subject" required>
+                </div>
+                <div class="form-group">
+                    <label for="body" id="labelMessage">Message</label>
+                    <textarea id="body" name="body" required></textarea>
+                </div>
+                <button type="submit" class="send-btn" id="sendBtn">Send Email</button>
+            </form>
+        </div>
+
+        <div class="emails-section">
+            <h2 id="inboxTitle">Your Emails</h2>
+            {% if emails %}
+                {% for email in emails %}
+                    <div class="email-item">
+                        <strong id="emailFrom">From:</strong> {{ email.sender }}<br>
+                        <strong id="emailSubject">Subject:</strong> {{ email.subject }}<br>
+                        {% if email.timestamp %}
+                            <div class="timestamp">{{ email.timestamp }}</div>
+                        {% endif %}
+                        <p>{{ email.body }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-emails">
+                    <p id="noEmails">You have no emails yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
     <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
+        // Translations
+        const translations = {
+            en: {
+                pageTitle: 'Dashboard - DIGiDIG',
+                welcomeMsg: 'Welcome, {{ username }}!',
+                logoutBtn: 'Logout',
+                composeTitle: 'Compose Email',
+                labelRecipient: 'Recipient',
+                labelSubject: 'Subject',
+                labelMessage: 'Message',
+                sendBtn: 'Send Email',
+                inboxTitle: 'Your Emails',
+                emailFrom: 'From:',
+                emailSubject: 'Subject:',
+                noEmails: 'You have no emails yet.'
+            },
+            cs: {
+                pageTitle: 'Nástěnka - DIGiDIG',
+                welcomeMsg: 'Vítejte, {{ username }}!',
+                logoutBtn: 'Odhlásit se',
+                composeTitle: 'Napsat email',
+                labelRecipient: 'Příjemce',
+                labelSubject: 'Předmět',
+                labelMessage: 'Zpráva',
+                sendBtn: 'Odeslat email',
+                inboxTitle: 'Vaše emaily',
+                emailFrom: 'Od:',
+                emailSubject: 'Předmět:',
+                noEmails: 'Zatím nemáte žádné emaily.'
+            }
+        };
+
+        // Get current language from cookie
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return 'en';
+        }
+
+        // Set current language cookie
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/;SameSite=Lax";
+        }
+
+        // Change language
+        function changeLanguage(lang) {
+            setCookie('language', lang, 365);
+            updateUI(lang);
+            
+            // Also update on server
+            fetch('/api/language', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `lang=${lang}`
+            });
+        }
+
+        // Update UI texts
+        function updateUI(lang) {
+            const t = translations[lang] || translations.en;
+            const username = '{{ username }}';
+            
+            document.title = t.pageTitle;
+            document.getElementById('welcomeMsg').textContent = t.welcomeMsg.replace('{{ username }}', username);
+            document.getElementById('logoutBtn').textContent = t.logoutBtn;
+            document.getElementById('composeTitle').textContent = t.composeTitle;
+            document.getElementById('labelRecipient').textContent = t.labelRecipient;
+            document.getElementById('labelSubject').textContent = t.labelSubject;
+            document.getElementById('labelMessage').textContent = t.labelMessage;
+            document.getElementById('sendBtn').textContent = t.sendBtn;
+            document.getElementById('inboxTitle').textContent = t.inboxTitle;
+            
+            // Update email labels if they exist
+            const emailFromLabels = document.querySelectorAll('#emailFrom');
+            emailFromLabels.forEach(el => el.textContent = t.emailFrom);
+            
+            const emailSubjectLabels = document.querySelectorAll('#emailSubject');
+            emailSubjectLabels.forEach(el => el.textContent = t.emailSubject);
+            
+            const noEmailsEl = document.getElementById('noEmails');
+            if (noEmailsEl) {
+                noEmailsEl.textContent = t.noEmails;
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentLang = getCookie('language') || 'en';
+            document.getElementById('langSelect').value = currentLang;
+            updateUI(currentLang);
+        });
     </script>
 </body>
 </html>

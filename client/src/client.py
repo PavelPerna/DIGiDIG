@@ -1,15 +1,24 @@
 from fastapi import FastAPI, Request, Form, Depends, HTTPException, Response
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import aiohttp
 import os
+import sys
 from pydantic import BaseModel
 import logging
+
+# Add parent directory to path for common imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+from common.i18n import init_i18n, get_i18n
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Initialize i18n
+i18n = init_i18n(default_language='en', service_name='client')
 
 # Service URLs
 IDENTITY_URL = os.getenv("IDENTITY_URL", "http://identity:8001")
@@ -54,6 +63,36 @@ async def get_session(request: Request):
     if not user:
         return None
     return user
+
+def get_language(request: Request) -> str:
+    """Get current language from cookie or default to 'en'"""
+    return request.cookies.get("language", "en")
+
+def set_language(response: Response, lang: str):
+    """Set language cookie"""
+    if lang in ['cs', 'en']:
+        response.set_cookie(
+            key="language",
+            value=lang,
+            max_age=365*24*60*60,  # 1 year
+            httponly=True,
+            samesite="lax"
+        )
+
+@app.post("/api/language")
+async def set_language_endpoint(request: Request, lang: str = Form(...)):
+    """Set user language preference"""
+    i18n.set_language(lang)
+    response = JSONResponse({"success": True, "language": lang})
+    set_language(response, lang)
+    return response
+
+@app.get("/api/translations")
+async def get_translations(request: Request):
+    """Get all translations for current language"""
+    lang = get_language(request)
+    i18n.set_language(lang)
+    return JSONResponse(i18n.get_all())
 
 @app.get("/", response_class=HTMLResponse)
 async def login(request: Request):

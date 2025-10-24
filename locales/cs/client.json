@@ -1,0 +1,64 @@
+{
+  "client": {
+    "title": "DIGiDIG Emailový klient",
+    "welcome": "Vítejte v DIGiDIG",
+    "tagline": "Bezpečná a distribuovaná emailová komunikace"
+  },
+  "login": {
+    "title": "Přihlášení",
+    "subtitle": "Přihlaste se do svého účtu",
+    "button": "Přihlásit se",
+    "error": "Přihlášení se nezdařilo. Zkontrolujte prosím přihlašovací údaje."
+  },
+  "inbox": {
+    "title": "Doručená pošta",
+    "empty": "Zatím žádné emaily",
+    "unread": "Nepřečtené",
+    "all": "Všechny",
+    "folders": "Složky",
+    "compose": "Napsat",
+    "refresh": "Obnovit"
+  },
+  "email": {
+    "from": "Od",
+    "to": "Komu",
+    "cc": "Kopie",
+    "bcc": "Skrytá kopie",
+    "subject": "Předmět",
+    "message": "Zpráva",
+    "send": "Odeslat email",
+    "sent": "Email byl úspěšně odeslán",
+    "failed": "Nepodařilo se odeslat email",
+    "reply": "Odpovědět",
+    "forward": "Přeposlat",
+    "delete": "Smazat",
+    "mark_read": "Označit jako přečtené",
+    "mark_unread": "Označit jako nepřečtené",
+    "attachments": "Přílohy"
+  },
+  "compose": {
+    "title": "Napsat email",
+    "recipient": "Příjemce",
+    "subject": "Předmět",
+    "message": "Zpráva",
+    "send": "Odeslat",
+    "cancel": "Zrušit",
+    "draft_saved": "Koncept uložen",
+    "validation": {
+      "recipient_required": "Příjemce je povinný",
+      "subject_required": "Předmět je povinný",
+      "message_required": "Zpráva je povinná",
+      "invalid_email": "Neplatná emailová adresa"
+    }
+  },
+  "settings": {
+    "title": "Nastavení",
+    "profile": "Profil",
+    "preferences": "Předvolby",
+    "security": "Zabezpečení",
+    "notifications": "Oznámení",
+    "language": "Jazyk",
+    "save": "Uložit změny",
+    "saved": "Nastavení bylo úspěšně uloženo"
+  }
+}

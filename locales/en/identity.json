@@ -1,0 +1,27 @@
+{
+  "identity": {
+    "title": "Identity Service",
+    "description": "User authentication and authorization"
+  },
+  "user": {
+    "created": "User created successfully",
+    "updated": "User updated successfully",
+    "deleted": "User deleted successfully",
+    "not_found": "User not found",
+    "exists": "User already exists"
+  },
+  "domain": {
+    "created": "Domain created successfully",
+    "updated": "Domain updated successfully",
+    "deleted": "Domain deleted successfully",
+    "not_found": "Domain not found",
+    "exists": "Domain already exists"
+  },
+  "auth": {
+    "login_success": "Login successful",
+    "login_failed": "Login failed",
+    "logout_success": "Logout successful",
+    "token_invalid": "Invalid or expired token",
+    "token_required": "Authentication token required"
+  }
+}

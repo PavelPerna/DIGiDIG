@@ -1,0 +1,17 @@
+{
+  "smtp": {
+    "title": "Služba SMTP",
+    "description": "Služba pro odesílání emailů"
+  },
+  "server": {
+    "started": "SMTP server spuštěn na portu {port}",
+    "stopped": "SMTP server zastaven",
+    "error": "Chyba SMTP serveru: {error}"
+  },
+  "email": {
+    "sent": "Email byl úspěšně odeslán",
+    "failed": "Nepodařilo se odeslat email",
+    "queued": "Email zařazen do fronty",
+    "delivered": "Email doručen příjemci {recipient}"
+  }
+}

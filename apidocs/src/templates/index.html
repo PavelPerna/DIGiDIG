@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIGiDIG API Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+        }
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .service-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+        }
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+        .service-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        .service-name {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .service-description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .service-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .tag {
+            background: #f0f0f0;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            color: #555;
+        }
+        .service-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            flex: 1;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        .health-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+        .health-status.healthy {
+            background: #4CAF50;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+        }
+        .health-status.unhealthy {
+            background: #f44336;
+            box-shadow: 0 0 8px rgba(244, 67, 54, 0.5);
+        }
+        .health-status.unreachable {
+            background: #ff9800;
+            box-shadow: 0 0 8px rgba(255, 152, 0, 0.5);
+        }
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 50px;
+            opacity: 0.8;
+        }
+        .combined-docs {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .combined-docs h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .combined-docs p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 DIGiDIG API Documentation</h1>
+            <p>Comprehensive API documentation for all services</p>
+        </div>
+
+        <div class="combined-docs">
+            <h2>🔗 Combined API Documentation</h2>
+            <p>View all services in a single unified documentation</p>
+            <a href="/api/openapi/combined" class="btn btn-primary" style="display: inline-block; max-width: 200px;">
+                View Combined API
+            </a>
+        </div>
+
+        <div class="services-grid">
+            {% for service_id, service in services.items() %}
+            <div class="service-card" data-service="{{ service_id }}">
+                <div class="health-status" id="health-{{ service_id }}"></div>
+                
+                <div class="service-icon">{{ service.icon }}</div>
+                <div class="service-name">{{ service.name }}</div>
+                <div class="service-description">{{ service.description }}</div>
+                
+                <div class="service-tags">
+                    {% for tag in service.tags %}
+                    <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                
+                <div class="service-actions">
+                    <a href="/docs/{{ service_id }}" class="btn btn-primary">
+                        Swagger UI
+                    </a>
+                    <a href="/redoc/{{ service_id }}" class="btn btn-secondary">
+                        ReDoc
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="footer">
+            <p>DIGiDIG © 2025 | Distributed Email System</p>
+        </div>
+    </div>
+
+    <script>
+        // Check health status for all services
+        async function checkHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                for (const [serviceId, health] of Object.entries(data.services)) {
+                    const statusEl = document.getElementById(`health-${serviceId}`);
+                    if (statusEl) {
+                        statusEl.className = `health-status ${health.status}`;
+                        statusEl.title = health.message;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to check health:', error);
+            }
+        }
+
+        // Check health on load and periodically
+        checkHealth();
+        setInterval(checkHealth, 30000); // Every 30 seconds
+    </script>
+</body>
+</html>

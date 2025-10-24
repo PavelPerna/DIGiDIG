@@ -1,0 +1,107 @@
+{
+  "admin": {
+    "title": "DIGiDIG Administrační panel",
+    "subtitle": "Správa a monitoring systému",
+    "welcome": "Vítejte, {username}"
+  },
+  "navigation": {
+    "dashboard": "Nástěnka",
+    "services": "Služby",
+    "users": "Uživatelé",
+    "domains": "Domény",
+    "monitoring": "Monitoring",
+    "logs": "Logy",
+    "settings": "Nastavení"
+  },
+  "dashboard": {
+    "title": "Nástěnka",
+    "overview": "Přehled systému",
+    "statistics": "Statistiky",
+    "recent_activity": "Nedávná aktivita",
+    "system_health": "Stav systému",
+    "metrics": {
+      "total_users": "Celkem uživatelů",
+      "total_emails": "Celkem emailů",
+      "active_domains": "Aktivní domény",
+      "uptime": "Doba běhu"
+    }
+  },
+  "services": {
+    "title": "Správa služeb",
+    "status": "Stav",
+    "running": "Běží",
+    "stopped": "Zastaveno",
+    "error": "Chyba",
+    "restart": "Restartovat službu",
+    "stop": "Zastavit službu",
+    "start": "Spustit službu",
+    "restart_confirm": "Opravdu chcete restartovat službu {service}?",
+    "restarted": "Služba {service} byla úspěšně restartována",
+    "restart_failed": "Nepodařilo se restartovat službu {service}",
+    "list": {
+      "identity": "Služba Identity",
+      "storage": "Služba úložiště",
+      "smtp": "Služba SMTP",
+      "imap": "Služba IMAP",
+      "client": "Klientská služba",
+      "admin": "Administrátorská služba"
+    }
+  },
+  "users": {
+    "title": "Správa uživatelů",
+    "add": "Přidat uživatele",
+    "edit": "Upravit uživatele",
+    "delete": "Smazat uživatele",
+    "delete_confirm": "Opravdu chcete smazat uživatele {username}?",
+    "username": "Uživatelské jméno",
+    "email": "Email",
+    "domain": "Doména",
+    "roles": "Role",
+    "created": "Vytvořeno",
+    "last_login": "Poslední přihlášení",
+    "status": "Stav",
+    "active": "Aktivní",
+    "inactive": "Neaktivní"
+  },
+  "domains": {
+    "title": "Správa domén",
+    "add": "Přidat doménu",
+    "edit": "Upravit doménu",
+    "delete": "Smazat doménu",
+    "delete_confirm": "Opravdu chcete smazat doménu {domain}?",
+    "name": "Název domény",
+    "description": "Popis",
+    "users_count": "Uživatelé",
+    "created": "Vytvořeno",
+    "status": "Stav",
+    "active": "Aktivní",
+    "inactive": "Neaktivní"
+  },
+  "logs": {
+    "title": "Systémové logy",
+    "filter": "Filtrovat logy",
+    "level": "Úroveň",
+    "service": "Služba",
+    "timestamp": "Čas",
+    "message": "Zpráva",
+    "download": "Stáhnout logy",
+    "clear": "Vymazat logy",
+    "levels": {
+      "debug": "Ladění",
+      "info": "Info",
+      "warning": "Varování",
+      "error": "Chyba",
+      "critical": "Kritické"
+    }
+  },
+  "settings": {
+    "title": "Nastavení systému",
+    "general": "Obecné",
+    "security": "Zabezpečení",
+    "email": "Email",
+    "backup": "Záloha",
+    "save": "Uložit nastavení",
+    "saved": "Nastavení bylo úspěšně uloženo",
+    "reset": "Obnovit výchozí"
+  }
+}

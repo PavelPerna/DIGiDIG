@@ -35,7 +35,65 @@ async def lifespan(app: FastAPI):
             await app.state.db_pool.close()
 
 
-app = FastAPI(title="Identity Microservice", lifespan=lifespan)
+app = FastAPI(
+    title="DIGiDIG Identity Service",
+    description="""
+## Identity & Authentication Service
+
+Provides user authentication, authorization, and management capabilities for the DIGiDIG email system.
+
+### Features
+
+* **User Management**: Create, read, update, and delete users
+* **Domain Management**: Multi-domain support with CRUD operations
+* **Authentication**: JWT-based authentication with secure token generation
+* **Authorization**: Role-based access control (RBAC)
+* **Session Management**: Track and manage user sessions
+
+### Authentication
+
+Most endpoints require authentication via JWT Bearer token:
+
+```
+Authorization: Bearer <your-jwt-token>
+```
+
+Obtain a token by calling the `/login` endpoint with valid credentials.
+
+### Security
+
+* Passwords are hashed using SHA-256
+* JWT tokens expire after 1 hour
+* Admin operations require 'admin' role
+    """,
+    version="1.0.0",
+    contact={
+        "name": "DIGiDIG Team",
+        "url": "https://github.com/PavelPerna/DIGiDIG",
+    },
+    license_info={
+        "name": "MIT",
+    },
+    lifespan=lifespan,
+    tags_metadata=[
+        {
+            "name": "Authentication",
+            "description": "User login, logout, and token verification"
+        },
+        {
+            "name": "Users",
+            "description": "User management operations (CRUD)"
+        },
+        {
+            "name": "Domains",
+            "description": "Domain management for multi-tenant support"
+        },
+        {
+            "name": "Health",
+            "description": "Service health and status monitoring"
+        }
+    ]
+)
 
 # Global state for service management
 service_state = {

@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "DIGiDIG",
+    "tagline": "Distribuovaný emailový systém"
+  },
+  "common": {
+    "yes": "Ano",
+    "no": "Ne",
+    "ok": "OK",
+    "cancel": "Zrušit",
+    "save": "Uložit",
+    "delete": "Smazat",
+    "edit": "Upravit",
+    "close": "Zavřít",
+    "back": "Zpět",
+    "next": "Další",
+    "submit": "Odeslat",
+    "search": "Hledat",
+    "filter": "Filtrovat",
+    "refresh": "Obnovit",
+    "loading": "Načítání...",
+    "error": "Chyba",
+    "success": "Úspěch",
+    "warning": "Varování",
+    "info": "Informace"
+  },
+  "auth": {
+    "login": "Přihlásit se",
+    "logout": "Odhlásit se",
+    "username": "Uživatelské jméno",
+    "password": "Heslo",
+    "email": "Email",
+    "domain": "Doména",
+    "remember_me": "Zapamatovat si mě",
+    "forgot_password": "Zapomenuté heslo?",
+    "invalid_credentials": "Neplatné uživatelské jméno nebo heslo",
+    "session_expired": "Vaše relace vypršela. Přihlaste se prosím znovu.",
+    "unauthorized": "Neautorizovaný přístup",
+    "forbidden": "Přístup zamítnut"
+  },
+  "errors": {
+    "generic": "Došlo k chybě. Zkuste to prosím znovu.",
+    "network": "Chyba sítě. Zkontrolujte prosím připojení.",
+    "server": "Chyba serveru. Zkuste to prosím později.",
+    "not_found": "Zdroj nenalezen",
+    "validation": "Chyba validace",
+    "required_field": "Toto pole je povinné",
+    "invalid_format": "Neplatný formát",
+    "too_short": "Hodnota je příliš krátká",
+    "too_long": "Hodnota je příliš dlouhá"
+  },
+  "date": {
+    "today": "Dnes",
+    "yesterday": "Včera",
+    "tomorrow": "Zítra",
+    "last_week": "Minulý týden",
+    "last_month": "Minulý měsíc",
+    "format": "DD.MM.YYYY"
+  },
+  "language": {
+    "cs": "Čeština",
+    "en": "Angličtina",
+    "current": "Aktuální jazyk",
+    "select": "Vyberte jazyk"
+  }
+}

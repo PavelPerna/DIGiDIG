@@ -1,0 +1,22 @@
+{
+  "storage": {
+    "title": "Storage Service",
+    "description": "Email storage and retrieval"
+  },
+  "email": {
+    "stored": "Email stored successfully",
+    "retrieved": "Email retrieved successfully",
+    "deleted": "Email deleted successfully",
+    "not_found": "Email not found",
+    "marked_read": "Email marked as read",
+    "marked_unread": "Email marked as unread"
+  },
+  "folder": {
+    "inbox": "Inbox",
+    "sent": "Sent",
+    "drafts": "Drafts",
+    "trash": "Trash",
+    "spam": "Spam",
+    "archive": "Archive"
+  }
+}

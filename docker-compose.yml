@@ -132,6 +132,31 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro  # Docker socket for restart functionality
       - ./:/app/project:ro  # Mount project root for docker-compose.yml access
 
+  apidocs:
+    build:
+      context: .
+      dockerfile: ./apidocs/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8010:8010"
+    environment:
+      - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
+      - IDENTITY_URL=http://identity:8001
+      - STORAGE_URL=http://storage:8002
+      - SMTP_URL=http://smtp:8000
+      - IMAP_URL=http://imap:8003
+      - CLIENT_URL=http://client:8004
+      - ADMIN_URL=http://admin:8005
+    depends_on:
+      - identity
+      - storage
+      - smtp
+      - imap
+      - client
+      - admin
+    networks:
+      - strategos-net
+
 networks:
   strategos-net:
     driver: bridge
