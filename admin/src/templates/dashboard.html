@@ -36,6 +36,7 @@
             <nav class="menu">
                 <ul>
                     <li><button class="menu-item active" onclick="showDomains()">Domény</button></li>
+                    <li><button class="menu-item" onclick="goToServices()">Služby</button></li>
                 </ul>
             </nav>
         </aside>
@@ -665,6 +666,10 @@
             }
             // Redirect to empty root endpoint instead of explicit login page
             window.location.href = '/';
+        }
+
+        function goToServices() {
+            window.location.href = '/services?token={{ token }}';
         }
 
         // Close avatar dropdown when clicking outside

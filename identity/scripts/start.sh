@@ -1,9 +1,16 @@
 #!/bin/bash
 set -e
 
+# Add src to Python path for config_loader
+export PYTHONPATH=/app/src:/app:$PYTHONPATH
+
 # Wait for database to be ready
 echo "Waiting for database..."
 for i in {1..30}; do
+    # Get DB credentials from Python config
+    DB_HOST=$(python3 -c "from config_loader import config; print(config.DB_HOST)")
+    DB_USER=$(python3 -c "from config_loader import config; print(config.DB_USER)")
+    
     if pg_isready -h $DB_HOST -U $DB_USER; then
         break
     fi

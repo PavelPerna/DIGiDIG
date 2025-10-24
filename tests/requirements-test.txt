@@ -3,3 +3,9 @@ pytest-asyncio>=0.21
 httpx>=0.24
 requests>=2.28
 PyJWT>=2.0
+PyYAML>=6.0
+
+# Dependencies for unit tests (loading identity module)
+fastapi>=0.115.0
+pydantic>=2.9
+asyncpg>=0.29

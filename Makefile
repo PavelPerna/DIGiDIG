@@ -1,60 +1,85 @@
+# Helper to accept service as argument: make <target> <service>
+%:
+	@:
+
+.DEFAULT_GOAL := help
+
 up:
-	docker compose up -d
+	@SERVICE=$(filter-out $@,$(MAKECMDGOALS)); \
+	if [ -z "$$SERVICE" ]; then \
+		docker compose up -d; \
+	else \
+		docker compose up -d $$SERVICE; \
+	fi
 
 down:
-	docker compose down
+	@SERVICE=$(filter-out $@,$(MAKECMDGOALS)); \
+	if [ -z "$$SERVICE" ]; then \
+		docker compose down; \
+	else \
+		docker compose stop $$SERVICE; \
+		docker compose rm -f $$SERVICE; \
+	fi
 
 build:
-	docker compose build --no-cache
+	@SERVICE=$(filter-out $@,$(MAKECMDGOALS)); \
+	if [ -z "$$SERVICE" ]; then \
+		docker compose build --no-cache; \
+	else \
+		docker compose build --no-cache $$SERVICE; \
+	fi
 
-rebuild: down build up
+rebuild: 
+	@SERVICE=$(filter-out $@,$(MAKECMDGOALS)); \
+	if [ -z "$$SERVICE" ]; then \
+		$(MAKE) down && $(MAKE) build && $(MAKE) up; \
+	else \
+		$(MAKE) down $$SERVICE && $(MAKE) build $$SERVICE && $(MAKE) up $$SERVICE; \
+	fi
 
-install: down build
+install:
 	@echo "Installing and initializing services..."
+	@$(MAKE) down
+	@$(MAKE) build
 	docker compose up -d postgres mongo
 	@echo "Waiting for databases to be ready..."
 	sleep 10
 	docker compose up -d
 	@echo "Installation complete. Default admin user (admin@example.com/admin) is auto-created if needed."
 
-test: install
-	@echo "Running identity tests inside Docker..."
-	# Build the identity tests image
-	docker build -t digidig-identity-tests -f identity/tests/Dockerfile identity
-	# Run the tests container on the same network so it can reach postgres and identity
-	@NET=digidig_strategos-net; \
-	if docker network inspect $$NET >/dev/null 2>&1; then \
-	  docker run --rm --network $$NET -e SKIP_COMPOSE=1 -e BASE_URL=http://identity:8001 digidig-identity-tests; \
-	else \
-	  echo "Network $$NET not found, running tests without custom network"; \
-	  docker run --rm -e SKIP_COMPOSE=1 -e BASE_URL=http://identity:8001 digidig-identity-tests; \
-	fi
-	@echo "Tests finished."
+test:
+	@echo "Building test container..."
+	docker build -f tests/Dockerfile -t digidig-tests .
+	@echo ""
+	@echo "Running integration tests..."
+	@NET=$$(docker network ls --format '{{.Name}}' | grep digidig | head -1); \
+	if [ -z "$$NET" ]; then \
+		NET=digidig_default; \
+	fi; \
+	echo "Using network: $$NET"; \
+	docker run --rm --network $$NET \
+		-e BASE_URL=http://identity:8001 \
+		-e IDENTITY_URL=http://identity:8001 \
+		-e SMTP_HOST=smtp \
+		-e SMTP_PORT=2525 \
+		-e SMTP_REST_URL=http://smtp:8000 \
+		-e IMAP_HOST=imap \
+		-e IMAP_PORT=143 \
+		-e IMAP_URL=http://imap:8003 \
+		-e STORAGE_URL=http://storage:8002 \
+		digidig-tests
+	@echo ""
+	@echo "✅ Tests finished."
 
+test-all: install
+	@echo "Running all tests (with fresh install)..."
+	@$(MAKE) test
+	@echo "✅ All tests finished."
 
-clean: down
-	@echo "Removing containers, volumes, images and build artifacts..."
-	# Stop and remove containers, networks, and anonymous volumes
-	docker compose down --volumes --remove-orphans
-
-	# Optionally remove built images for services in this compose (local only)
-	-docker image rm $$(docker compose ls -q) 2>/dev/null || true
-
-	# Remove common Python cache/build artifacts
-	@echo "Removing Python caches and build artifacts..."
-	-find . -type d -name '__pycache__' -print0 | xargs -0 -r rm -rf
-	-find . -type d -name '.pytest_cache' -print0 | xargs -0 -r rm -rf
-	-find . -type d -name '.venv' -print0 | xargs -0 -r rm -rf
-	-find . -type f -name '*.pyc' -print0 | xargs -0 -r rm -f
-
-	# Remove node_modules if present (frontend clients)
-	-find . -type d -name 'node_modules' -maxdepth 4 -print0 | xargs -0 -r rm -rf
-
-	# Remove any build artifacts / dist folders
-	-find . -type d -name 'build' -print0 | xargs -0 -r rm -rf
-	-find . -type d -name 'dist' -print0 | xargs -0 -r rm -rf
-
-	@echo "Clean finished. Databases and caches removed."
+test-build:
+	@echo "Building test container..."
+	docker build -f tests/Dockerfile -t digidig-tests .
+	@echo "✅ Test container built."
 
 
 clean-cache:
@@ -71,10 +96,75 @@ clean-cache:
 	-find . -type d -name 'dist' -print0 | xargs -0 -r rm -rf
 	@echo "Non-destructive cache clean finished."
 
+clean:
+	@echo "Removing containers, volumes, images and build artifacts..."
+	@echo "Step 1/3: Stopping and removing all containers, networks, and volumes..."
+	docker compose down --volumes --remove-orphans
+	@echo ""
+	@echo "Step 2/3: Removing built images..."
+	-docker image rm $$(docker compose config --services | xargs -I {} echo digidig-{}) 2>/dev/null || true
+	@echo ""
+	@echo "Step 3/3: Cleaning cache..."
+	@$(MAKE) clean-cache
+	@echo ""
+	@echo "✅ Clean finished. Databases and caches removed."
+
 
 test-deps:
-	@echo "Creating local virtualenv at .venv and installing test dependencies for identity..."
-	@python3 -m venv .venv || true
-	.venv/bin/python -m pip install --upgrade pip setuptools wheel || true
-	.venv/bin/python -m pip install -r identity/tests/requirements.txt || true
-	@echo "Test deps installed into .venv"
+	@echo "Installing test dependencies..."
+	@python3 -m pip install --user -r tests/requirements-test.txt
+	@echo "Test dependencies installed."
+
+clear-cache-view:
+	@SERVICE=$(filter-out $@,$(MAKECMDGOALS)); \
+	if [ -z "$$SERVICE" ]; then \
+		echo "Clearing browser cache for all web services (admin, client)..."; \
+		echo "Restarting admin service..."; \
+		docker compose restart admin; \
+		echo "Restarting client service..."; \
+		docker compose restart client; \
+		echo ""; \
+		echo "✓ Services restarted. Now clear your browser cache:"; \
+		echo "  • Hard refresh: Ctrl+Shift+R (Linux/Windows) or Cmd+Shift+R (Mac)"; \
+		echo "  • Open DevTools (F12) → Network tab → Check 'Disable cache'"; \
+		echo "  • Or use Private/Incognito window"; \
+	else \
+		echo "Clearing browser cache for service: $$SERVICE..."; \
+		docker compose restart $$SERVICE; \
+		echo ""; \
+		echo "✓ Service '$$SERVICE' restarted. Now clear your browser cache:"; \
+		echo "  • Hard refresh: Ctrl+Shift+R (Linux/Windows) or Cmd+Shift+R (Mac)"; \
+		echo "  • Open DevTools (F12) → Network tab → Check 'Disable cache'"; \
+		echo "  • Or use Private/Incognito window"; \
+	fi
+
+refresh:
+	@SERVICE=$(filter-out $@,$(MAKECMDGOALS)); \
+	if [ -z "$$SERVICE" ]; then \
+		echo "❌ Error: service name is required"; \
+		echo "Usage: make refresh <service_name>"; \
+		echo "Example: make refresh admin"; \
+		echo "         make refresh client"; \
+		exit 1; \
+	fi; \
+	echo "🔄 Full refresh of service: $$SERVICE"; \
+	echo ""; \
+	echo "Step 1/4: Stopping and removing service..."; \
+	docker compose stop $$SERVICE; \
+	docker compose rm -f $$SERVICE; \
+	echo ""; \
+	echo "Step 2/4: Clearing cache..."; \
+	$(MAKE) clean-cache; \
+	echo ""; \
+	echo "Step 3/4: Building service (no cache)..."; \
+	docker compose build --no-cache $$SERVICE; \
+	echo ""; \
+	echo "Step 4/4: Starting service..."; \
+	docker compose up -d $$SERVICE; \
+	echo ""; \
+	echo "✅ Service '$$SERVICE' fully refreshed!"; \
+	echo ""; \
+	echo "⚠️  Don't forget to clear your browser cache:"; \
+	echo "  • Hard refresh: Ctrl+Shift+R (Linux/Windows) or Cmd+Shift+R (Mac)"; \
+	echo "  • Open DevTools (F12) → Network tab → Check 'Disable cache'"; \
+	echo "  • Or use Private/Incognito window"

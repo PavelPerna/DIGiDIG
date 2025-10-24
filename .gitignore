@@ -1,7 +1,5 @@
 # Python
 __pycache__/
-**/__pycache__/**
-
 *.py[cod]
 *.pyo
 *.pyd
@@ -15,8 +13,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+lib/\n+lib64/
 parts/
 sdist/
 var/
@@ -37,12 +34,23 @@ venv/
 # Docker
 **/venv/
 **/.venv/
+**/__pycache__/
 
 # Editor configs
 .vscode/
 .idea/
 *.swp
 *~
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Configuration files with secrets (keep templates only)
+config/config.prod.yaml
+config/config.local.yaml
+config/*.local.yaml
 
 # OS files
 .DS_Store

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Správa služeb - DIGiDIG Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/datagrid.css') }}">
+    <style>
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .service-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--success-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .service-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .service-card.unhealthy {
+            border-left-color: var(--danger-color);
+        }
+        .service-card.unreachable {
+            border-left-color: var(--warning-color);
+        }
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .service-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            letter-spacing: 1px;
+        }
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-badge.healthy {
+            background: var(--success-color);
+            color: white;
+        }
+        .status-badge.unhealthy {
+            background: var(--danger-color);
+            color: white;
+        }
+        .status-badge.unreachable {
+            background: var(--warning-color);
+            color: white;
+        }
+        .service-stats {
+            margin: 15px 0;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .stat-label {
+            color: var(--text-secondary);
+        }
+        .stat-value {
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+        .service-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .service-actions .btn {
+            flex: 1;
+            min-width: 100px;
+            font-size: 0.9em;
+        }
+        /* Přidáme tlačítko restart styl */
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #d32f2f;
+            transform: translateY(-2px);
+        }
+        .nav-buttons {
+            margin-bottom: 20px;
+        }
+        .config-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 10000;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            margin: 50px auto;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 8px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+        .close-modal {
+            font-size: 2em;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        .close-modal:hover {
+            color: var(--text-primary);
+        }
+        .config-form input,
+        .config-form select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+        }
+        .config-form label {
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top pane: title and avatar -->
+    <div class="top-pane">
+        <div class="top-left">
+            <h1>Admin Dashboard</h1>
+        </div>
+        <div class="top-right">
+            <div class="avatar-wrapper">
+                <button class="avatar-button" onclick="toggleAvatarDropdown()" aria-haspopup="true" aria-expanded="false">
+                    <!-- simple avatar circle -->
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="8" r="3"></circle>
+                        <path d="M21 21v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"></path>
+                    </svg>
+                </button>
+                <div id="avatarDropdown" class="avatar-dropdown hidden">
+                    <button class="dropdown-item" onclick="doLogout()">Odhlásit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <!-- Left pane: menu -->
+        <aside class="left-pane">
+            <nav class="menu">
+                <ul>
+                    <li><button class="menu-item" onclick="window.location.href='/?token={{ token }}'">Domény</button></li>
+                    <li><button class="menu-item active" onclick="window.location.href='/services?token={{ token }}'">Služby</button></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Right pane: services content -->
+        <main class="right-pane">
+            <div class="section services">
+                <div class="header">
+                    <h2>Správa služeb</h2>
+                    <button class="btn btn-primary" onclick="refreshAllServices()">🔄 Obnovit vše</button>
+                </div>
+                
+                <div class="services-grid">
+            {% for service_name, service_data in services.items() %}
+            <div class="service-card {{ service_data.status }}" id="service-{{ service_name }}">
+                <div class="service-header">
+                    <div class="service-name">{{ service_name }}</div>
+                    <div class="status-badge {{ service_data.status }}">{{ service_data.status }}</div>
+                </div>
+                
+                <div class="service-stats">
+                    {% if service_data.uptime_seconds is defined %}
+                    <div class="stat-row">
+                        <span class="stat-label">Uptime:</span>
+                        <span class="stat-value">{{ "%.0f"|format(service_data.uptime_seconds / 3600) }}h {{ "%.0f"|format((service_data.uptime_seconds % 3600) / 60) }}m</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if service_data.details %}
+                    {% for key, value in service_data.details.items() %}
+                    <div class="stat-row">
+                        <span class="stat-label">{{ key }}:</span>
+                        <span class="stat-value">{{ value }}</span>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                    
+                    {% if service_data.error %}
+                    <div class="stat-row">
+                        <span class="stat-label">Error:</span>
+                        <span class="stat-value" style="color: #f44336;">{{ service_data.error }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="service-actions">
+                    <button class="btn btn-primary" onclick="viewStats('{{ service_name }}')">📊 Statistiky</button>
+                    <button class="btn btn-secondary" onclick="viewConfig('{{ service_name }}')">⚙️ Konfigurace</button>
+                    <button class="btn btn-danger" onclick="restartService('{{ service_name }}')">🔄 Restart</button>
+                </div>
+            </div>
+            {% endfor %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Config Modal -->
+    <div id="configModal" class="config-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Konfigurace služby</h2>
+                <span class="close-modal" onclick="closeConfigModal()">&times;</span>
+            </div>
+            <div id="modalBody">
+                <!-- Config will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = "{{ token }}";
+
+        async function refreshAllServices() {
+            window.location.reload();
+        }
+
+        async function viewStats(serviceName) {
+            try {
+                const response = await fetch(`/api/services/${serviceName}/stats`);
+                const stats = await response.json();
+                
+                let html = '<div class="service-stats">';
+                html += `<h3>Statistiky služby ${serviceName}</h3>`;
+                
+                for (const [key, value] of Object.entries(stats)) {
+                    if (typeof value === 'object' && value !== null) {
+                        html += `<h4>${key}:</h4>`;
+                        for (const [subKey, subValue] of Object.entries(value)) {
+                            html += `<div class="stat-row"><span class="stat-label">${subKey}:</span><span class="stat-value">${subValue}</span></div>`;
+                        }
+                    } else {
+                        html += `<div class="stat-row"><span class="stat-label">${key}:</span><span class="stat-value">${value}</span></div>`;
+                    }
+                }
+                html += '</div>';
+                
+                document.getElementById('modalTitle').textContent = `Statistiky - ${serviceName}`;
+                document.getElementById('modalBody').innerHTML = html;
+                document.getElementById('configModal').style.display = 'block';
+            } catch (error) {
+                alert('Chyba při načítání statistik: ' + error.message);
+            }
+        }
+
+        async function viewConfig(serviceName) {
+            try {
+                const response = await fetch(`/api/services/${serviceName}/config`);
+                const data = await response.json();
+                const config = data.config || data;
+                
+                let html = '<form class="config-form" onsubmit="saveConfig(event, \'' + serviceName + '\')">';
+                html += '<h3>Konfigurace služby ' + serviceName + '</h3>';
+                
+                for (const [key, value] of Object.entries(config)) {
+                    const inputType = typeof value === 'number' ? 'number' : 'text';
+                    const inputValue = typeof value === 'boolean' ? (value ? 'true' : 'false') : value;
+                    
+                    html += `<label for="${key}">${key}:</label>`;
+                    if (typeof value === 'boolean') {
+                        html += `<select name="${key}" id="${key}">
+                            <option value="true" ${value ? 'selected' : ''}>true</option>
+                            <option value="false" ${!value ? 'selected' : ''}>false</option>
+                        </select>`;
+                    } else {
+                        html += `<input type="${inputType}" name="${key}" id="${key}" value="${inputValue}" ${key.includes('secret') || key.includes('password') ? 'readonly' : ''}>`;
+                    }
+                }
+                
+                html += '<br><br><button type="submit" class="btn btn-primary">💾 Uložit</button>';
+                html += '<button type="button" class="btn btn-secondary" onclick="closeConfigModal()" style="margin-left: 10px;">Zrušit</button>';
+                html += '</form>';
+                
+                document.getElementById('modalTitle').textContent = `Konfigurace - ${serviceName}`;
+                document.getElementById('modalBody').innerHTML = html;
+                document.getElementById('configModal').style.display = 'block';
+            } catch (error) {
+                alert('Chyba při načítání konfigurace: ' + error.message);
+            }
+        }
+
+        async function saveConfig(event, serviceName) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const config = {};
+            
+            for (const [key, value] of formData.entries()) {
+                // Convert to appropriate type
+                if (value === 'true') config[key] = true;
+                else if (value === 'false') config[key] = false;
+                else if (!isNaN(value) && value !== '') config[key] = Number(value);
+                else config[key] = value;
+            }
+            
+            try {
+                const response = await fetch(`/api/services/${serviceName}/config`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(config)
+                });
+                
+                const result = await response.json();
+                alert('Konfigurace úspěšně uložena!');
+                closeConfigModal();
+                refreshAllServices();
+            } catch (error) {
+                alert('Chyba při ukládání konfigurace: ' + error.message);
+            }
+        }
+
+        async function restartService(serviceName) {
+            if (!confirm(`Opravdu chcete restartovat službu ${serviceName}?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/services/${serviceName}/restart`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                alert('Služba byla restartována!');
+                setTimeout(refreshAllServices, 2000);
+            } catch (error) {
+                alert('Chyba při restartování služby: ' + error.message);
+            }
+        }
+
+        function closeConfigModal() {
+            document.getElementById('configModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('configModal');
+            if (event.target == modal) {
+                closeConfigModal();
+            }
+        }
+
+        // Avatar dropdown toggle and logout
+        function toggleAvatarDropdown() {
+            const btn = document.querySelector('.avatar-button');
+            const dd = document.getElementById('avatarDropdown');
+            if (!btn || !dd) return;
+            const expanded = btn.getAttribute('aria-expanded') === 'true';
+            btn.setAttribute('aria-expanded', String(!expanded));
+            if (dd.classList.contains('hidden')) {
+                dd.classList.remove('hidden');
+            } else {
+                dd.classList.add('hidden');
+            }
+        }
+
+        async function doLogout() {
+            try {
+                await fetch('/logout', { method: 'POST', credentials: 'same-origin' });
+            } catch (e) {
+                // ignore network errors
+            }
+            window.location.href = '/';
+        }
+
+        // Close avatar dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const wrapper = document.querySelector('.avatar-wrapper');
+            const dd = document.getElementById('avatarDropdown');
+            if (!wrapper.contains(e.target) && dd && !dd.classList.contains('hidden')) {
+                dd.classList.add('hidden');
+                const btn = document.querySelector('.avatar-button');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
+            }
+        });
+    </script>
+</body>
+</html>

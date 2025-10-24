@@ -1,0 +1,34 @@
+# Production Configuration Override
+# Copy this file to config.yaml and customize for production
+
+database:
+  postgres:
+    password: "CHANGE_ME_STRONG_PASSWORD"
+  
+  mongodb:
+    # Add authentication if needed
+    user: "admin"
+    password: "CHANGE_ME_STRONG_PASSWORD"
+
+security:
+  jwt:
+    secret: "GENERATE_STRONG_RANDOM_SECRET_HERE_AT_LEAST_32_CHARS"
+  
+  admin:
+    email: "admin@yourdomain.com"
+    password: "CHANGE_ME_STRONG_PASSWORD"
+  
+  cookie:
+    secure: true  # Requires HTTPS
+    samesite: "strict"
+
+email:
+  domains:
+    - "yourdomain.com"
+    - "anotherdomain.com"
+  
+  smtp:
+    enable_tls: true
+
+logging:
+  level: "WARNING"  # Less verbose in production

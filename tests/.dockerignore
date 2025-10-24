@@ -1,0 +1,14 @@
+# Test Dockerfile context - only include necessary files
+
+# Exclude everything by default
+**
+
+# Include only what we need
+!tests/requirements-test.txt
+!tests/integration/
+!identity/src/
+
+# Exclude Python cache
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
