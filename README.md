@@ -1,12 +1,26 @@
 # DIGiDIG Project
 
-## Configuration Management
+**Distributed Email System with Multi-Language Support & Comprehensive API Documentation**
 
-**⚠️ NEW: Configuration now uses YAML files instead of environment variables!**
+## 🌟 Features
 
-See [Configuration Documentation](docs/CONFIGURATION.md) for detailed guide.
+- **Multi-Language Support (i18n)**: English and Czech with easy extensibility
+- **Comprehensive API Documentation**: Interactive Swagger UI and ReDoc for all services
+- **Microservices Architecture**: Identity, Storage, SMTP, IMAP, Client, Admin
+- **JWT Authentication**: Secure token-based authentication
+- **YAML Configuration**: Centralized, type-safe configuration management
+- **Docker-Based Deployment**: Easy setup with Docker Compose
+- **Service Health Monitoring**: Real-time status of all services
+- **Role-Based Access Control**: Admin and user roles
 
-### Quick Start
+## 📚 Documentation
+
+- **[Localization Guide](docs/LOCALIZATION.md)** - Multi-language support
+- **[API Documentation](docs/API-DOCUMENTATION.md)** - Complete API reference
+- **[Configuration Guide](docs/CONFIGURATION.md)** - YAML configuration system
+- **[Migration Guide](docs/CONFIG-MIGRATION.md)** - Migrate from ENV to YAML
+
+## 🚀 Quick Start
 
 1. **Development** (uses default config):
    ```bash
@@ -27,6 +41,47 @@ See [Configuration Documentation](docs/CONFIGURATION.md) for detailed guide.
    docker compose up
    ```
 
+## 🌐 Services
+
+| Service | Port | Description | Documentation |
+|---------|------|-------------|---------------|
+| **Identity** | 8001 | Authentication & user management | [Swagger](http://localhost:8010/docs/identity) |
+| **Storage** | 8002 | Email storage & retrieval | [Swagger](http://localhost:8010/docs/storage) |
+| **SMTP** | 8003 | Email sending service | [Swagger](http://localhost:8010/docs/smtp) |
+| **IMAP** | 8007 | Email retrieval protocol | [Swagger](http://localhost:8010/docs/imap) |
+| **Client** | 8004 | Web-based email client | [Swagger](http://localhost:8010/docs/client) |
+| **Admin** | 8005 | Administration panel | [Swagger](http://localhost:8010/docs/admin) |
+| **API Docs** | 8010 | **API Documentation Hub** | [Open](http://localhost:8010) |
+
+## 🎨 Multi-Language Support
+
+DIGiDIG supports multiple languages with easy language switching:
+
+- **Supported Languages**: English (en), Czech (cs)
+- **Language Selector**: Available in all web interfaces
+- **Persistent Preference**: Language choice saved in cookies
+- **Easy Extension**: Add new languages by creating translation files
+
+See [Localization Guide](docs/LOCALIZATION.md) for details.
+
+## 📖 API Documentation
+
+Access comprehensive API documentation at **http://localhost:8010**
+
+Features:
+- **Interactive Testing**: Try APIs directly in the browser
+- **Service Health**: Real-time status monitoring
+- **Combined Specs**: View all APIs in one place
+- **Swagger UI & ReDoc**: Choose your preferred format
+
+See [API Documentation Guide](docs/API-DOCUMENTATION.md) for details.
+
+## ⚙️ Configuration Management
+
+**⚠️ YAML Configuration System**
+
+Configuration uses YAML files instead of environment variables:
+
 ### Configuration Files
 
 ```
@@ -44,9 +99,9 @@ config/
 - ✅ Better secrets management (separate files)
 - ✅ Easy validation and documentation
 
-See [Migration Guide](docs/CONFIG-MIGRATION.md) for migration from ENV variables.
+See [Configuration Guide](docs/CONFIGURATION.md) and [Migration Guide](docs/CONFIG-MIGRATION.md).
 
-## Security Notes
+## 🔒 Security Notes
 
 ### Identity Service
 

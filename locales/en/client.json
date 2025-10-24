@@ -1,0 +1,64 @@
+{
+  "client": {
+    "title": "DIGiDIG Email Client",
+    "welcome": "Welcome to DIGiDIG",
+    "tagline": "Secure and distributed email communication"
+  },
+  "login": {
+    "title": "Login",
+    "subtitle": "Sign in to your account",
+    "button": "Sign In",
+    "error": "Login failed. Please check your credentials."
+  },
+  "inbox": {
+    "title": "Inbox",
+    "empty": "No emails yet",
+    "unread": "Unread",
+    "all": "All",
+    "folders": "Folders",
+    "compose": "Compose",
+    "refresh": "Refresh"
+  },
+  "email": {
+    "from": "From",
+    "to": "To",
+    "cc": "CC",
+    "bcc": "BCC",
+    "subject": "Subject",
+    "message": "Message",
+    "send": "Send Email",
+    "sent": "Email sent successfully",
+    "failed": "Failed to send email",
+    "reply": "Reply",
+    "forward": "Forward",
+    "delete": "Delete",
+    "mark_read": "Mark as read",
+    "mark_unread": "Mark as unread",
+    "attachments": "Attachments"
+  },
+  "compose": {
+    "title": "Compose Email",
+    "recipient": "Recipient",
+    "subject": "Subject",
+    "message": "Message",
+    "send": "Send",
+    "cancel": "Cancel",
+    "draft_saved": "Draft saved",
+    "validation": {
+      "recipient_required": "Recipient is required",
+      "subject_required": "Subject is required",
+      "message_required": "Message is required",
+      "invalid_email": "Invalid email address"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "preferences": "Preferences",
+    "security": "Security",
+    "notifications": "Notifications",
+    "language": "Language",
+    "save": "Save Changes",
+    "saved": "Settings saved successfully"
+  }
+}

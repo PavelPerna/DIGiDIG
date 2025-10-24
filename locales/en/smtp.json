@@ -1,0 +1,17 @@
+{
+  "smtp": {
+    "title": "SMTP Service",
+    "description": "Email sending service"
+  },
+  "server": {
+    "started": "SMTP server started on port {port}",
+    "stopped": "SMTP server stopped",
+    "error": "SMTP server error: {error}"
+  },
+  "email": {
+    "sent": "Email sent successfully",
+    "failed": "Failed to send email",
+    "queued": "Email queued for delivery",
+    "delivered": "Email delivered to {recipient}"
+  }
+}

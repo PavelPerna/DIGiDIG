@@ -1,0 +1,22 @@
+{
+  "storage": {
+    "title": "Služba úložiště",
+    "description": "Ukládání a získávání emailů"
+  },
+  "email": {
+    "stored": "Email byl úspěšně uložen",
+    "retrieved": "Email byl úspěšně načten",
+    "deleted": "Email byl úspěšně smazán",
+    "not_found": "Email nenalezen",
+    "marked_read": "Email označen jako přečtený",
+    "marked_unread": "Email označen jako nepřečtený"
+  },
+  "folder": {
+    "inbox": "Doručená pošta",
+    "sent": "Odeslané",
+    "drafts": "Koncepty",
+    "trash": "Koš",
+    "spam": "Spam",
+    "archive": "Archiv"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "identity": {
+    "title": "Služba Identity",
+    "description": "Autentizace a autorizace uživatelů"
+  },
+  "user": {
+    "created": "Uživatel byl úspěšně vytvořen",
+    "updated": "Uživatel byl úspěšně aktualizován",
+    "deleted": "Uživatel byl úspěšně smazán",
+    "not_found": "Uživatel nenalezen",
+    "exists": "Uživatel již existuje"
+  },
+  "domain": {
+    "created": "Doména byla úspěšně vytvořena",
+    "updated": "Doména byla úspěšně aktualizována",
+    "deleted": "Doména byla úspěšně smazána",
+    "not_found": "Doména nenalezena",
+    "exists": "Doména již existuje"
+  },
+  "auth": {
+    "login_success": "Přihlášení úspěšné",
+    "login_failed": "Přihlášení se nezdařilo",
+    "logout_success": "Odhlášení úspěšné",
+    "token_invalid": "Neplatný nebo vypršelý token",
+    "token_required": "Vyžadován autentizační token"
+  }
+}

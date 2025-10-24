@@ -1,0 +1,17 @@
+{
+  "imap": {
+    "title": "IMAP Service",
+    "description": "Email retrieval service"
+  },
+  "server": {
+    "started": "IMAP server started on port {port}",
+    "stopped": "IMAP server stopped",
+    "error": "IMAP server error: {error}"
+  },
+  "mailbox": {
+    "selected": "Mailbox {name} selected",
+    "created": "Mailbox {name} created",
+    "deleted": "Mailbox {name} deleted",
+    "not_found": "Mailbox {name} not found"
+  }
+}

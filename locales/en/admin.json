@@ -1,0 +1,107 @@
+{
+  "admin": {
+    "title": "DIGiDIG Admin Panel",
+    "subtitle": "System Management and Monitoring",
+    "welcome": "Welcome, {username}"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "services": "Services",
+    "users": "Users",
+    "domains": "Domains",
+    "monitoring": "Monitoring",
+    "logs": "Logs",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "overview": "System Overview",
+    "statistics": "Statistics",
+    "recent_activity": "Recent Activity",
+    "system_health": "System Health",
+    "metrics": {
+      "total_users": "Total Users",
+      "total_emails": "Total Emails",
+      "active_domains": "Active Domains",
+      "uptime": "Uptime"
+    }
+  },
+  "services": {
+    "title": "Services Management",
+    "status": "Status",
+    "running": "Running",
+    "stopped": "Stopped",
+    "error": "Error",
+    "restart": "Restart Service",
+    "stop": "Stop Service",
+    "start": "Start Service",
+    "restart_confirm": "Are you sure you want to restart {service}?",
+    "restarted": "Service {service} has been restarted successfully",
+    "restart_failed": "Failed to restart service {service}",
+    "list": {
+      "identity": "Identity Service",
+      "storage": "Storage Service",
+      "smtp": "SMTP Service",
+      "imap": "IMAP Service",
+      "client": "Client Service",
+      "admin": "Admin Service"
+    }
+  },
+  "users": {
+    "title": "User Management",
+    "add": "Add User",
+    "edit": "Edit User",
+    "delete": "Delete User",
+    "delete_confirm": "Are you sure you want to delete user {username}?",
+    "username": "Username",
+    "email": "Email",
+    "domain": "Domain",
+    "roles": "Roles",
+    "created": "Created",
+    "last_login": "Last Login",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "domains": {
+    "title": "Domain Management",
+    "add": "Add Domain",
+    "edit": "Edit Domain",
+    "delete": "Delete Domain",
+    "delete_confirm": "Are you sure you want to delete domain {domain}?",
+    "name": "Domain Name",
+    "description": "Description",
+    "users_count": "Users",
+    "created": "Created",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "logs": {
+    "title": "System Logs",
+    "filter": "Filter Logs",
+    "level": "Level",
+    "service": "Service",
+    "timestamp": "Timestamp",
+    "message": "Message",
+    "download": "Download Logs",
+    "clear": "Clear Logs",
+    "levels": {
+      "debug": "Debug",
+      "info": "Info",
+      "warning": "Warning",
+      "error": "Error",
+      "critical": "Critical"
+    }
+  },
+  "settings": {
+    "title": "System Settings",
+    "general": "General",
+    "security": "Security",
+    "email": "Email",
+    "backup": "Backup",
+    "save": "Save Settings",
+    "saved": "Settings saved successfully",
+    "reset": "Reset to Defaults"
+  }
+}

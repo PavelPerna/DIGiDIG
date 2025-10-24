@@ -1,0 +1,17 @@
+{
+  "imap": {
+    "title": "Služba IMAP",
+    "description": "Služba pro získávání emailů"
+  },
+  "server": {
+    "started": "IMAP server spuštěn na portu {port}",
+    "stopped": "IMAP server zastaven",
+    "error": "Chyba IMAP serveru: {error}"
+  },
+  "mailbox": {
+    "selected": "Poštovní schránka {name} vybrána",
+    "created": "Poštovní schránka {name} vytvořena",
+    "deleted": "Poštovní schránka {name} smazána",
+    "not_found": "Poštovní schránka {name} nenalezena"
+  }
+}
