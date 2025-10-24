@@ -83,19 +83,23 @@ class Authenticator:
             # Use sync HTTP client to call Identity service
             import requests
             
-            # Extract username and domain from login (email format)
-            if '@' in login:
-                username, domain = login.split('@', 1)
-            else:
+            # Decode bytes to string if necessary
+            if isinstance(login, bytes):
+                login = login.decode('utf-8')
+            if isinstance(password, bytes):
+                password = password.decode('utf-8')
+            
+            # Validate email format
+            if '@' not in login:
                 logger.warning(f"Login must be in email format (user@domain): {login}")
                 return False
             
             # Call Identity service /login endpoint
+            # Identity service accepts email field directly
             response = requests.post(
                 "http://identity:8001/login",
                 json={
-                    "username": username,
-                    "domain": domain,
+                    "email": login,  # login is already in email format (user@domain)
                     "password": password
                 },
                 timeout=5
