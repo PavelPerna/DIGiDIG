@@ -1,20 +1,29 @@
 # DIGiDIG Project
 
-**Distributed Email System with Multi-Language Support & Comprehensive API Documentation**
+[![CI Status](https://github.com/YOUR_USERNAME/DIGiDIG/workflows/CI/badge.svg)](https://github.com/YOUR_USERNAME/DIGiDIG/actions/workflows/ci.yml)
+[![CD Status](https://github.com/YOUR_USERNAME/DIGiDIG/workflows/CD/badge.svg)](https://github.com/YOUR_USERNAME/DIGiDIG/actions/workflows/cd.yml)
+[![Security Scan](https://github.com/YOUR_USERNAME/DIGiDIG/workflows/Security%20Scan/badge.svg)](https://github.com/YOUR_USERNAME/DIGiDIG/security)
+
+**Distributed Email System with Multi-Language Support, Comprehensive API Documentation & Full CI/CD Pipeline**
 
 ## 🌟 Features
 
-- **Multi-Language Support (i18n)**: English and Czech with easy extensibility
-- **Comprehensive API Documentation**: Interactive Swagger UI and ReDoc for all services
-- **Microservices Architecture**: Identity, Storage, SMTP, IMAP, Client, Admin
-- **JWT Authentication**: Secure token-based authentication
-- **YAML Configuration**: Centralized, type-safe configuration management
-- **Docker-Based Deployment**: Easy setup with Docker Compose
-- **Service Health Monitoring**: Real-time status of all services
-- **Role-Based Access Control**: Admin and user roles
+- **🚀 Full CI/CD Pipeline**: Automated testing, building, deployment with GitHub Actions
+- **🐳 Container Registry**: Docker images automatically built and published to GHCR
+- **🌍 Multi-Environment**: Staging and production deployment automation
+- **🔄 Health Monitoring**: Comprehensive health checks and automated rollback
+- **🌐 Multi-Language Support (i18n)**: English and Czech with easy extensibility
+- **📚 Comprehensive API Documentation**: Interactive Swagger UI and ReDoc for all services
+- **🏗️ Microservices Architecture**: Identity, Storage, SMTP, IMAP, Client, Admin
+- **🔐 JWT Authentication**: Secure token-based authentication
+- **⚙️ YAML Configuration**: Centralized, type-safe configuration management
+- **🐳 Docker-Based Deployment**: Easy setup with Docker Compose
+- **💊 Service Health Monitoring**: Real-time status of all services
+- **👥 Role-Based Access Control**: Admin and user roles
 
 ## 📚 Documentation
 
+- **[CI/CD Pipeline](docs/CI-CD.md)** - Complete CI/CD automation guide
 - **[Localization Guide](docs/LOCALIZATION.md)** - Multi-language support
 - **[API Documentation](docs/API-DOCUMENTATION.md)** - Complete API reference
 - **[Configuration Guide](docs/CONFIGURATION.md)** - YAML configuration system
@@ -22,13 +31,15 @@
 
 ## 🚀 Quick Start
 
-1. **Development** (uses default config):
+### Development Environment
+
+1. **Local Development** (uses default config):
    ```bash
    make install
    docker compose up
    ```
 
-2. **Production** (customize config):
+2. **Production Deployment** (customize config):
    ```bash
    # Copy and edit production config
    cp config/config.prod.example.yaml config/config.prod.yaml
@@ -40,6 +51,33 @@
    # Start services
    docker compose up
    ```
+
+### CI/CD Automated Deployment
+
+The project includes a complete CI/CD pipeline for automated deployment:
+
+```bash
+# Trigger staging deployment
+git push origin main
+
+# Trigger production deployment
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+**📖 See [CI/CD Pipeline Documentation](docs/CI-CD.md) for complete automation guide.**
+
+### Health Monitoring
+
+Check service health across environments:
+
+```bash
+# Local environment
+./scripts/deployment/health-check.sh local
+
+# Production with details
+./scripts/deployment/health-check.sh production --details
+```
 
 ## 🌐 Services
 
@@ -236,3 +274,44 @@ Example test run:
 ```
 
 All tests run in isolated Docker container with access to service network.
+
+## 🚀 CI/CD Pipeline
+
+DIGiDIG includes a comprehensive CI/CD pipeline with GitHub Actions:
+
+### Continuous Integration
+- **Automated Testing**: Full test suite with PostgreSQL and MongoDB
+- **Code Quality**: Black, isort, Flake8 validation
+- **Security Scanning**: Trivy vulnerability scanning with GitHub Security integration
+
+### Continuous Deployment
+- **Docker Registry**: Automatic image builds and push to GitHub Container Registry (GHCR)
+- **Multi-Environment**: Staging (automatic) and production (manual approval) deployments
+- **Health Checks**: Post-deployment validation with automatic rollback
+
+### Container Images
+
+All services are available as Docker images:
+
+```bash
+# Pull specific service
+docker pull ghcr.io/YOUR_USERNAME/digidig-identity:latest
+docker pull ghcr.io/YOUR_USERNAME/digidig-client:latest
+
+# Available services: identity, storage, smtp, imap, client, admin, apidocs
+```
+
+### Deployment Automation
+
+```bash
+# Deploy to staging
+./scripts/deployment/deploy.sh staging main
+
+# Deploy to production with backup and rollback
+./scripts/deployment/deploy.sh production v1.2.3
+
+# Health monitoring
+./scripts/deployment/health-check.sh production
+```
+
+**📖 Complete CI/CD documentation: [CI/CD Pipeline Guide](docs/CI-CD.md)**
