@@ -11,6 +11,9 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Service URLs
+IDENTITY_URL = os.getenv("IDENTITY_URL", "http://identity:8001")
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -60,52 +63,62 @@ async def login(request: Request):
         return RedirectResponse(url="/dashboard", status_code=303)
     return templates.TemplateResponse("login.html", {"request": request})
 
-@app.post("/login", response_class=HTMLResponse)
-async def login_post(request: Request, response: Response, email: str = Form(...), password: str = Form(...)):
-    """Authenticate user via identity service"""
+@app.post("/login")
+async def login_post(request: Request):
+    """Handle login form submission"""
     try:
-        identity_url = os.getenv("IDENTITY_URL", "http://identity:8001")
+        form = await request.form()
+        username = form.get("username")
+        domain = form.get("domain")
+        password = form.get("password")
+        
+        if not username or not domain or not password:
+            return templates.TemplateResponse("login.html", {
+                "request": request,
+                "error": "Všechna pole jsou povinná"
+            })
+        
+        # Construct full email
+        email = f"{username}@{domain}"
+        
+        # Call Identity service /login endpoint
         async with aiohttp.ClientSession() as session:
-            # Call identity service login endpoint
             async with session.post(
-                f"{identity_url}/login",
-                json={"email": email, "password": password}
-            ) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    token = data.get("access_token")
+                f"{IDENTITY_URL}/login",
+                json={
+                    "username": username,
+                    "domain": domain,
+                    "password": password
+                }
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    access_token = data.get("access_token")
                     
-                    if token:
-                        # Set token in cookie and redirect to dashboard
-                        redirect_response = RedirectResponse(url="/dashboard", status_code=303)
-                        redirect_response.set_cookie(
-                            key="access_token",
-                            value=token,
-                            httponly=True,
-                            max_age=3600,  # 1 hour
-                            samesite="lax"
-                        )
-                        return redirect_response
-                    else:
-                        logger.error("No token in response")
-                        return templates.TemplateResponse("login.html", {
-                            "request": request,
-                            "error": "Chyba serveru"
-                        })
+                    # Create redirect response and set cookie
+                    redirect = RedirectResponse(url="/dashboard", status_code=303)
+                    redirect.set_cookie(
+                        key="access_token",
+                        value=access_token,
+                        httponly=True,
+                        max_age=3600,
+                        samesite="lax"
+                    )
+                    return redirect
                 else:
-                    error_data = await resp.json()
-                    error_msg = error_data.get("detail", "Neplatné přihlašovací údaje")
-                    logger.warning(f"Login failed: {error_msg}")
+                    error_text = await response.text()
+                    logger.warning(f"Login failed: {response.status} - {error_text}")
                     return templates.TemplateResponse("login.html", {
                         "request": request,
-                        "error": error_msg
+                        "error": "Neplatné přihlašovací údaje"
                     })
     except Exception as e:
         logger.error(f"Login error: {e}")
         return templates.TemplateResponse("login.html", {
             "request": request,
-            "error": f"Chyba připojení: {str(e)}"
+            "error": "Chyba při přihlašování"
         })
+
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request, error: str = None):
@@ -114,11 +127,10 @@ async def dashboard(request: Request, error: str = None):
     if not user:
         return RedirectResponse(url="/", status_code=303)
     
-    # Get username from verified token
+    # Get username and domain from verified token
     username = user.get("username", "user")
-    # For email, we need to fetch user details from identity /users endpoint
-    # For now, construct email from username (assuming domain)
-    user_email = f"{username}@example.com"
+    domain = user.get("domain", "example.com")
+    user_email = f"{username}@{domain}"
     
     # Fetch emails from Storage service
     emails = []
@@ -157,9 +169,10 @@ async def send_email(request: Request, recipient: str = Form(...), subject: str 
     if not user:
         return RedirectResponse(url="/", status_code=303)
     
-    # Get username from verified token and construct sender email
+    # Get username and domain from verified token and construct sender email
     username = user.get("username", "unknown")
-    sender = f"{username}@example.com"
+    domain = user.get("domain", "example.com")
+    sender = f"{username}@{domain}"
     
     email = Email(sender=sender, recipient=recipient, subject=subject, body=body)
     

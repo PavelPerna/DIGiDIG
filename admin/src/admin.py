@@ -632,12 +632,24 @@ async def restart_smtp_service(request: Request, token: str = Form(None)):
 
 @app.post("/api/services/{service_name}/restart")
 async def restart_service(service_name: str, request: Request, token: str = None):
-    """Restart a specific service using docker compose"""
+    """Restart a specific service using docker compose - admin only"""
     if not token:
         token = request.cookies.get('access_token')
+    
+    # Verify user and check admin role
     try:
-        await get_user(token)
+        user = await get_user(token)
+        
+        # Check if user has admin role
+        roles = user.get("roles", [])
+        if "admin" not in roles:
+            logger.warning(f"Non-admin user {user.get('username')} attempted to restart service {service_name}")
+            return JSONResponse(status_code=403, content={
+                "error": "Forbidden",
+                "message": "Admin role required to restart services"
+            })
     except Exception as e:
+        logger.error(f"Authentication failed: {str(e)}")
         return JSONResponse(status_code=401, content={"error": "Unauthorized"})
     
     # List of valid services
@@ -647,7 +659,7 @@ async def restart_service(service_name: str, request: Request, token: str = None
         return JSONResponse(status_code=404, content={"error": f"Service '{service_name}' not found"})
     
     try:
-        logger.info(f"Restarting service: {service_name}")
+        logger.info(f"Admin user {user.get('username')} restarting service: {service_name}")
         # Use docker compose restart command
         # docker-compose.yml is mounted at /app/project/
         result = subprocess.run(

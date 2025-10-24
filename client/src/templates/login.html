@@ -10,9 +10,42 @@
         <p style="color: red;">{{ error }}</p>
     {% endif %}
     <form method="post" action="/login">
-        <label>E-mail: <input type="email" name="email" required></label><br>
+        <label>Uživatelské jméno: <input type="text" name="username" required></label><br>
+        <label>Doména: 
+            <select name="domain" id="domainSelect" required>
+                <option value="">Načítání...</option>
+            </select>
+        </label><br>
         <label>Heslo: <input type="password" name="password" required></label><br>
         <button type="submit">Přihlásit</button>
     </form>
+    <script>
+        // Fetch available domains from Identity service via client proxy
+        // Note: Direct call to Identity would fail due to CORS
+        // TODO: Add /api/domains endpoint to client service as proxy
+        
+        // For now, hardcode common domains and add dynamic loading later
+        const domains = ['example.com']; // Default domain
+        
+        const select = document.getElementById('domainSelect');
+        select.innerHTML = '';
+        
+        domains.forEach(domain => {
+            const option = document.createElement('option');
+            option.value = domain;
+            option.textContent = domain;
+            select.appendChild(option);
+        });
+        
+        // TODO: Implement /api/domains endpoint in client.py to proxy Identity service
+        // fetch('/api/domains')
+        //     .then(response => response.json())
+        //     .then(domains => {
+        //         // populate dropdown
+        //     })
+        //     .catch(error => {
+        //         console.error('Failed to load domains:', error);
+        //     });
+    </script>
 </body>
 </html>

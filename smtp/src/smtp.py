@@ -71,27 +71,49 @@ class Authenticator:
     def __call__(self, mechanism, login, password):
         """
         Synchronous authentication handler (aiosmtpd requirement).
-        TODO: Make async call to Identity service for validation.
+        Validates credentials against Identity service.
         """
         logger.info(f"SMTP authentication: mechanism={mechanism}, login={login}")
-        
-        # TODO: Use sync HTTP client to call Identity service
-        # For now, accept all authentication (temporary for testing)
-        # In production:
-        # import requests
-        # response = requests.post(
-        #     "http://identity:8001/api/verify",
-        #     json={"email": login, "password": password},
-        #     timeout=5
-        # )
-        # return response.status_code == 200
         
         if mechanism not in ("LOGIN", "PLAIN"):
             logger.warning(f"Invalid authentication mechanism: {mechanism}")
             return False
         
-        logger.info(f"Authentication accepted for {login} (Identity integration pending)")
-        return True
+        try:
+            # Use sync HTTP client to call Identity service
+            import requests
+            
+            # Extract username and domain from login (email format)
+            if '@' in login:
+                username, domain = login.split('@', 1)
+            else:
+                logger.warning(f"Login must be in email format (user@domain): {login}")
+                return False
+            
+            # Call Identity service /login endpoint
+            response = requests.post(
+                "http://identity:8001/login",
+                json={
+                    "username": username,
+                    "domain": domain,
+                    "password": password
+                },
+                timeout=5
+            )
+            
+            if response.status_code == 200:
+                logger.info(f"Authentication successful for {login}")
+                return True
+            else:
+                logger.warning(f"Authentication failed for {login}: HTTP {response.status_code}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            logger.error(f"Identity service timeout for {login}")
+            return False
+        except Exception as e:
+            logger.error(f"Authentication error for {login}: {e}")
+            return False
 
 async def is_local_domain(domain: str) -> bool:
     """Check if domain exists in Identity service (local delivery)"""

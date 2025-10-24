@@ -51,14 +51,19 @@ try:
     emails_collection = db["emails"]
     
     # Create indexes for efficient querying
-    emails_collection.create_index("recipient")
-    emails_collection.create_index([("recipient", 1), ("timestamp", -1)])
-    emails_collection.create_index([("recipient", 1), ("read", 1)])
+    try:
+        emails_collection.create_index("recipient")
+        emails_collection.create_index([("recipient", 1), ("timestamp", -1)])
+        emails_collection.create_index([("recipient", 1), ("read", 1)])
+        logger.info("MongoDB indexes created successfully")
+    except Exception as idx_error:
+        # Indexes may already exist from previous runs
+        logger.info(f"Index creation skipped (may already exist): {idx_error}")
     
     client.admin.command("ping")
     logger.info("Úspěšně připojeno k MongoDB")
 except Exception as e:
-    logger.critical(f"Chyba při připojení k MongoDB: {str(e)}")
+    logger.error(f"Chyba při připojování k MongoDB: {str(e)}")
     raise
 
 @app.post("/emails")
