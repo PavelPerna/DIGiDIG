@@ -1,11 +1,12 @@
 [project]
 name = "digidig_mcp"
 version = "0.1.0"
-description = "A simple MCP weather server"
+description = "A DIGiDIG MCP server for interacting with email services"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "mcp==1.4.1"
+    "mcp==1.4.1",
+    "aiohttp>=3.8.0"
 ]
 
 [project.optional-dependencies]

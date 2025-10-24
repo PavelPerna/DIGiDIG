@@ -1,10 +1,42 @@
-# Weather MCP Server
+# DIGiDIG MCP Server
 
-This is a sample MCP Server in Python implementing weather tools with mock responses. It can be used as a scaffold for your own MCP Server. It includes the following features: 
+This is an MCP Server for the DIGiDIG email system, providing tools to interact with the microservices architecture. It includes the following features:
 
-- **Weather Tool**: A tool that provides mocked weather information based on the given location.
-- **Connect to Agent Builder**: A feature that allows you to connect the MCP server to the Agent Builder for testing and debugging.
-- **Debug in [MCP Inspector](https://github.com/modelcontextprotocol/inspector)**: A feature that allows you to debug the MCP Server using the MCP Inspector.
+- **Service Health Monitoring**: Check the health status of all DIGiDIG services
+- **Email Management**: Send and retrieve emails through the DIGiDIG API
+- **User Information**: Query user data from the identity service
+- **Weather Tool**: Legacy weather tool for testing (kept for compatibility)
+- **Connect to Agent Builder**: Integration with AI Toolkit for testing and debugging
+- **Debug in [MCP Inspector](https://github.com/modelcontextprotocol/inspector)**: Visual debugging tools
+
+## Available Tools
+
+### DIGiDIG-Specific Tools
+
+1. **get_digidig_service_health()** - Check health status of all services (identity, storage, smtp, imap, client, admin, apidocs)
+2. **get_digidig_emails(recipient, limit)** - Retrieve emails from storage service with optional filtering
+3. **send_digidig_email(sender, recipient, subject, body)** - Send emails through SMTP service
+4. **get_digidig_users()** - Get user information from identity service (requires authentication)
+
+### Legacy Tools
+
+- **get_weather(location)** - Mock weather information (for testing MCP functionality)
+
+## Service URLs Configuration
+
+The MCP server connects to DIGiDIG services using these environment variables:
+
+```bash
+IDENTITY_URL=http://localhost:8001
+STORAGE_URL=http://localhost:8002  
+SMTP_URL=http://localhost:8000
+IMAP_URL=http://localhost:8003
+CLIENT_URL=http://localhost:8004
+ADMIN_URL=http://localhost:8005
+APIDOCS_URL=http://localhost:8010
+```
+
+Default URLs assume local Docker Compose setup. Adjust for production deployment.
 
 ## Get started with the Weather MCP Server template
 
