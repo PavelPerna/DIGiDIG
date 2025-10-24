@@ -47,39 +47,70 @@ install:
 	docker compose up -d
 	@echo "Installation complete. Default admin user (admin@example.com/admin) is auto-created if needed."
 
-test:
-	@echo "Building test container..."
-	docker build -f tests/Dockerfile -t digidig-tests .
-	@echo ""
-	@echo "Running integration tests..."
-	@NET=$$(docker network ls --format '{{.Name}}' | grep digidig | head -1); \
-	if [ -z "$$NET" ]; then \
-		NET=digidig_default; \
-	fi; \
-	echo "Using network: $$NET"; \
-	docker run --rm --network $$NET \
-		-e BASE_URL=http://identity:8001 \
-		-e IDENTITY_URL=http://identity:8001 \
-		-e SMTP_HOST=smtp \
-		-e SMTP_PORT=2525 \
-		-e SMTP_REST_URL=http://smtp:8000 \
-		-e IMAP_HOST=imap \
-		-e IMAP_PORT=143 \
-		-e IMAP_URL=http://imap:8003 \
-		-e STORAGE_URL=http://storage:8002 \
-		digidig-tests
-	@echo ""
-	@echo "✅ Tests finished."
+# ==============================================================================
+# UNIFIED DOCKER TESTING SYSTEM
+# ==============================================================================
 
-test-all: install
-	@echo "Running all tests (with fresh install)..."
-	@$(MAKE) test
-	@echo "✅ All tests finished."
+test:  ## Run all tests using unified Docker test runner
+	@python3 unified_test_runner.py all
 
-test-build:
-	@echo "Building test container..."
-	docker build -f tests/Dockerfile -t digidig-tests .
-	@echo "✅ Test container built."
+test-quick:  ## Run quick health check tests
+	@python3 unified_test_runner.py quick
+
+test-config:  ## Run configuration tests
+	@python3 unified_test_runner.py config
+
+test-unit:  ## Run unit tests
+	@python3 unified_test_runner.py unit-core
+
+test-unit-safe:  ## Run safe unit tests (no service dependencies)
+	@python3 unified_test_runner.py unit-safe
+
+test-unit-core:  ## Run core unit tests (config, i18n, models)
+	@python3 unified_test_runner.py unit-core
+
+test-integration:  ## Run integration tests
+	@python3 unified_test_runner.py integration
+
+test-persistence:  ## Run persistence tests
+	@python3 unified_test_runner.py persistence
+
+test-admin:  ## Run admin service tests
+	@python3 unified_test_runner.py admin
+
+test-identity:  ## Run identity service tests
+	@python3 unified_test_runner.py identity
+
+test-flow:  ## Run email flow tests
+	@python3 unified_test_runner.py flow
+
+test-services:  ## Start DIGiDIG services only
+	@python3 unified_test_runner.py services
+
+test-coverage:  ## Run tests with code coverage analysis
+	@python3 unified_test_runner.py coverage
+
+test-help:  ## Show available test categories
+	@echo "🧪 DIGiDIG Unified Docker Testing System"
+	@echo ""
+	@echo "Available test categories:"
+	@echo "  make test          - Run all tests"
+	@echo "  make test-quick    - Quick health check"
+	@echo "  make test-config   - Configuration tests"
+	@echo "  make test-unit     - Core unit tests (config, i18n, models)"
+	@echo "  make test-unit-safe - Safe unit tests (no service deps)"
+	@echo "  make test-integration - Integration tests"
+	@echo "  make test-persistence - Persistence tests"
+	@echo "  make test-admin    - Admin service tests"
+	@echo "  make test-identity - Identity service tests"
+	@echo "  make test-flow     - Email flow tests"
+	@echo "  make test-services - Start services only"
+	@echo "  make test-coverage - Run tests with coverage analysis"
+	@echo ""
+	@echo "Direct usage:"
+	@echo "  python3 unified_test_runner.py <category>"
+	@echo ""
+	@echo "📖 See _doc/UNIFIED-DOCKER-TESTING.md for details"
 
 
 clean-cache:
@@ -110,10 +141,7 @@ clean:
 	@echo "✅ Clean finished. Databases and caches removed."
 
 
-test-deps:
-	@echo "Installing test dependencies..."
-	@python3 -m pip install --user -r tests/requirements-test.txt
-	@echo "Test dependencies installed."
+
 
 clear-cache-view:
 	@SERVICE=$(filter-out $@,$(MAKECMDGOALS)); \
@@ -168,3 +196,5 @@ refresh:
 	echo "  • Hard refresh: Ctrl+Shift+R (Linux/Windows) or Cmd+Shift+R (Mac)"; \
 	echo "  • Open DevTools (F12) → Network tab → Check 'Disable cache'"; \
 	echo "  • Or use Private/Incognito window"
+
+
