@@ -6,7 +6,7 @@ from typing import Optional, List, Dict, Any
 import jwt
 import os
 import asyncpg
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, timezone
 import uuid
 import hashlib
 import asyncio
@@ -196,7 +196,7 @@ async def init_db():
                     CREATE TABLE refresh_tokens (
                         token TEXT PRIMARY KEY,
                         username TEXT NOT NULL,
-                        expires_at TIMESTAMP NOT NULL
+                        expires_at TIMESTAMPTZ NOT NULL
                     )
                 """)
 
@@ -271,7 +271,7 @@ app.state.db_pool = None
 def _encode_token(username: str, roles: List[str]):
     jti = str(uuid.uuid4())
     # create JWT
-    payload = {"username": username, "roles": roles, "exp": datetime.now(UTC) + timedelta(hours=1), "jti": jti}
+    payload = {"username": username, "roles": roles, "exp": datetime.now(timezone.utc) + timedelta(hours=1), "jti": jti}
     token = jwt.encode(payload, config.JWT_SECRET, algorithm="HS256")
     return token
 
@@ -304,7 +304,7 @@ async def _decode_token(authorization: str):
 async def register(user: UserCreate):
     logger.info(f"Registering {user.username}")
     service_state["requests_total"] += 1
-    service_state["last_request_time"] = datetime.now(UTC).isoformat()
+    service_state["last_request_time"] = datetime.now(timezone.utc).isoformat()
     
     domain = user.domain if user.domain else ""
     async with app.state.db_pool.acquire() as conn:
@@ -341,7 +341,7 @@ async def login(payload: LoginRequest):
     provided = payload.username or payload.email
     logger.info(f"Login attempt {provided}")
     service_state["requests_total"] += 1
-    service_state["last_request_time"] = datetime.now(UTC).isoformat()
+    service_state["last_request_time"] = datetime.now(timezone.utc).isoformat()
     
     if not provided:
         service_state["requests_failed"] += 1
@@ -382,13 +382,13 @@ async def login(payload: LoginRequest):
         token = _encode_token(row["username"], roles)
         refresh = _generate_refresh_token()
         # store refresh token
-        exp = datetime.now(UTC) + timedelta(days=14)
-        await conn.execute('INSERT INTO refresh_tokens (token, username, expires_at) VALUES ($1, $2, $3)', refresh, row['username'], exp)
+        exp = datetime.now(timezone.utc) + timedelta(days=14)
+        await conn.execute('INSERT INTO refresh_tokens (token, username, expires_at) VALUES ($1, $2, $3)', refresh, row['username'], exp.replace(tzinfo=None))
         
         # Track active session
         service_state["active_sessions"].append({
             "username": row["username"],
-            "logged_in_at": datetime.now(UTC).isoformat(),
+            "logged_in_at": datetime.now(timezone.utc).isoformat(),
             "roles": roles
         })
         
@@ -411,7 +411,7 @@ async def revoke_token(body: dict = None, authorization: str = Header(None)):
             try:
                 payload = jwt.decode(tok, config.JWT_SECRET, algorithms=["HS256"])
                 jti = payload.get('jti')
-                exp_ts = datetime.utcfromtimestamp(payload.get('exp')) if payload.get('exp') else None
+                exp_ts = datetime.fromtimestamp(payload.get('exp'), tz=timezone.utc) if payload.get('exp') else None
             except Exception as e:
                 # Maybe this is a refresh token (opaque). Try to delete from refresh_tokens
                 logger.info(f"Provided token is not JWT, trying refresh_tokens table: {e}")
@@ -428,7 +428,7 @@ async def revoke_token(body: dict = None, authorization: str = Header(None)):
             tok = authorization.split('Bearer ')[1]
             payload = jwt.decode(tok, config.JWT_SECRET, algorithms=["HS256"])
             jti = payload.get('jti')
-            exp_ts = datetime.utcfromtimestamp(payload.get('exp')) if payload.get('exp') else None
+            exp_ts = datetime.fromtimestamp(payload.get('exp'), tz=timezone.utc) if payload.get('exp') else None
         except Exception as e:
             logger.error(f"Failed to decode authorization token for revoke: {e}")
 
@@ -437,7 +437,7 @@ async def revoke_token(body: dict = None, authorization: str = Header(None)):
 
     # Persist the revoked jti with expiry (if known) or a default short expiry
     if not exp_ts:
-        exp_ts = datetime.now(UTC) + timedelta(hours=1)
+        exp_ts = datetime.now(timezone.utc) + timedelta(hours=1)
 
     async with app.state.db_pool.acquire() as conn:
         try:
@@ -460,7 +460,7 @@ async def refresh_token(body: dict):
         row = await conn.fetchrow('SELECT token, username, expires_at FROM refresh_tokens WHERE token = $1', rt)
         if not row:
             raise HTTPException(status_code=401, detail='Invalid refresh token')
-        if row['expires_at'] < datetime.now(UTC):
+        if row['expires_at'] < datetime.now(timezone.utc).replace(tzinfo=None):
             # remove expired
             await conn.execute('DELETE FROM refresh_tokens WHERE token = $1', rt)
             raise HTTPException(status_code=401, detail='Refresh token expired')
@@ -471,10 +471,10 @@ async def refresh_token(body: dict):
         urow = await conn.fetchrow('SELECT id, username FROM users WHERE username = $1', row['username'])
         roles = [r['name'] for r in await conn.fetch('SELECT roles.name FROM roles JOIN user_roles ur ON roles.id = ur.role_id WHERE ur.user_id = $1', urow['id'])]
         new_access = _encode_token(urow['username'], roles)
-        new_exp = datetime.now(UTC) + timedelta(days=14)
+        new_exp = datetime.now(timezone.utc) + timedelta(days=14)
         # store new refresh and delete old
         await conn.execute('DELETE FROM refresh_tokens WHERE token = $1', rt)
-        await conn.execute('INSERT INTO refresh_tokens (token, username, expires_at) VALUES ($1, $2, $3)', new_rt, urow['username'], new_exp)
+        await conn.execute('INSERT INTO refresh_tokens (token, username, expires_at) VALUES ($1, $2, $3)', new_rt, urow['username'], new_exp.replace(tzinfo=None))
         return {'access_token': new_access, 'refresh_token': new_rt}
 
 
@@ -664,7 +664,7 @@ async def health_check():
     return {
         "service_name": "identity",
         "status": status,
-        "timestamp": datetime.now(UTC).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "uptime_seconds": uptime,
         "details": {
             "enabled": service_state["config"]["enabled"],

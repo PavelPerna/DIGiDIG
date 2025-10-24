@@ -229,6 +229,18 @@ async def send_email(request: Request, recipient: str = Form(...), subject: str 
         logger.error(f"Error sending email: {e}")
         return RedirectResponse(url="/dashboard?error=connection_failed", status_code=303)
 
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint for monitoring"""
+    return {
+        "status": "healthy",
+        "service": "client",
+        "version": "1.0.0",
+        "dependencies": {
+            "identity": IDENTITY_URL
+        }
+    }
+
 @app.post("/logout")
 async def logout(response: Response):
     """Logout user by clearing cookie"""

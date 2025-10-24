@@ -541,6 +541,18 @@ async def get_service_health(service_name: str, token: str = None):
         logger.error(f"Error getting health for {service_name}: {str(e)}")
         return JSONResponse(status_code=500, content={"error": str(e), "status": "unreachable"})
 
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint for monitoring"""
+    return {
+        "status": "healthy",
+        "service": "admin",
+        "version": "1.0.0",
+        "dependencies": {
+            "identity": "http://identity:8001"
+        }
+    }
+
 @app.get("/api/services/{service_name}/stats")
 async def get_service_stats(service_name: str, request: Request, token: str = None):
     """Get statistics of a specific service"""
