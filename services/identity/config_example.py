@@ -15,7 +15,7 @@ import subprocess
 import sys
 import os
 
-from lib.common.config import get_config, get_db_config, get_jwt_secret
+from common.config import get_config, get_db_config, get_jwt_secret
 
 config = get_config()
 

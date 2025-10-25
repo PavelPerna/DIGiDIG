@@ -97,8 +97,8 @@ PyYAML>=6.0
 
 Update service Dockerfile:
 ```dockerfile
-# Copy common module
-COPY common/ /app/common/
+# Copy lib module
+COPY lib/ /app/lib/
 
 # Or add to Python path
 ENV PYTHONPATH=/app:$PYTHONPATH

@@ -60,6 +60,16 @@ class IdentityConfig(ServiceConfig):
     db_password: str = Field(description="Database password")
 
 
+class SSOConfig(ServiceConfig):
+    """SSO service configuration"""
+    service_name: str = "sso"
+    port: int = 8006
+    trusted_domains: list = Field(default_factory=list, description="List of trusted domains for redirects")
+    session_timeout: int = Field(default=1800, description="Session timeout in seconds")
+    cookie_secure: bool = Field(default=False, description="Use secure cookies (HTTPS only)")
+    cookie_samesite: str = Field(default="lax", description="SameSite cookie attribute")
+
+
 class ServiceStats(BaseModel):
     """Service statistics"""
     service_name: str
