@@ -59,11 +59,10 @@ mv version.py lib/
 #### `_test/Dockerfile`:
 ```dockerfile
 # Before:
-COPY common/ ./common/
+COPY lib/ ./lib/
 COPY config/ ./config/
-COPY config_models.py ./
 
-# After:
+# After:  
 COPY lib/ ./lib/
 COPY config/ ./config/
 ```

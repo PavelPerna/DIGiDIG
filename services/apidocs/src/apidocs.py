@@ -64,7 +64,7 @@ SERVICES = {
     "smtp": {
         "name": "SMTP Service",
         "description": "Email sending via SMTP protocol",
-        "url": os.getenv("SMTP_URL", "http://smtp:8003"),
+        "url": os.getenv("SMTP_URL", "http://smtp:8000"),
         "openapi_path": "/openapi.json",
         "icon": "📤",
         "tags": ["SMTP", "Send Email"]
@@ -72,7 +72,7 @@ SERVICES = {
     "imap": {
         "name": "IMAP Service",
         "description": "Email retrieval via IMAP protocol",
-        "url": os.getenv("IMAP_URL", "http://imap:8007"),
+        "url": os.getenv("IMAP_URL", "http://imap:8003"),
         "openapi_path": "/openapi.json",
         "icon": "📥",
         "tags": ["IMAP", "Retrieve Email"]

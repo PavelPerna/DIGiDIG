@@ -1,5 +1,5 @@
 import logging
-from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi import FastAPI, Request, Form, HTTPException, Depends
 from typing import Optional
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 import json
@@ -9,6 +9,14 @@ import aiohttp
 from pydantic import BaseModel
 import traceback
 import subprocess
+import urllib.parse
+import os
+import sys
+
+# Add parent directory to path for common imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+from lib.common.config import get_config, get_service_url
 
 # Nastavení logování
 logging.basicConfig(
@@ -18,7 +26,65 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Get configuration
+config = get_config()
+IDENTITY_URL = get_service_url('identity')
+SSO_URL = get_service_url('sso')
+
 app = FastAPI(title="Admin Microservice")
+
+# Authentication middleware
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    """Middleware to handle authentication for protected routes"""
+    # Public routes that don't require authentication
+    public_paths = ["/health", "/static", "/api/health", "/login", "/logout"]
+    
+    # Check if this is a public path
+    is_public = any(request.url.path.startswith(path) or request.url.path == path for path in public_paths)
+    
+    if not is_public and request.url.path != "/":
+        # Check authentication
+        user = await get_user_from_token(request)
+        if not user:
+            # Redirect to SSO for authentication
+            redirect_url = urllib.parse.quote(str(request.url))
+            sso_login_url = f"{SSO_URL}/?redirect_to={redirect_url}"
+            return RedirectResponse(url=sso_login_url, status_code=307)
+        
+        # Check if user has admin role
+        if not is_admin(user):
+            raise HTTPException(status_code=403, detail="Admin role required")
+    
+    response = await call_next(request)
+    return response
+
+async def get_user_from_token(request: Request):
+    """Get current user session or return None"""
+    token = request.cookies.get("access_token")
+    if not token:
+        return None
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"{SSO_URL}/verify",
+                cookies={"access_token": token}
+            ) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    return None
+    except Exception as e:
+        logger.error(f"Error verifying token: {e}")
+        return None
+
+def is_admin(user: dict) -> bool:
+    """Check if user has admin role"""
+    if not user:
+        return False
+    roles = user.get('roles', [])
+    return 'admin' in roles or user.get('role') == 'admin'
 
 
 @app.exception_handler(Exception)
@@ -132,16 +198,16 @@ async def get_user(token: str):
         raise HTTPException(status_code=401, detail=f"Neplatný token: {str(e)}")
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request, token: str = None):
+async def index(request: Request, user: dict = Depends(auth_middleware)):
     logger.info("Načítání admin dashboardu")
-    # prefer cookie-based access_token if present
-    if not token:
-        token = request.cookies.get('access_token')
-    if not token:
-        logger.info("Žádný token, přesměrování na login")
-        return templates.TemplateResponse("login.html", {"request": request})
+    
+    # Check if user has admin role
+    if not is_admin(user):
+        logger.error(f"Uživatel {user.get('username')} nemá admin oprávnění")
+        raise HTTPException(status_code=403, detail="Neautorizovaný přístup - vyžadována admin role")
+    
     try:
-        user = await get_user(token)
+        token = request.cookies.get('access_token')
         logger.info(f"Admin {user.get('username') or user.get('email')} ověřen")
         async with aiohttp.ClientSession() as session:
             users = await identity_request(session, "GET", "/users", token=token)
@@ -176,59 +242,19 @@ async def index(request: Request, token: str = None):
             "error": f"Chyba: {str(e)}"
         })
 
+@app.get("/login", response_class=HTMLResponse)
+async def login_redirect(request: Request):
+    """Legacy login endpoint - redirect to SSO"""
+    redirect_url = urllib.parse.quote(str(request.url).replace('/login', '/'))
+    sso_login_url = f"{SSO_URL}/?redirect_to={redirect_url}"
+    return RedirectResponse(url=sso_login_url)
+
 @app.post("/login", response_class=HTMLResponse)
-async def login(request: Request, email: str = Form(...), password: str = Form(...)):
-    # keep login form named 'email' for UX compatibility; identity accepts email or username
-    logger.info(f"Přihlášení admina: {email}")
-    try:
-        async with aiohttp.ClientSession() as session:
-            result = await identity_request(
-                session, 
-                "POST", 
-                "/login", 
-                {"email": email, "password": password, "role": "admin"}
-            )
-            token = result["access_token"]
-            
-            users = await identity_request(session, "GET", "/users", token=token)
-            logger.info(f"Načteno {len(users)} uživatelů")
-            
-            domains = await identity_request(session, "GET", "/domains", token=token)
-            logger.info(f"Načteno {len(domains)} domén")
-            
-            # Redirect to dashboard with token in query string (avoid form resubmit on refresh)
-            # If client expects JSON, return token JSON instead of redirect (useful for API clients)
-            accept = request.headers.get("accept", "")
-            if "application/json" in accept:
-                # return JSON and set cookies for browser clients
-                resp = JSONResponse(status_code=200, content={"access_token": token, "token_type": "bearer"})
-                # set httpOnly cookies (short-lived access token and longer refresh token handled by identity if provided)
-                resp.set_cookie('access_token', token, httponly=True, secure=False)
-                return resp
-
-            # set cookie and redirect
-            resp = RedirectResponse(url=f"/?token={token}", status_code=303)
-            resp.set_cookie('access_token', token, httponly=True, secure=False)
-            return resp
-    except Exception as e:
-        # If this is an identity error, format and return its status/body for API clients
-        if isinstance(e, AdminIdentityError):
-            logger.info(f"Identity error during login: status={e.status} body={e.body}")
-            # if client expects JSON, return JSONResponse with the identity status
-            accept = request.headers.get("accept", "")
-            if "application/json" in accept:
-                return format_identity_response(status=e.status, body=e.body)
-            # otherwise render login page with error
-            return templates.TemplateResponse("login.html", {
-                "request": request,
-                "error": f"Chyba při přihlášení: {e.body}"
-            })
-
-        logger.error(f"Chyba při přihlášení admina {email}: {str(e)}")
-        return templates.TemplateResponse("login.html", {
-            "request": request,
-            "error": f"Chyba při přihlášení: {str(e)}"
-        })
+async def login_post_redirect(request: Request):
+    """Legacy POST login endpoint - redirect to SSO GET endpoint"""
+    redirect_url = urllib.parse.quote(str(request.url).replace('/login', '/'))
+    sso_login_url = f"{SSO_URL}/?redirect_to={redirect_url}"
+    return RedirectResponse(url=sso_login_url)
 
 
 @app.post("/api/login")
@@ -278,15 +304,19 @@ async def manage_user(
     password: str = Form(None),
     originalUsername: str = Form(None),
     id: Optional[int] = Form(None),
-    token: str = Form(None)
+    user: dict = Depends(auth_middleware)
 ):
     operation = "update" if (originalUsername or id) else "create"
     target = originalUsername if originalUsername else username
     logger.info(f"{operation.capitalize()} uživatele: {target}")
+    
+    # Check admin role
+    if not is_admin(user):
+        logger.error(f"Uživatel {user.get('username')} nemá admin oprávnění")
+        raise HTTPException(status_code=403, detail="Neautorizovaný přístup - vyžadována admin role")
+    
     try:
-        if not token:
-            token = request.cookies.get('access_token')
-        await get_user(token)
+        token = request.cookies.get('access_token')
         async with aiohttp.ClientSession() as session:
             data = {
                 # identity expects username + optional domain
@@ -330,15 +360,19 @@ async def manage_domain(
     request: Request,
     name: str = Form(...),
     oldName: str = Form(None),
-    token: str = Form(None)
+    user: dict = Depends(auth_middleware)
 ):
     operation = "update" if oldName else "create"
     target_name = oldName if oldName else name
     logger.info(f"{operation.capitalize()} domény: {target_name}")
+    
+    # Check admin role
+    if not is_admin(user):
+        logger.error(f"Uživatel {user.get('username')} nemá admin oprávnění")
+        raise HTTPException(status_code=403, detail="Neautorizovaný přístup - vyžadována admin role")
+    
     try:
-        if not token:
-            token = request.cookies.get('access_token')
-        await get_user(token)
+        token = request.cookies.get('access_token')
         async with aiohttp.ClientSession() as session:
             data = {"name": name}
             if oldName:
@@ -362,15 +396,23 @@ async def manage_domain(
         return format_identity_response(status=500, body={"error": str(e)})
 
 @app.post("/delete-domain")
-async def delete_domain(request: Request, domain_name: str = Form(...), token: str = Form(None)):
-    logger.info(f"Odstraňování domény: {domain_name}")
+async def delete_domain(
+    request: Request,
+    name: str = Form(...),
+    user: dict = Depends(auth_middleware)
+):
+    logger.info(f"Odstraňování domény: {name}")
+    
+    # Check admin role
+    if not is_admin(user):
+        logger.error(f"Uživatel {user.get('username')} nemá admin oprávnění")
+        raise HTTPException(status_code=403, detail="Neautorizovaný přístup - vyžadována admin role")
+    
     try:
-        if not token:
-            token = request.cookies.get('access_token')
-        await get_user(token)
+        token = request.cookies.get('access_token')
         async with aiohttp.ClientSession() as session:
-            result = await identity_request(session, "DELETE", f"/domains/{domain_name}", token=token)
-            logger.info(f"Doména {domain_name} úspěšně odstraněna")
+            result = await identity_request(session, "DELETE", f"/domains/{name}", token=token)
+            logger.info(f"Doména {name} úspěšně odstraněna")
             return result
     except AdminIdentityError as e:
         logger.info(f"Identity error while deleting domain: status={e.status} body={e.body}")
@@ -379,17 +421,27 @@ async def delete_domain(request: Request, domain_name: str = Form(...), token: s
         logger.info(f"HTTP error while deleting domain: status={getattr(e,'status_code',None)} detail={e.detail}")
         return format_identity_response(status=getattr(e, 'status_code', None), body=e.detail)
     except Exception as e:
-        logger.exception(f"Chyba při odstraňování domény {domain_name}: {str(e)}")
+        logger.exception(f"Chyba při odstraňování domény {name}: {str(e)}")
         return format_identity_response(status=500, body={"error": str(e)})
 
 @app.post("/delete-user")
-async def delete_user(request: Request, username: str = Form(None), domain: str = Form(None), id: Optional[int] = Form(None), token: str = Form(None)):
+async def delete_user(
+    request: Request,
+    username: str = Form(None),
+    domain: str = Form(None),
+    id: Optional[int] = Form(None),
+    user: dict = Depends(auth_middleware)
+):
     target = id if id else (f"{username}@{domain}" if username and domain else username)
     logger.info(f"Odstraňování uživatele: {target}")
+    
+    # Check admin role
+    if not is_admin(user):
+        logger.error(f"Uživatel {user.get('username')} nemá admin oprávnění")
+        raise HTTPException(status_code=403, detail="Neautorizovaný přístup - vyžadována admin role")
+    
     try:
-        if not token:
-            token = request.cookies.get('access_token')
-        await get_user(token)
+        token = request.cookies.get('access_token')
         async with aiohttp.ClientSession() as session:
             user_id = None
             # prefer explicit numeric id
@@ -488,17 +540,17 @@ SERVICES = {
 }
 
 @app.get("/services", response_class=HTMLResponse)
-async def services_page(request: Request, token: str = None):
+async def services_page(request: Request, user: dict = Depends(auth_middleware)):
     """Service management page"""
     logger.info("Načítání stránky pro správu služeb")
-    if not token:
-        token = request.cookies.get('access_token')
-    if not token:
-        logger.info("Žádný token, přesměrování na login")
-        return templates.TemplateResponse("login.html", {"request": request})
+    
+    # Check admin role
+    if not is_admin(user):
+        logger.error(f"Uživatel {user.get('username')} nemá admin oprávnění")
+        raise HTTPException(status_code=403, detail="Neautorizovaný přístup - vyžadována admin role")
     
     try:
-        user = await get_user(token)
+        token = request.cookies.get('access_token')
         logger.info(f"Admin {user.get('username')} přistupuje ke správě služeb")
         
         # Get health status for all services
@@ -664,22 +716,26 @@ async def restart_service(service_name: str, request: Request, token: str = None
         logger.error(f"Authentication failed: {str(e)}")
         return JSONResponse(status_code=401, content={"error": "Unauthorized"})
     
-    # List of valid services
-    valid_services = ["identity", "smtp", "imap", "storage", "admin", "client", "postgres", "mongo"]
+    # List of valid services (must match docker-compose.yml service names)
+    valid_services = ["identity", "smtp", "imap", "storage", "admin", "client", "apidocs", "postgres", "mongo"]
     
     if service_name not in valid_services:
         return JSONResponse(status_code=404, content={"error": f"Service '{service_name}' not found"})
     
     try:
         logger.info(f"Admin user {user.get('username')} restarting service: {service_name}")
-        # Use docker compose restart command
-        # docker-compose.yml is mounted at /app/project/
+        
+        # Use docker compose restart command with explicit project directory
+        # The docker-compose.yml is mounted at /app/project/
+        cmd = ["docker", "compose", "-f", "/app/project/docker-compose.yml", "restart", service_name]
+        
         result = subprocess.run(
-            ["docker", "compose", "restart", service_name],
+            cmd,
             capture_output=True,
             text=True,
-            timeout=30,
-            cwd="/app/project"  # Project root with docker-compose.yml
+            timeout=60,  # Increased timeout for service restart
+            cwd="/app/project",
+            env={"PATH": "/usr/local/bin:/usr/bin:/bin"}  # Ensure Docker CLI is in PATH
         )
         
         if result.returncode == 0:
@@ -687,24 +743,36 @@ async def restart_service(service_name: str, request: Request, token: str = None
             return JSONResponse(status_code=200, content={
                 "status": "success",
                 "message": f"Service '{service_name}' restarted successfully",
-                "output": result.stdout
+                "output": result.stdout.strip() if result.stdout else "Service restarted",
+                "command": " ".join(cmd)
             })
         else:
             logger.error(f"Failed to restart {service_name}: {result.stderr}")
             return JSONResponse(status_code=500, content={
                 "status": "error",
                 "message": f"Failed to restart service '{service_name}'",
-                "error": result.stderr
+                "error": result.stderr.strip() if result.stderr else "Unknown error",
+                "command": " ".join(cmd),
+                "stdout": result.stdout.strip() if result.stdout else ""
             })
     except subprocess.TimeoutExpired:
         logger.error(f"Timeout restarting {service_name}")
         return JSONResponse(status_code=504, content={
             "status": "error",
-            "message": f"Restart timeout for service '{service_name}'"
+            "message": f"Restart timeout for service '{service_name}' (60s)",
+            "error": "Command timed out"
+        })
+    except FileNotFoundError as e:
+        logger.error(f"Docker command not found: {str(e)}")
+        return JSONResponse(status_code=500, content={
+            "status": "error",
+            "message": "Docker CLI not available in container",
+            "error": str(e)
         })
     except Exception as e:
         logger.error(f"Error restarting {service_name}: {str(e)}")
         return JSONResponse(status_code=500, content={
             "status": "error",
-            "message": str(e)
+            "message": f"Unexpected error: {str(e)}",
+            "error": str(e)
         })

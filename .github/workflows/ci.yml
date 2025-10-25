@@ -86,7 +86,7 @@ jobs:
 
     - name: Run integration tests
       run: |
-        make test-ci
+        make test-integration
       timeout-minutes: 15
 
     - name: Show service logs on failure

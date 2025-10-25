@@ -9,8 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code
 COPY services/apidocs/src/ ./src/
 
-# Add common module to path
-ENV PYTHONPATH=/app:$PYTHONPATH
+ENV PYTHONPATH=/app
 
 EXPOSE 8010
 
