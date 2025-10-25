@@ -18,8 +18,8 @@ from datetime import datetime, timezone
 # Add parent directory to path for common imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
-from lib.common.config import get_config, get_service_url
-from lib.common.i18n import init_i18n
+from common.config import get_config, get_service_url
+from common.i18n import init_i18n
 
 # Logging setup
 logging.basicConfig(

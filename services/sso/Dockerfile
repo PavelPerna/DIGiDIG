@@ -7,8 +7,10 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy shared library code first
-COPY lib/ /app/lib/
+# Copy common module and config files (from project root)
+COPY common/ /app/common/
+COPY config/ /app/config/
+COPY locales/ /app/locales/
 
 # Copy service requirements and install
 COPY services/sso/requirements.txt .
@@ -16,10 +18,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy service application code
 COPY services/sso/src/ /app/
-
-# Copy configuration files
-COPY config/ /app/config/
-COPY locales/ /app/locales/
 
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app \
