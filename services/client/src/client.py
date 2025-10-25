@@ -7,11 +7,14 @@ import os
 import sys
 from pydantic import BaseModel
 import logging
+import urllib.parse
+from datetime import datetime, timezone
 
 # Add parent directory to path for common imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from common.i18n import init_i18n, get_i18n
+from lib.common.config import get_config, get_service_url
+from lib.common.i18n import init_i18n, get_i18n
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -20,10 +23,38 @@ logger = logging.getLogger(__name__)
 # Initialize i18n
 i18n = init_i18n(default_language='en', service_name='client')
 
-# Service URLs
-IDENTITY_URL = os.getenv("IDENTITY_URL", "http://identity:8001")
+# Get configuration
+config = get_config()
+IDENTITY_URL = get_service_url('identity')
+SSO_URL = get_service_url('sso')
 
-app = FastAPI()
+app = FastAPI(
+    title="DIGiDIG Client Service",
+    description="Email client interface for DIGiDIG system",
+    version="1.0.0"
+)
+
+# Authentication middleware
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    """Middleware to handle authentication for protected routes"""
+    # Public routes that don't require authentication
+    public_paths = ["/health", "/static", "/api/translations", "/api/language"]
+    
+    # Check if this is a public path
+    is_public = any(request.url.path.startswith(path) for path in public_paths)
+    
+    if not is_public and request.url.path not in ["/", "/login", "/logout"]:
+        # Check authentication
+        user = await get_user_from_token(request)
+        if not user:
+            # Redirect to SSO for authentication
+            redirect_url = urllib.parse.quote(str(request.url))
+            return RedirectResponse(url=f"{SSO_URL}/?redirect_to={redirect_url}", status_code=307)
+    
+    response = await call_next(request)
+    return response
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -40,12 +71,11 @@ async def get_user_from_token(request: Request):
         return None
     
     try:
-        # Verify token with identity service
-        identity_url = os.getenv("IDENTITY_URL", "http://identity:8001")
+        # Verify token with SSO service
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                f"{identity_url}/verify",
-                headers={"Authorization": f"Bearer {token}"}
+                f"{SSO_URL}/verify",
+                cookies={"access_token": token}
             ) as response:
                 if response.status == 200:
                     user_data = await response.json()
@@ -56,6 +86,16 @@ async def get_user_from_token(request: Request):
     except Exception as e:
         logger.error(f"Error validating token: {e}")
         return None
+
+async def require_auth(request: Request):
+    """Require authentication, redirect to SSO if not authenticated"""
+    user = await get_user_from_token(request)
+    if not user:
+        # Create redirect URL to SSO with current URL as return destination
+        redirect_url = urllib.parse.quote(str(request.url))
+        sso_login_url = f"{SSO_URL}/?redirect_to={redirect_url}"
+        raise HTTPException(status_code=307, headers={"Location": sso_login_url})
+    return user
 
 async def get_session(request: Request):
     """Get current user session or redirect to login"""
@@ -95,76 +135,36 @@ async def get_translations(request: Request):
     return JSONResponse(i18n.get_all())
 
 @app.get("/", response_class=HTMLResponse)
-async def login(request: Request):
-    # Check if already logged in
+async def root(request: Request):
+    """Root endpoint - redirect to dashboard if authenticated, otherwise to SSO"""
     user = await get_user_from_token(request)
     if user:
         return RedirectResponse(url="/dashboard", status_code=303)
-    return templates.TemplateResponse("login.html", {"request": request})
+    else:
+        # Redirect to SSO for authentication
+        redirect_url = urllib.parse.quote(str(request.url).replace('/', '/dashboard'))
+        return RedirectResponse(url=f"{SSO_URL}/?redirect_to={redirect_url}", status_code=307)
 
-@app.post("/login")
-async def login_post(request: Request):
-    """Handle login form submission"""
-    try:
-        form = await request.form()
-        username = form.get("username")
-        domain = form.get("domain")
-        password = form.get("password")
-        
-        if not username or not domain or not password:
-            return templates.TemplateResponse("login.html", {
-                "request": request,
-                "error": "Všechna pole jsou povinná"
-            })
-        
-        # Construct full email
-        email = f"{username}@{domain}"
-        
-        # Call Identity service /login endpoint
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"{IDENTITY_URL}/login",
-                json={
-                    "username": username,
-                    "domain": domain,
-                    "password": password
-                }
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    access_token = data.get("access_token")
-                    
-                    # Create redirect response and set cookie
-                    redirect = RedirectResponse(url="/dashboard", status_code=303)
-                    redirect.set_cookie(
-                        key="access_token",
-                        value=access_token,
-                        httponly=True,
-                        max_age=3600,
-                        samesite="lax"
-                    )
-                    return redirect
-                else:
-                    error_text = await response.text()
-                    logger.warning(f"Login failed: {response.status} - {error_text}")
-                    return templates.TemplateResponse("login.html", {
-                        "request": request,
-                        "error": "Neplatné přihlašovací údaje"
-                    })
-    except Exception as e:
-        logger.error(f"Login error: {e}")
-        return templates.TemplateResponse("login.html", {
-            "request": request,
-            "error": "Chyba při přihlašování"
-        })
+@app.get("/login", response_class=HTMLResponse)
+async def login_redirect(request: Request):
+    """Legacy login endpoint - redirect to SSO"""
+    redirect_url = urllib.parse.quote(str(request.url).replace('/login', '/dashboard'))
+    return RedirectResponse(url=f"{SSO_URL}/?redirect_to={redirect_url}", status_code=307)
 
+@app.post("/logout")
+async def logout(request: Request):
+    """Logout endpoint - redirect to SSO logout"""
+    redirect_url = urllib.parse.quote(str(request.url).replace('/logout', '/'))
+    return RedirectResponse(url=f"{SSO_URL}/logout?redirect_to={redirect_url}", status_code=307)
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request, error: str = None):
-    # Get current user from token
-    user = await get_user_from_token(request)
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
+    """Main dashboard - requires authentication"""
+    try:
+        user = await require_auth(request)
+    except HTTPException as e:
+        # Redirect to SSO
+        return RedirectResponse(url=e.headers["Location"], status_code=307)
     
     # Get username and domain from verified token
     username = user.get("username", "user")
@@ -247,6 +247,15 @@ async def logout(response: Response):
     redirect_response = RedirectResponse(url="/", status_code=303)
     redirect_response.delete_cookie(key="access_token")
     return redirect_response
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "service": "client",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
 
 if __name__ == "__main__":
     import uvicorn

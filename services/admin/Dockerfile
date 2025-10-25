@@ -16,8 +16,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy common module and config files (from project root)
-COPY common/ ./common/
+# Copy lib and config files (from project root)
+COPY lib/ ./lib/
 COPY config/ ./config/
 
 # Copy service-specific files
