@@ -36,7 +36,7 @@ jobs:
         
     - name: Run unit tests
       run: |
-        python unified_test_runner.py quick
+        python -m pytest _test/unit/ -v --tb=short
         
     - name: Upload unit test results
       uses: actions/upload-artifact@v4
@@ -94,17 +94,50 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r _test/requirements-test.txt
         
+    - name: Install Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
+        
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        DIGIDIG_ENV=test
+        POSTGRES_HOST=localhost
+        POSTGRES_PASSWORD=postgres
+        MONGO_HOST=localhost
+        MONGO_PASSWORD=mongo
+        JWT_SECRET=test-secret-for-ci
+        EOF
+        
+    - name: Build and start services
+      run: |
+        docker-compose build
+        docker-compose up -d
+        sleep 30
+        
     - name: Wait for services
       run: |
-        timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
+        timeout 120 bash -c 'until docker-compose ps | grep -q "healthy\|Up"; do sleep 5; done'
+        docker-compose ps
         
     - name: Run integration tests
       env:
         DIGIDIG_ENV: test
-        POSTGRES_HOST: localhost
-        MONGO_HOST: localhost
       run: |
-        python unified_test_runner.py integration
+        python -m pytest _test/integration/ -v --tb=short -m "not slow"
+      timeout-minutes: 15
+        
+    - name: Show logs on failure
+      if: failure()
+      run: |
+        docker-compose logs identity | tail -50
+        docker-compose logs smtp | tail -50
+        
+    - name: Cleanup
+      if: always()
+      run: |
+        docker-compose down -v
         
     - name: Upload integration test results
       uses: actions/upload-artifact@v4
@@ -164,17 +197,42 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r _test/requirements-test.txt
         
+    - name: Install Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
+        
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        DIGIDIG_ENV=test
+        POSTGRES_HOST=localhost
+        POSTGRES_PASSWORD=postgres
+        MONGO_HOST=localhost
+        MONGO_PASSWORD=mongo
+        JWT_SECRET=test-secret-for-ci
+        EOF
+        
+    - name: Build and start services
+      run: |
+        docker-compose build
+        docker-compose up -d
+        sleep 30
+        
     - name: Wait for services
       run: |
-        timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
+        timeout 120 bash -c 'until docker-compose ps | grep -q "healthy\|Up"; do sleep 5; done'
         
     - name: Run full test suite with coverage
       env:
         DIGIDIG_ENV: test
-        POSTGRES_HOST: localhost
-        MONGO_HOST: localhost
       run: |
-        python unified_test_runner.py all
+        python -m pytest _test/ -v --tb=short --cov=. --cov-report=xml --cov-report=term
+        
+    - name: Cleanup
+      if: always()
+      run: |
+        docker-compose down -v
         
     - name: Upload coverage reports
       uses: actions/upload-artifact@v4

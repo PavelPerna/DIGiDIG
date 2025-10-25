@@ -70,7 +70,7 @@ test-unit-core:  ## Run core unit tests (config, i18n, models)
 	@python3 unified_test_runner.py unit-core
 
 test-integration:  ## Run integration tests
-	@python3 unified_test_runner.py integration
+	@python3 -m pytest _test/integration/ -v --tb=short -m "not slow"
 
 test-persistence:  ## Run persistence tests
 	@python3 unified_test_runner.py persistence
