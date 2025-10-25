@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy common module and config files (from project root)
-COPY common/ /app/common/
+COPY lib/ /app/lib/
 COPY config/ /app/config/
 COPY locales/ /app/locales/
 

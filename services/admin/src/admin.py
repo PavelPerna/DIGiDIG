@@ -16,7 +16,7 @@ import sys
 # Add parent directory to path for common imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from common.config import get_config, get_service_url
+from lib.common.config import get_config, get_service_url
 
 # Nastavení logování
 logging.basicConfig(
