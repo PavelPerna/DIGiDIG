@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY services/identity/src/ ./src/
 COPY services/identity/scripts/ ./scripts/
 
-ENV PYTHONPATH=/app:$PYTHONPATH
+ENV PYTHONPATH=/app
 
 RUN chmod +x /app/scripts/start.sh
 
