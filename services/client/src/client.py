@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 # Add parent directory to path for common imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from lib.common.config import get_config, get_service_url
+from lib.common.config import get_config, get_service_url, get_external_service_url, get_external_service_url
 from lib.common.i18n import init_i18n, get_i18n
 
 # Logging setup
@@ -26,7 +26,8 @@ i18n = init_i18n(default_language='en', service_name='client')
 # Get configuration
 config = get_config()
 IDENTITY_URL = get_service_url('identity')
-SSO_URL = get_service_url('sso')
+SSO_INTERNAL_URL = get_service_url('sso')  # Internal URL for server-to-server calls
+SSO_EXTERNAL_URL = get_external_service_url('sso')  # External URL for browser redirects
 
 app = FastAPI(
     title="DIGiDIG Client Service",
@@ -50,7 +51,7 @@ async def auth_middleware(request: Request, call_next):
         if not user:
             # Redirect to SSO for authentication
             redirect_url = urllib.parse.quote(str(request.url))
-            return RedirectResponse(url=f"{SSO_URL}/?redirect_to={redirect_url}", status_code=307)
+            return RedirectResponse(url=f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}", status_code=307)
     
     response = await call_next(request)
     return response
@@ -74,7 +75,7 @@ async def get_user_from_token(request: Request):
         # Verify token with SSO service
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                f"{SSO_URL}/verify",
+                f"{SSO_INTERNAL_URL}/verify",
                 cookies={"access_token": token}
             ) as response:
                 if response.status == 200:
@@ -93,7 +94,7 @@ async def require_auth(request: Request):
     if not user:
         # Create redirect URL to SSO with current URL as return destination
         redirect_url = urllib.parse.quote(str(request.url))
-        sso_login_url = f"{SSO_URL}/?redirect_to={redirect_url}"
+        sso_login_url = f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}"
         raise HTTPException(status_code=307, headers={"Location": sso_login_url})
     return user
 
@@ -141,21 +142,25 @@ async def root(request: Request):
     if user:
         return RedirectResponse(url="/dashboard", status_code=303)
     else:
-        # Redirect to SSO for authentication
-        redirect_url = urllib.parse.quote(str(request.url).replace('/', '/dashboard'))
-        return RedirectResponse(url=f"{SSO_URL}/?redirect_to={redirect_url}", status_code=307)
+        # Redirect to SSO for authentication - user should come back to dashboard
+        base_url = f"{request.url.scheme}://{request.url.netloc}"
+        redirect_url = urllib.parse.quote(f"{base_url}/dashboard")
+        return RedirectResponse(url=f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}", status_code=307)
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_redirect(request: Request):
     """Legacy login endpoint - redirect to SSO"""
-    redirect_url = urllib.parse.quote(str(request.url).replace('/login', '/dashboard'))
-    return RedirectResponse(url=f"{SSO_URL}/?redirect_to={redirect_url}", status_code=307)
+    base_url = f"{request.url.scheme}://{request.url.netloc}"
+    redirect_url = urllib.parse.quote(f"{base_url}/dashboard")
+    return RedirectResponse(url=f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}", status_code=307)
 
 @app.post("/logout")
+@app.get("/logout")
 async def logout(request: Request):
     """Logout endpoint - redirect to SSO logout"""
-    redirect_url = urllib.parse.quote(str(request.url).replace('/logout', '/'))
-    return RedirectResponse(url=f"{SSO_URL}/logout?redirect_to={redirect_url}", status_code=307)
+    base_url = f"{request.url.scheme}://{request.url.netloc}"
+    redirect_url = urllib.parse.quote(f"{base_url}/")
+    return RedirectResponse(url=f"{SSO_EXTERNAL_URL}/logout?redirect_to={redirect_url}", status_code=307)
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request, error: str = None):
@@ -240,13 +245,6 @@ async def health_check():
             "identity": IDENTITY_URL
         }
     }
-
-@app.post("/logout")
-async def logout(response: Response):
-    """Logout user by clearing cookie"""
-    redirect_response = RedirectResponse(url="/", status_code=303)
-    redirect_response.delete_cookie(key="access_token")
-    return redirect_response
 
 @app.get("/health")
 async def health_check():

@@ -59,7 +59,7 @@ class I18n:
     def _get_locales_dir(self) -> Path:
         """Get path to locales directory."""
         # Locales are in project root
-        project_root = Path(__file__).parent.parent
+        project_root = Path(__file__).parent.parent.parent
         return project_root / 'locales'
     
     def _load_translations(self):

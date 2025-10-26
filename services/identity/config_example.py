@@ -35,7 +35,7 @@ REFRESH_TOKEN_EXPIRE = config.get("security.jwt.refresh_token_expire_days", 7)
 
 # Get service URLs
 STORAGE_URL = config.get("services.storage.url")
-SMTP_URL = config.get("services.smtp.rest_url")
+SMTP_URL = config.get("services.smtp.url")
 
 # Database connection string
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"

@@ -5,6 +5,7 @@ WORKDIR /app
 # Copy common module and config files (from project root)
 COPY lib/ ./lib/
 COPY config/ ./config/
+COPY locales/ ./locales/
 
 # Copy service-specific files
 COPY services/client/requirements.txt .

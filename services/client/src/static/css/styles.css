@@ -17,6 +17,8 @@
     --warning: #d29922;
     --success: #238636;
     --info: #1f6feb;
+    --primary: #238636;
+    --primary-hover: #2ea043;
 }
 
 body { 

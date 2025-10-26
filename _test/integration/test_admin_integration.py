@@ -12,7 +12,13 @@ import os
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-ADMIN_URL = os.environ.get("ADMIN_URL", "http://localhost:8005")
+def get_service_url(service, port, default_host='localhost'):
+    """Get service URL, preferring Docker service names in containerized environment"""
+    if os.getenv('SKIP_COMPOSE') == '1':  # Running in Docker test container
+        return f'http://{service}:{port}'
+    return f'http://{default_host}:{port}'
+
+ADMIN_URL = get_service_url('admin', 8005)
 
 
 class TestAdminService:
@@ -32,10 +38,11 @@ class TestAdminService:
             'username': username,
             'domain': domain,
             'role': role,
-            'password': password,
-            'token': token
+            'password': password
         }
-        response = requests.post(f"{ADMIN_URL}/manage-user", data=data)
+        # Send token as cookie (not form data)
+        cookies = {'access_token': token}
+        response = requests.post(f"{ADMIN_URL}/manage-user", data=data, cookies=cookies)
         return response
 
     def test_admin_login_success(self):
@@ -91,8 +98,8 @@ class TestAdminService:
     def test_admin_dashboard_access(self):
         """Test admin dashboard accessibility."""
         response = requests.get(f"{ADMIN_URL}/", allow_redirects=False)
-        # Dashboard might redirect to login, which is expected
-        assert response.status_code in [200, 302], f"Dashboard access failed: {response.status_code}"
+        # Dashboard might redirect to login, which is expected (302, 307)
+        assert response.status_code in [200, 302, 307], f"Dashboard access failed: {response.status_code}"
         
         logger.info("✅ Admin dashboard accessible")
 

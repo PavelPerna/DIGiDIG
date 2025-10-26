@@ -153,12 +153,23 @@ def load_config(config_path: Optional[str] = None, env: Optional[str] = None) ->
 # Convenience functions for common config access
 def get_db_config(db_type: str = "postgres") -> Dict[str, Any]:
     """Get database configuration"""
-    return get_config().get_section(f"database.{db_type}")
+    return get_config().get(f"database.{db_type}", {})
 
 
 def get_service_url(service_name: str) -> str:
     """Get service URL by name"""
     return get_config().get(f"services.{service_name}.url", "")
+
+
+def get_external_service_url(service_name: str) -> str:
+    """Get external service URL by name for browser access"""
+    # Try external_urls section first (for localhost browser access)
+    external_url = get_config().get(f"external_urls.{service_name}")
+    if external_url:
+        return external_url
+    
+    # Fallback to internal service URL
+    return get_service_url(service_name)
 
 
 def get_jwt_secret() -> str:

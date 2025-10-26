@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 # Add parent directory to path for common imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
-from lib.common.config import get_config, get_service_url
+from lib.common.config import get_config, get_service_url, get_external_service_url
 from lib.common.i18n import init_i18n
 
 # Logging setup
@@ -121,6 +121,8 @@ async def validate_redirect_url(url: str) -> bool:
     
     # Get trusted service URLs from config
     trusted_hosts = []
+    
+    # Add internal service hosts
     services = config.get('services', {})
     for service_name, service_config in services.items():
         if isinstance(service_config, dict) and 'host' in service_config:
@@ -129,8 +131,44 @@ async def validate_redirect_url(url: str) -> bool:
             if 'port' in service_config:
                 trusted_hosts.append(f"{service_config['host']}:{service_config['port']}")
     
+    # Add localhost and docker network hosts for development/testing
+    trusted_hosts.extend(['localhost', '127.0.0.1', 'host.docker.internal'])
+    # Add localhost ports for external access
+    trusted_hosts.extend(['localhost:8000', 'localhost:8001', 'localhost:8002', 'localhost:8003', 
+                         'localhost:8004', 'localhost:8005', 'localhost:8006'])
+    # Add Docker network service names
+    for service_name in services.keys():
+        trusted_hosts.append(service_name)
+    
     # Check if the host is in our trusted list
     return parsed.netloc in trusted_hosts
+
+def convert_to_external_url(url: str) -> str:
+    """Convert Docker service URL to external browser-accessible URL"""
+    if not url:
+        return url
+        
+    parsed = urllib.parse.urlparse(url)
+    
+    # If it's already localhost or external, return as is
+    if parsed.netloc.startswith('localhost:') or parsed.netloc.startswith('127.0.0.1:'):
+        return url
+    
+    # Map Docker service names to localhost URLs
+    service_mappings = {
+        'admin:8005': 'localhost:8005',
+        'client:8004': 'localhost:8004', 
+        'sso:8006': 'localhost:8006',
+        'identity:8001': 'localhost:8001',
+        'storage:8002': 'localhost:8002',
+        'smtp:8000': 'localhost:8000',
+        'imap:8003': 'localhost:8003'
+    }
+    
+    if parsed.netloc in service_mappings:
+        return url.replace(parsed.netloc, service_mappings[parsed.netloc])
+    
+    return url
 
 async def authenticate_user(username_or_email: str, password: str) -> Optional[Dict[str, Any]]:
     """Authenticate user with identity service"""
@@ -182,10 +220,11 @@ async def login_page(request: Request, redirect_to: Optional[str] = None):
         if user_data:
             # User is already authenticated, redirect if needed
             if redirect_to and await validate_redirect_url(redirect_to):
-                return RedirectResponse(url=redirect_to)
+                external_redirect_url = convert_to_external_url(redirect_to)
+                return RedirectResponse(url=external_redirect_url)
             else:
-                # Default redirect to client service
-                client_url = get_service_url('client')
+                # Default redirect to client service with external URL
+                client_url = get_external_service_url('client')
                 return RedirectResponse(url=f"{client_url}/dashboard")
     
     return templates.TemplateResponse("login.html", {
@@ -206,6 +245,13 @@ async def login(
     lang = get_language(request)
     i18n.set_language(lang)
     
+    # Check for redirect_to in query params if not in form data
+    if not redirect_to:
+        redirect_to = request.query_params.get("redirect_to")
+    
+    logger.info(f"Login request - redirect_to from form: {redirect_to}")
+    logger.info(f"Login request - query params: {dict(request.query_params)}")
+    
     # Authenticate with identity service
     auth_result = await authenticate_user(username, password)
     
@@ -219,22 +265,30 @@ async def login(
             "translations": i18n.get_all()
         }, status_code=401)
     
+    logger.info(f"Login success - redirect_to: {redirect_to}")
+    
     # Create response with redirect
     if redirect_to and await validate_redirect_url(redirect_to):
-        response = RedirectResponse(url=redirect_to, status_code=302)
+        # Convert Docker service URLs to external browser-accessible URLs
+        external_redirect_url = convert_to_external_url(redirect_to)
+        logger.info(f"Using provided redirect_to: {redirect_to} -> {external_redirect_url}")
+        response = RedirectResponse(url=external_redirect_url, status_code=302)
     else:
-        # Default redirect to client dashboard
-        client_url = get_service_url('client')
+        logger.info(f"Using default redirect - redirect_to was: {redirect_to}")
+        # Default redirect to client dashboard with external URL
+        client_url = get_external_service_url('client')
         response = RedirectResponse(url=f"{client_url}/dashboard", status_code=302)
     
     # Set authentication cookies
+    # Note: In Docker network, omit domain to allow cookie sharing between services
     response.set_cookie(
         key="access_token",
         value=auth_result["access_token"],
         max_age=1800,  # 30 minutes
         httponly=True,
         secure=config.get('security.cookie.secure', False),
-        samesite=config.get('security.cookie.samesite', 'lax')
+        samesite=config.get('security.cookie.samesite', 'lax'),
+        path="/"
     )
     
     if "refresh_token" in auth_result:
@@ -244,24 +298,31 @@ async def login(
             max_age=7*24*60*60,  # 7 days
             httponly=True,
             secure=config.get('security.cookie.secure', False),
-            samesite=config.get('security.cookie.samesite', 'lax')
+            samesite=config.get('security.cookie.samesite', 'lax'),
+            path="/"
         )
     
     logger.info(f"User {username} logged in successfully")
     return response
 
 @app.post("/logout")
+@app.get("/logout")
 async def logout(request: Request, redirect_to: Optional[str] = None):
     """Logout user and clear session"""
+    # Get redirect_to from query params if not provided as parameter
+    if not redirect_to:
+        redirect_to = request.query_params.get("redirect_to")
+    
     # Create response
     if redirect_to and await validate_redirect_url(redirect_to):
-        response = RedirectResponse(url=redirect_to)
+        external_redirect_url = convert_to_external_url(redirect_to)
+        response = RedirectResponse(url=external_redirect_url)
     else:
         response = RedirectResponse(url="/")
     
     # Clear authentication cookies
-    response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
+    response.delete_cookie("access_token", path="/")
+    response.delete_cookie("refresh_token", path="/")
     
     logger.info("User logged out")
     return response

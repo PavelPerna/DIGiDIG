@@ -7,7 +7,13 @@ from httpx import Client
 
 
 COMPOSE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'docker-compose.yml'))
-BASE_URL = os.environ.get('BASE_URL', 'http://localhost:8001')
+def get_service_url(service, port, default_host='localhost'):
+    """Get service URL, preferring Docker service names in containerized environment"""
+    if os.getenv('SKIP_COMPOSE') == '1':  # Running in Docker test container
+        return f'http://{service}:{port}'
+    return f'http://{default_host}:{port}'
+
+BASE_URL = get_service_url('identity', 8001)
 
 
 def docker_compose_up(services):

@@ -1,5 +1,5 @@
 # Test Configuration Override
-# Used by test container
+# For test container running in Docker network
 
 database:
   postgres:
@@ -8,19 +8,45 @@ database:
   mongodb:
     host: mongo
 
+# Test container uses Docker network URLs
 services:
   identity:
+    host: identity
+    port: 8001
     url: http://identity:8001
+  
   smtp:
-    rest_url: http://smtp:8000
+    host: smtp
+    port: 8000
+    url: http://smtp:8000
+  
   imap:
-    rest_url: http://imap:8003
+    host: imap
+    port: 8003
+    url: http://imap:8003
+  
   storage:
+    host: storage
+    port: 8002
     url: http://storage:8002
+  
+  admin:
+    host: admin
+    port: 8005
+    url: http://admin:8005
+  
+  client:
+    host: client
+    port: 8004
+    url: http://client:8004
+  
+  sso:
+    host: sso
+    port: 8006
+    url: http://sso:8006
 
 test:
   enabled: true
-  skip_compose: true
 
 logging:
   level: "DEBUG"

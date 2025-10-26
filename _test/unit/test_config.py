@@ -40,7 +40,7 @@ def temp_config_dir():
             },
             "services": {
                 "storage": {"url": "http://storage:8002"},
-                "smtp": {"rest_url": "http://smtp:8000"}
+                "smtp": {"url": "http://smtp:8000"}
             }
         }
         
@@ -180,7 +180,7 @@ def test_nested_path_access(temp_config_dir):
     
     # Deep nesting
     assert config.get("services.storage.url") == "http://storage:8002"
-    assert config.get("services.smtp.rest_url") == "http://smtp:8000"
+    assert config.get("services.smtp.url") == "http://smtp:8000"
     
     # Invalid deep path
     assert config.get("services.nonexistent.url") is None

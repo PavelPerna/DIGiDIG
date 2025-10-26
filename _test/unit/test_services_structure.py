@@ -13,7 +13,7 @@ class TestServiceStructure:
     
     def test_identity_service_exists(self):
         """Test that identity service file exists"""
-        identity_file = Path(__file__).parent.parent.parent / 'identity' / 'src' / 'identity.py'
+        identity_file = Path(__file__).parent.parent.parent / 'services' / 'identity' / 'src' / 'identity.py'
         assert identity_file.exists()
         
         # Read and parse the file
@@ -27,7 +27,7 @@ class TestServiceStructure:
     
     def test_smtp_service_exists(self):
         """Test that SMTP service file exists"""
-        smtp_file = Path(__file__).parent.parent.parent / 'smtp' / 'src' / 'smtp.py'
+        smtp_file = Path(__file__).parent.parent.parent / 'services' / 'smtp' / 'src' / 'smtp.py'
         assert smtp_file.exists()
         
         with open(smtp_file, 'r') as f:
@@ -37,7 +37,7 @@ class TestServiceStructure:
     
     def test_storage_service_exists(self):
         """Test that storage service file exists"""
-        storage_file = Path(__file__).parent.parent.parent / 'storage' / 'src' / 'storage.py'
+        storage_file = Path(__file__).parent.parent.parent / 'services' / 'storage' / 'src' / 'storage.py'
         assert storage_file.exists()
         
         with open(storage_file, 'r') as f:
@@ -47,7 +47,7 @@ class TestServiceStructure:
     
     def test_imap_service_exists(self):
         """Test that IMAP service file exists"""
-        imap_file = Path(__file__).parent.parent.parent / 'imap' / 'src' / 'imap.py'
+        imap_file = Path(__file__).parent.parent.parent / 'services' / 'imap' / 'src' / 'imap.py'
         assert imap_file.exists()
         
         with open(imap_file, 'r') as f:
@@ -57,7 +57,7 @@ class TestServiceStructure:
     
     def test_client_service_exists(self):
         """Test that client service file exists"""
-        client_file = Path(__file__).parent.parent.parent / 'client' / 'src' / 'client.py'
+        client_file = Path(__file__).parent.parent.parent / 'services' / 'client' / 'src' / 'client.py'
         assert client_file.exists()
         
         with open(client_file, 'r') as f:
@@ -67,7 +67,7 @@ class TestServiceStructure:
     
     def test_admin_service_exists(self):
         """Test that admin service file exists"""
-        admin_file = Path(__file__).parent.parent.parent / 'admin' / 'src' / 'admin.py'
+        admin_file = Path(__file__).parent.parent.parent / 'services' / 'admin' / 'src' / 'admin.py'
         assert admin_file.exists()
         
         with open(admin_file, 'r') as f:
@@ -77,7 +77,7 @@ class TestServiceStructure:
     
     def test_apidocs_service_exists(self):
         """Test that API docs service file exists"""
-        apidocs_file = Path(__file__).parent.parent.parent / 'apidocs' / 'src' / 'apidocs.py'
+        apidocs_file = Path(__file__).parent.parent.parent / 'services' / 'apidocs' / 'src' / 'apidocs.py'
         assert apidocs_file.exists()
         
         with open(apidocs_file, 'r') as f:
@@ -91,7 +91,7 @@ class TestServiceParsing:
     
     def test_identity_service_syntax(self):
         """Test identity service has valid Python syntax"""
-        identity_file = Path(__file__).parent.parent.parent / 'identity' / 'src' / 'identity.py'
+        identity_file = Path(__file__).parent.parent.parent / 'services' / 'identity' / 'src' / 'identity.py'
         
         with open(identity_file, 'r') as f:
             content = f.read()
@@ -105,7 +105,7 @@ class TestServiceParsing:
     
     def test_smtp_service_syntax(self):
         """Test SMTP service has valid Python syntax"""
-        smtp_file = Path(__file__).parent.parent.parent / 'smtp' / 'src' / 'smtp.py'
+        smtp_file = Path(__file__).parent.parent.parent / 'services' / 'smtp' / 'src' / 'smtp.py'
         
         with open(smtp_file, 'r') as f:
             content = f.read()
@@ -118,7 +118,7 @@ class TestServiceParsing:
     
     def test_storage_service_syntax(self):
         """Test storage service has valid Python syntax"""
-        storage_file = Path(__file__).parent.parent.parent / 'storage' / 'src' / 'storage.py'
+        storage_file = Path(__file__).parent.parent.parent / 'services' / 'storage' / 'src' / 'storage.py'
         
         with open(storage_file, 'r') as f:
             content = f.read()
@@ -131,7 +131,7 @@ class TestServiceParsing:
     
     def test_imap_service_syntax(self):
         """Test IMAP service has valid Python syntax"""
-        imap_file = Path(__file__).parent.parent.parent / 'imap' / 'src' / 'imap.py'
+        imap_file = Path(__file__).parent.parent.parent / 'services' / 'imap' / 'src' / 'imap.py'
         
         with open(imap_file, 'r') as f:
             content = f.read()
@@ -144,7 +144,7 @@ class TestServiceParsing:
     
     def test_client_service_syntax(self):
         """Test client service has valid Python syntax"""
-        client_file = Path(__file__).parent.parent.parent / 'client' / 'src' / 'client.py'
+        client_file = Path(__file__).parent.parent.parent / 'services' / 'client' / 'src' / 'client.py'
         
         with open(client_file, 'r') as f:
             content = f.read()
@@ -157,7 +157,7 @@ class TestServiceParsing:
     
     def test_admin_service_syntax(self):
         """Test admin service has valid Python syntax"""
-        admin_file = Path(__file__).parent.parent.parent / 'admin' / 'src' / 'admin.py'
+        admin_file = Path(__file__).parent.parent.parent / 'services' / 'admin' / 'src' / 'admin.py'
         
         with open(admin_file, 'r') as f:
             content = f.read()
@@ -170,7 +170,7 @@ class TestServiceParsing:
     
     def test_apidocs_service_syntax(self):
         """Test API docs service has valid Python syntax"""
-        apidocs_file = Path(__file__).parent.parent.parent / 'apidocs' / 'src' / 'apidocs.py'
+        apidocs_file = Path(__file__).parent.parent.parent / 'services' / 'apidocs' / 'src' / 'apidocs.py'
         
         with open(apidocs_file, 'r') as f:
             content = f.read()
@@ -187,7 +187,7 @@ class TestServiceFunctions:
     
     def test_identity_service_functions(self):
         """Test identity service contains expected functions"""
-        identity_file = Path(__file__).parent.parent.parent / 'identity' / 'src' / 'identity.py'
+        identity_file = Path(__file__).parent.parent.parent / 'services' / 'identity' / 'src' / 'identity.py'
         
         with open(identity_file, 'r') as f:
             content = f.read()
@@ -212,7 +212,7 @@ class TestServiceFunctions:
     
     def test_smtp_service_functions(self):
         """Test SMTP service contains expected functions"""
-        smtp_file = Path(__file__).parent.parent.parent / 'smtp' / 'src' / 'smtp.py'
+        smtp_file = Path(__file__).parent.parent.parent / 'services' / 'smtp' / 'src' / 'smtp.py'
         
         with open(smtp_file, 'r') as f:
             content = f.read()
@@ -234,7 +234,7 @@ class TestServiceFunctions:
     
     def test_storage_service_functions(self):
         """Test storage service contains expected functions"""
-        storage_file = Path(__file__).parent.parent.parent / 'storage' / 'src' / 'storage.py'
+        storage_file = Path(__file__).parent.parent.parent / 'services' / 'storage' / 'src' / 'storage.py'
         
         with open(storage_file, 'r') as f:
             content = f.read()

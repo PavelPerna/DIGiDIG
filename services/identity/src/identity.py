@@ -11,9 +11,42 @@ import uuid
 import hashlib
 import asyncio
 import time
+import sys
 
-# Configuration (with backward compatibility)
-from config_loader import config
+# Add parent directory to path for common imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+
+# Configuration
+from lib.common.config import get_config, get_db_config
+
+# Get configuration
+config_obj = get_config()
+db_config = get_db_config('postgres')  # Get postgres config directly
+
+# For backward compatibility, create config object with old attributes
+class ConfigCompat:
+    def __init__(self):
+        print(f"DEBUG: ConfigCompat init called")
+        print(f"DEBUG: config_obj = {config_obj}")
+        # JWT settings
+        self.JWT_SECRET = config_obj.get('security.jwt.secret', 'super-secret-key-change-in-production')
+        self.JWT_ALGORITHM = config_obj.get('security.jwt.algorithm', 'HS256')
+        self.TOKEN_EXPIRY = config_obj.get('security.jwt.token_expiry', 1800)  # 30 minutes
+        self.REFRESH_TOKEN_EXPIRY = config_obj.get('security.jwt.refresh_token_expiry', 604800)  # 7 days
+        
+        # Database settings (PostgreSQL)
+        self.DB_HOST = db_config.get('host', 'postgres')
+        self.DB_USER = db_config.get('user', 'postgres')
+        self.DB_PASS = db_config.get('password', 'securepassword')
+        self.DB_NAME = db_config.get('database', 'strategos')
+        
+        # Admin settings
+        self.ADMIN_EMAIL = config_obj.get('security.admin.email', 'admin@example.com')
+        self.ADMIN_PASSWORD = config_obj.get('security.admin.password', 'admin')
+        print(f"DEBUG: ADMIN_EMAIL = {self.ADMIN_EMAIL}")
+        print(f"DEBUG: ADMIN_PASSWORD = {self.ADMIN_PASSWORD}")
+
+config = ConfigCompat()
 
 # Logging
 logging.basicConfig(
@@ -104,11 +137,8 @@ service_state = {
     "last_request_time": None,
     "active_sessions": [],
     "config": {
-        "hostname": config.IDENTITY_HOSTNAME,
-        "port": config.IDENTITY_PORT,
         "enabled": True,
-        "timeout": config.IDENTITY_TIMEOUT,
-        "jwt_secret": config.JWT_SECRET,
+        "jwt_algorithm": config.JWT_ALGORITHM,
         "token_expiry": config.TOKEN_EXPIRY,
         "refresh_token_expiry": config.REFRESH_TOKEN_EXPIRY,
         "db_host": config.DB_HOST,
@@ -438,10 +468,13 @@ async def revoke_token(body: dict = None, authorization: str = Header(None)):
     # Persist the revoked jti with expiry (if known) or a default short expiry
     if not exp_ts:
         exp_ts = datetime.now(timezone.utc) + timedelta(hours=1)
+    
+    # Convert to naive datetime for database storage (TIMESTAMP without timezone)
+    exp_ts_naive = exp_ts.replace(tzinfo=None) if exp_ts.tzinfo else exp_ts
 
     async with app.state.db_pool.acquire() as conn:
         try:
-            await conn.execute('INSERT INTO revoked_tokens (jti, expires_at) VALUES ($1, $2) ON CONFLICT DO NOTHING', jti, exp_ts)
+            await conn.execute('INSERT INTO revoked_tokens (jti, expires_at) VALUES ($1, $2) ON CONFLICT DO NOTHING', jti, exp_ts_naive)
             logger.info(f"Revoked token jti={jti}")
             return {'status': 'revoked', 'jti': jti}
         except Exception as e:

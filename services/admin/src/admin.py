@@ -16,7 +16,7 @@ import sys
 # Add parent directory to path for common imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from lib.common.config import get_config, get_service_url
+from lib.common.config import get_config, get_service_url, get_external_service_url
 
 # Nastavení logování
 logging.basicConfig(
@@ -28,28 +28,38 @@ logger = logging.getLogger(__name__)
 
 # Get configuration
 config = get_config()
+# Configuration
 IDENTITY_URL = get_service_url('identity')
-SSO_URL = get_service_url('sso')
+SSO_INTERNAL_URL = get_service_url('sso')  # Internal URL for server-to-server calls
+SSO_EXTERNAL_URL = get_external_service_url('sso')  # External URL for browser redirects
 
 app = FastAPI(title="Admin Microservice")
 
 # Authentication middleware
 @app.middleware("http")
-async def auth_middleware(request: Request, call_next):
+async def auth_middleware_handler(request: Request, call_next):
     """Middleware to handle authentication for protected routes"""
     # Public routes that don't require authentication
-    public_paths = ["/health", "/static", "/api/health", "/login", "/logout"]
+    public_paths = ["/health", "/static", "/api/health", "/login", "/logout", "/api/login"]
     
     # Check if this is a public path
-    is_public = any(request.url.path.startswith(path) or request.url.path == path for path in public_paths)
+    path = request.url.path
+    is_public = (
+        path == "/api/login" or 
+        path == "/api/health" or 
+        path == "/health" or 
+        path == "/login" or 
+        path == "/logout" or
+        path.startswith("/static")
+    )
     
-    if not is_public and request.url.path != "/":
+    if not is_public and path != "/":
         # Check authentication
         user = await get_user_from_token(request)
         if not user:
             # Redirect to SSO for authentication
             redirect_url = urllib.parse.quote(str(request.url))
-            sso_login_url = f"{SSO_URL}/?redirect_to={redirect_url}"
+            sso_login_url = f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}"
             return RedirectResponse(url=sso_login_url, status_code=307)
         
         # Check if user has admin role
@@ -68,7 +78,7 @@ async def get_user_from_token(request: Request):
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                f"{SSO_URL}/verify",
+                f"{SSO_INTERNAL_URL}/verify",
                 cookies={"access_token": token}
             ) as response:
                 if response.status == 200:
@@ -87,6 +97,20 @@ def is_admin(user: dict) -> bool:
     return 'admin' in roles or user.get('role') == 'admin'
 
 
+async def require_auth(request: Request):
+    """Dependency to require authentication"""
+    user = await get_user_from_token(request)
+    if not user:
+        # For dependencies, we can't redirect directly, need to raise exception
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    # Check if user has admin role
+    if not is_admin(user):
+        raise HTTPException(status_code=403, detail="Admin role required")
+    
+    return user
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     # Log full traceback for debugging and return JSON error
@@ -98,8 +122,12 @@ async def global_exception_handler(request, exc):
         return format_identity_response(status=getattr(exc, 'status_code', None), body=detail)
     # Otherwise return a generic 500 but allow format_identity_response to normalize body
     return format_identity_response(status=500, body={"error": str(exc)})
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+
+# Get the directory where this admin.py file is located
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
+app.mount("/static", StaticFiles(directory=os.path.join(current_dir, "static")), name="static")
+templates = Jinja2Templates(directory=os.path.join(current_dir, "templates"))
 
 
 class AdminIdentityError(Exception):
@@ -139,12 +167,15 @@ class User(BaseModel):
 
 class Domain(BaseModel):
     name: str
+
+class LanguageRequest(BaseModel):
+    language: str
     old_name: str = None  # For rename operations
 
 async def identity_request(session, method, endpoint, data=None, token=None, params=None):
     """Helper function for making requests to identity service"""
     headers = {"Authorization": f"Bearer {token}"} if token else {}
-    url = f"http://identity:8001{endpoint}"
+    url = f"{IDENTITY_URL}{endpoint}"
 
     async with getattr(session, method.lower())(
         url,
@@ -198,8 +229,16 @@ async def get_user(token: str):
         raise HTTPException(status_code=401, detail=f"Neplatný token: {str(e)}")
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request, user: dict = Depends(auth_middleware)):
+async def index(request: Request):
     logger.info("Načítání admin dashboardu")
+    
+    # Get user from middleware
+    user = await get_user_from_token(request)
+    if not user:
+        # Redirect to SSO for authentication
+        redirect_url = urllib.parse.quote(str(request.url))
+        sso_login_url = f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}"
+        return RedirectResponse(url=sso_login_url, status_code=307)
     
     # Check if user has admin role
     if not is_admin(user):
@@ -246,14 +285,14 @@ async def index(request: Request, user: dict = Depends(auth_middleware)):
 async def login_redirect(request: Request):
     """Legacy login endpoint - redirect to SSO"""
     redirect_url = urllib.parse.quote(str(request.url).replace('/login', '/'))
-    sso_login_url = f"{SSO_URL}/?redirect_to={redirect_url}"
+    sso_login_url = f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}"
     return RedirectResponse(url=sso_login_url)
 
 @app.post("/login", response_class=HTMLResponse)
 async def login_post_redirect(request: Request):
     """Legacy POST login endpoint - redirect to SSO GET endpoint"""
     redirect_url = urllib.parse.quote(str(request.url).replace('/login', '/'))
-    sso_login_url = f"{SSO_URL}/?redirect_to={redirect_url}"
+    sso_login_url = f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}"
     return RedirectResponse(url=sso_login_url)
 
 
@@ -304,7 +343,7 @@ async def manage_user(
     password: str = Form(None),
     originalUsername: str = Form(None),
     id: Optional[int] = Form(None),
-    user: dict = Depends(auth_middleware)
+    user: dict = Depends(require_auth)
 ):
     operation = "update" if (originalUsername or id) else "create"
     target = originalUsername if originalUsername else username
@@ -360,7 +399,7 @@ async def manage_domain(
     request: Request,
     name: str = Form(...),
     oldName: str = Form(None),
-    user: dict = Depends(auth_middleware)
+    user: dict = Depends(require_auth)
 ):
     operation = "update" if oldName else "create"
     target_name = oldName if oldName else name
@@ -399,7 +438,7 @@ async def manage_domain(
 async def delete_domain(
     request: Request,
     name: str = Form(...),
-    user: dict = Depends(auth_middleware)
+    user: dict = Depends(require_auth)
 ):
     logger.info(f"Odstraňování domény: {name}")
     
@@ -430,7 +469,7 @@ async def delete_user(
     username: str = Form(None),
     domain: str = Form(None),
     id: Optional[int] = Form(None),
-    user: dict = Depends(auth_middleware)
+    user: dict = Depends(require_auth)
 ):
     target = id if id else (f"{username}@{domain}" if username and domain else username)
     logger.info(f"Odstraňování uživatele: {target}")
@@ -533,14 +572,14 @@ async def logout(request: Request):
 # Service Management Endpoints
 
 SERVICES = {
-    "smtp": "http://smtp:8000",
-    "imap": "http://imap:8003", 
-    "storage": "http://storage:8002",
-    "identity": "http://identity:8001"
+    "smtp": get_service_url('smtp').replace('/rest', ''),  # Remove /rest suffix for admin display
+    "imap": get_service_url('imap').replace('/rest', ''),  # Remove /rest suffix for admin display
+    "storage": get_service_url('storage'),
+    "identity": IDENTITY_URL
 }
 
 @app.get("/services", response_class=HTMLResponse)
-async def services_page(request: Request, user: dict = Depends(auth_middleware)):
+async def services_page(request: Request, user: dict = Depends(require_auth)):
     """Service management page"""
     logger.info("Načítání stránky pro správu služeb")
     
@@ -601,7 +640,7 @@ async def health_check():
         "service": "admin",
         "version": "1.0.0",
         "dependencies": {
-            "identity": "http://identity:8001"
+            "identity": IDENTITY_URL
         }
     }
 
@@ -776,3 +815,29 @@ async def restart_service(service_name: str, request: Request, token: str = None
             "message": f"Unexpected error: {str(e)}",
             "error": str(e)
         })
+
+@app.post("/api/language")
+async def set_language(request: Request, lang_request: LanguageRequest):
+    """Set language preference"""
+    try:
+        # Set language cookie
+        response = JSONResponse({"status": "success"})
+        response.set_cookie(
+            key="language",
+            value=lang_request.language,
+            max_age=30*24*60*60,  # 30 days
+            httponly=False,  # Allow client-side access
+            secure=False,  # Set to True in production with HTTPS
+            samesite="lax"
+        )
+        return response
+    except Exception as e:
+        logger.error(f"Error setting language: {str(e)}")
+        return JSONResponse(status_code=500, content={
+            "status": "error",
+            "message": str(e)
+        })
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8005)

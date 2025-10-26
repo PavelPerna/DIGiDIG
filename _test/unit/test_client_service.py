@@ -7,11 +7,16 @@ from pathlib import Path
 import sys
 
 # Add service src to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'client' / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'services' / 'client' / 'src'))
+
+# Mock the static directory to prevent FastAPI from failing
+def mock_staticfiles_init(self, directory, **kwargs):
+    self.directory = directory
 
 try:
-    from client import app
-    from config_loader import load_client_config
+    with patch('starlette.staticfiles.StaticFiles.__init__', mock_staticfiles_init):
+        from client import app
+        from config_loader import load_client_config
     CLIENT_AVAILABLE = True
 except ImportError:
     CLIENT_AVAILABLE = False

@@ -18,8 +18,14 @@ import requests
 import sys
 import time
 
-ADMIN = 'http://localhost:8005'
-IDENTITY = 'http://localhost:8001'
+def get_service_url(service, port, default_host='localhost'):
+    """Get service URL, preferring Docker service names in containerized environment"""
+    if os.getenv('SKIP_COMPOSE') == '1':  # Running in Docker test container
+        return f'http://{service}:{port}'
+    return f'http://{default_host}:{port}'
+
+ADMIN = get_service_url('admin', 8005)
+IDENTITY = get_service_url('identity', 8001)
 
 session = requests.Session()
 

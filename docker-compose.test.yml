@@ -1,0 +1,42 @@
+version: '3.9'
+
+services:
+  test-runner:
+    build:
+      context: ./_test
+      dockerfile: Dockerfile
+    environment:
+      - CI=true
+      - DIGIDIG_ENV=test
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+      - ./config:/app/config
+      - ./_test:/app/_test
+      - ./lib:/app/lib
+      - ./services:/app/services
+      - ./locales:/app/locales
+    networks:
+      - digidig_internal
+    depends_on:
+      - postgres
+      - mongo
+      - identity
+      - smtp
+      - imap
+      - storage
+      - client
+      - admin
+      - apidocs
+      - sso
+    command: >
+      sh -c "
+        echo 'Waiting for services to be ready...' &&
+        sleep 10 &&
+        echo 'Running integration tests...' &&
+        python -m pytest _test/integration/ -v --tb=short -k 'not slow' --maxfail=3
+      "
+
+networks:
+  digidig_internal:
+    external: true

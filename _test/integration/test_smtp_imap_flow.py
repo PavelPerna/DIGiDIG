@@ -18,9 +18,15 @@ import os
 # Test configuration
 SMTP_HOST = os.getenv("SMTP_HOST", "localhost")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "2525"))
-IDENTITY_URL = os.getenv("IDENTITY_URL", "http://localhost:8001")
-STORAGE_URL = os.getenv("STORAGE_URL", "http://localhost:8002")
-IMAP_URL = os.getenv("IMAP_URL", "http://localhost:8003")
+def get_service_url(service, port, default_host='localhost'):
+    """Get service URL, preferring Docker service names in containerized environment"""
+    if os.getenv('SKIP_COMPOSE') == '1':  # Running in Docker test container
+        return f'http://{service}:{port}'
+    return f'http://{default_host}:{port}'
+
+IDENTITY_URL = get_service_url('identity', 8001)
+STORAGE_URL = get_service_url('storage', 8002)
+IMAP_URL = get_service_url('imap', 8003)
 
 # Test credentials (should exist in system)
 TEST_SENDER = "admin@example.com"
@@ -206,7 +212,7 @@ class TestSMTPIMAPFlow:
     
     def test_rest_api_send(self, setup_test_environment):
         """Test sending email via REST API"""
-        smtp_url = os.getenv("SMTP_REST_URL", "http://localhost:8000")
+        smtp_url = get_service_url('smtp', 8000)
         recipient = "restapi@example.com"
         
         email_data = {

@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 # Add project root to Python path for imports
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(project_root / 'admin' / 'src'))
+sys.path.insert(0, str(project_root / 'services' / 'admin' / 'src'))
 
 
 @pytest.fixture(autouse=True)
@@ -31,7 +31,7 @@ def reset_config_state():
     # Reset global config instance if it exists
     try:
         import lib.common.config
-        common.config._config_instance = None
+        lib.common.config._config_instance = None
     except ImportError:
         pass
     

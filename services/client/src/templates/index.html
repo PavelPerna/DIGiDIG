@@ -44,6 +44,60 @@
             border-color: var(--input-focus);
             box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
         }
+        
+        /* Avatar dropdown styles */
+        .avatar-wrapper {
+            position: relative;
+        }
+        .avatar-button {
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            width: 46px;
+            height: 46px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .avatar-button svg {
+            width: 34px !important;
+            height: 34px !important;
+        }
+        .avatar-button:hover {
+            background: var(--primary-hover, #1d4ed8);
+            transform: scale(1.05);
+        }
+        .avatar-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--bg-color) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+            min-width: 120px;
+            z-index: 1000;
+            margin-top: 0.5rem;
+        }
+        .avatar-dropdown.hidden {
+            display: none;
+        }
+        .dropdown-item {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+            color: var(--text-color) !important;
+            font-size: 0.875rem;
+        }
+        .dropdown-item:hover {
+            background-color: var(--surface-hover) !important;
+        }
+        
         .logout-btn {
             background: var(--danger);
             color: white;
@@ -234,9 +288,18 @@
                     <option value="cs">Čeština</option>
                 </select>
             </div>
-            <form action="/logout" method="post" style="margin: 0;">
-                <button type="submit" class="logout-btn" id="logoutBtn">Logout</button>
-            </form>
+            <div class="avatar-wrapper">
+                <button class="avatar-button" onclick="toggleAvatarDropdown()" aria-haspopup="true" aria-expanded="false">
+                    <!-- simple avatar circle -->
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="8" r="3"></circle>
+                        <path d="M21 21v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"></path>
+                    </svg>
+                </button>
+                <div id="avatarDropdown" class="avatar-dropdown hidden">
+                    <button class="dropdown-item" onclick="doLogout()" id="logoutBtn">Logout</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -383,6 +446,45 @@
                 noEmailsEl.textContent = t.noEmails;
             }
         }
+
+        function toggleAvatarDropdown() {
+            const btn = document.querySelector('.avatar-button');
+            const dd = document.getElementById('avatarDropdown');
+            if (!btn || !dd) return;
+            const expanded = btn.getAttribute('aria-expanded') === 'true';
+            btn.setAttribute('aria-expanded', String(!expanded));
+            if (dd.classList.contains('hidden')) {
+                dd.classList.remove('hidden');
+            } else {
+                dd.classList.add('hidden');
+            }
+        }
+
+        async function doLogout() {
+            try {
+                // Clear local storage first
+                localStorage.removeItem('accessToken');
+                
+                // Redirect directly to SSO logout with redirect back to client
+                const redirectUrl = encodeURIComponent(window.location.origin);
+                window.location.href = `http://localhost:8006/logout?redirect_to=${redirectUrl}`;
+            } catch (e) {
+                console.error('Logout error:', e);
+                // Fallback - just go to home page
+                window.location.href = '/';
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const avatarWrapper = document.querySelector('.avatar-wrapper');
+            const dropdown = document.getElementById('avatarDropdown');
+            if (avatarWrapper && dropdown && !avatarWrapper.contains(event.target)) {
+                dropdown.classList.add('hidden');
+                const btn = document.querySelector('.avatar-button');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
+            }
+        });
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {

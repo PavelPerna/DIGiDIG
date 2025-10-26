@@ -17,8 +17,8 @@ def get_service_rest_url(service_name: str) -> str:
     # Service-specific URL patterns and fallbacks
     service_config = {
         'identity': ('services.identity.url', 'http://identity:8001'),
-        'smtp': ('services.smtp.rest_url', 'http://smtp:8000'),
-        'imap': ('services.imap.rest_url', 'http://imap:8003'),
+        'smtp': ('services.smtp.url', 'http://smtp:8000'),
+        'imap': ('services.imap.url', 'http://imap:8003'),
         'storage': ('services.storage.url', 'http://storage:8002'),
         'admin': ('services.admin.url', 'http://admin:8005'),
         'client': ('services.client.url', 'http://client:8004'),

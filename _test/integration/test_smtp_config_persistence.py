@@ -15,7 +15,13 @@ from typing import Dict, Any
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-SMTP_URL = os.environ.get("SMTP_URL", "http://localhost:8000")
+def get_service_url(service, port, default_host='localhost'):
+    """Get service URL, preferring Docker service names in containerized environment"""
+    if os.getenv('SKIP_COMPOSE') == '1':  # Running in Docker test container
+        return f'http://{service}:{port}'
+    return f'http://{default_host}:{port}'
+
+SMTP_URL = get_service_url('smtp', 8000)
 COMPOSE_PATH = "/home/pavel/DIGiDIG"
 
 
