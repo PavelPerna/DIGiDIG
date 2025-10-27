@@ -9,7 +9,7 @@ from pathlib import Path
 # Add lib to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'lib'))
 
-from common.config import get_config as get_global_config
+from lib.common.config import get_config as get_global_config
 
 # Load config on import
 config = get_global_config()

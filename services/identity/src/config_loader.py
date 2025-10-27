@@ -7,7 +7,7 @@ import logging
 
 # Try to load new config system, fallback to ENV variables
 try:
-    from common.config import get_config, get_db_config, get_jwt_secret
+    from lib.common.config import get_config, get_db_config, get_jwt_secret
     USE_CONFIG_FILE = True
     logger = logging.getLogger(__name__)
     logger.info("Using YAML configuration system")
