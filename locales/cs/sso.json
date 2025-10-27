@@ -1,0 +1,27 @@
+{
+  "login": {
+    "title": "DIGiDIG Přihlášení",
+    "subtitle": "Jednotné přihlášení",
+    "username": "Uživatelské jméno nebo Email",
+    "username_placeholder": "Zadejte uživatelské jméno nebo email",
+    "password": "Heslo",
+    "password_placeholder": "Zadejte heslo",
+    "submit": "Přihlásit se",
+    "error": {
+      "invalid_credentials": "Neplatné uživatelské jméno nebo heslo",
+      "network_error": "Chyba sítě. Zkuste to znovu.",
+      "server_error": "Chyba serveru. Zkuste to znovu později."
+    },
+    "success": {
+      "logged_in": "Úspěšně přihlášen"
+    }
+  },
+  "logout": {
+    "success": "Úspěšně odhlášen",
+    "confirm": "Opravdu se chcete odhlásit?"
+  },
+  "session": {
+    "expired": "Vaše relace vypršela. Přihlaste se znovu.",
+    "invalid": "Neplatná relace. Přihlaste se znovu."
+  }
+}

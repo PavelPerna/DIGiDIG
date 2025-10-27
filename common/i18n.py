@@ -9,7 +9,7 @@ Supported languages:
 - en: English (default)
 
 Usage:
-    from lib.common.i18n import I18n
+    from common.i18n import I18n
 
     # Initialize
     i18n = I18n(default_language='cs')
