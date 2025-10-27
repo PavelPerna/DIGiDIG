@@ -40,20 +40,21 @@ app = FastAPI(title="Admin Microservice")
 async def auth_middleware_handler(request: Request, call_next):
     """Middleware to handle authentication for protected routes"""
     # Public routes that don't require authentication
-    public_paths = ["/health", "/static", "/api/health", "/login", "/logout", "/api/login"]
+    public_paths = ["/health", "/static", "/lib/common", "/api/health", "/login", "/logout"]
     
     # Check if this is a public path
     path = request.url.path
     is_public = (
-        path == "/api/login" or 
+        path == "/" or
         path == "/api/health" or 
         path == "/health" or 
         path == "/login" or 
         path == "/logout" or
-        path.startswith("/static")
+        path.startswith("/static") or
+        path.startswith("/lib/common")
     )
     
-    if not is_public and path != "/":
+    if not is_public:
         # Check authentication
         user = await get_user_from_token(request)
         if not user:
@@ -127,6 +128,10 @@ async def global_exception_handler(request, exc):
 import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 app.mount("/static", StaticFiles(directory=os.path.join(current_dir, "static")), name="static")
+# Mount lib/common directory for shared header CSS
+lib_common_dir = "/app/project/lib/common"  # Path to lib/common in Docker mount
+if os.path.exists(lib_common_dir):
+    app.mount("/lib/common", StaticFiles(directory=lib_common_dir), name="lib_common")
 templates = Jinja2Templates(directory=os.path.join(current_dir, "templates"))
 
 
@@ -273,13 +278,14 @@ async def index(request: Request):
                 elif isinstance(body, str):
                     message = body
                 if message and 'logged out' in message.lower():
-                    return templates.TemplateResponse("login.html", {"request": request, "error": "User logged out"})
+                    # Redirect to SSO login with current URL as redirect_to
+                    redirect_url = urllib.parse.quote(str(request.url))
+                    return RedirectResponse(url=f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}")
             except Exception:
                 pass
-        return templates.TemplateResponse("login.html", {
-            "request": request,
-            "error": f"Chyba: {str(e)}"
-        })
+        # Redirect to SSO login on any error
+        redirect_url = urllib.parse.quote(str(request.url))
+        return RedirectResponse(url=f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}")
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_redirect(request: Request):
@@ -295,44 +301,6 @@ async def login_post_redirect(request: Request):
     sso_login_url = f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}"
     return RedirectResponse(url=sso_login_url)
 
-
-@app.post("/api/login")
-async def api_login(request: Request):
-    """Programmatic login that returns JSON (access_token) and propagates identity errors."""
-    try:
-        payload = await request.json()
-    except Exception:
-        return format_identity_response(status=400, body={"detail": "Invalid JSON payload"})
-
-    email = payload.get("email")
-    password = payload.get("password")
-    if not email or not password:
-        return format_identity_response(status=400, body={"detail": "Missing email or password"})
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            result = await identity_request(
-                session,
-                "POST",
-                "/login",
-                {"email": email, "password": password, "role": "admin"}
-            )
-            token = result.get("access_token")
-            refresh = result.get("refresh_token")
-            if not token:
-                return format_identity_response(status=500, body={"detail": "Identity did not return access_token"})
-            resp = JSONResponse(status_code=200, content={"access_token": token, "token_type": "bearer"})
-            # Set HttpOnly cookies for browser flows (secure flag false in dev; in prod set True)
-            resp.set_cookie('access_token', token, httponly=True, secure=False)
-            if refresh:
-                resp.set_cookie('refresh_token', refresh, httponly=True, secure=False)
-            return resp
-    except AdminIdentityError as e:
-        logger.info(f"Identity error during api login: status={e.status} body={e.body}")
-        return format_identity_response(status=e.status, body=e.body)
-    except Exception as e:
-        logger.exception(f"Error during api login: {str(e)}")
-        return format_identity_response(status=500, body={"detail": str(e)})
 
 @app.post("/manage-user")
 async def manage_user(
@@ -613,10 +581,9 @@ async def services_page(request: Request, user: dict = Depends(require_auth)):
         })
     except Exception as e:
         logger.error(f"Chyba při načítání stránky služeb: {str(e)}")
-        return templates.TemplateResponse("login.html", {
-            "request": request,
-            "error": f"Chyba: {str(e)}"
-        })
+        # Redirect to SSO login on error
+        redirect_url = urllib.parse.quote(str(request.url))
+        return RedirectResponse(url=f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}")
 
 @app.get("/api/services/{service_name}/health")
 async def get_service_health(service_name: str, token: str = None):

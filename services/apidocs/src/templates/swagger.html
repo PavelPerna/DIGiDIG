@@ -1,17 +1,27 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ current_language }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ service_name }} - Swagger UI</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.10.3/swagger-ui.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
     <style>
         body {
             margin: 0;
             padding: 0;
+            background: linear-gradient(135deg, #0a3213, #071121);
+            min-height: 100vh;
         }
         .topbar {
             display: none;
+        }
+        .swagger-ui {
+            background: var(--background-light);
+            border-radius: 12px;
+            margin: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
         .swagger-ui .info {
             margin: 20px 0;
@@ -21,7 +31,7 @@
             top: 20px;
             left: 20px;
             padding: 10px 20px;
-            background: #667eea;
+            background: var(--primary-color);
             color: white;
             border: none;
             border-radius: 6px;
@@ -29,21 +39,102 @@
             text-decoration: none;
             font-weight: 500;
             z-index: 1000;
+            transition: background 0.2s ease;
         }
         .back-button:hover {
-            background: #5568d3;
+            background: var(--primary-hover);
+        }
+        
+        /* Language selector */
+        .language-selector {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .language-selector select {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            background: var(--background-light);
+            color: var(--text-light);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .swagger-ui {
+                background: var(--background-dark);
+                color: var(--text-dark);
+            }
+            .language-selector select {
+                background: var(--surface-dark);
+                border-color: var(--border-dark);
+                color: var(--text-dark);
+            }
+        }
+        
+        body.dark-mode .swagger-ui {
+            background: var(--background-dark);
+            color: var(--text-dark);
+        }
+        body.dark-mode .language-selector select {
+            background: var(--surface-dark);
+            border-color: var(--border-dark);
+            color: var(--text-dark);
         }
     </style>
 </head>
 <body>
-    <a href="/" class="back-button">← Back to Overview</a>
+    <a href="/" class="back-button">← {{ translations.get('back_to_overview', 'Back to Overview') }}</a>
+    
+    <!-- Language Selector -->
+    <div class="language-selector">
+        <select id="languageSelect" onchange="changeLanguage()">
+            <option value="en" {% if current_language == 'en' %}selected{% endif %}>English</option>
+            <option value="cs" {% if current_language == 'cs' %}selected{% endif %}>Čeština</option>
+        </select>
+    </div>
     
     <div id="swagger-ui"></div>
     
     <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.10.3/swagger-ui-bundle.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.10.3/swagger-ui-standalone-preset.js"></script>
     <script>
+        // Language selector functionality
+        async function changeLanguage() {
+            const select = document.getElementById('languageSelect');
+            const language = select.value;
+            
+            try {
+                const response = await fetch('/api/language', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ language: language })
+                });
+                
+                if (response.ok) {
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Failed to change language:', error);
+            }
+        }
+
+        // Dark mode support
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.body.classList.add('dark-mode');
+            }
+        }
+
         window.onload = function() {
+            initTheme();
+            
             const ui = SwaggerUIBundle({
                 url: '/api/services/{{ service_id }}/spec',
                 dom_id: '#swagger-ui',

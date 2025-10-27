@@ -16,7 +16,7 @@ Services documented:
 - Admin (port 8006): Administration panel
 """
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Cookie
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -25,6 +25,7 @@ import os
 import logging
 from typing import Dict, List, Optional
 from pathlib import Path
+import json
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -42,6 +43,47 @@ app = FastAPI(
 # Templates
 templates_dir = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(templates_dir))
+
+# Static files
+static_dir = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+# Translations
+TRANSLATIONS = {
+    "en": {
+        "title": "📚 DIGiDIG API Documentation",
+        "subtitle": "Comprehensive API documentation for all services",
+        "combined_docs_title": "🔗 Combined API Documentation", 
+        "combined_docs_description": "View all services in a single unified documentation",
+        "view_combined_api": "View Combined API",
+        "swagger_ui": "Swagger UI",
+        "redoc": "ReDoc",
+        "footer": "DIGiDIG © 2025 | Distributed Strategos System",
+        "service_not_found": "Service not found",
+        "back_to_overview": "Back to Overview"
+    },
+    "cs": {
+        "title": "📚 DIGiDIG API Dokumentace",
+        "subtitle": "Kompletní API dokumentace pro všechny služby",
+        "combined_docs_title": "🔗 Sloučená API Dokumentace",
+        "combined_docs_description": "Zobrazit všechny služby v jedné sjednocené dokumentaci",
+        "view_combined_api": "Zobrazit Sloučené API",
+        "swagger_ui": "Swagger UI",
+        "redoc": "ReDoc", 
+        "footer": "DIGiDIG © 2025 | Systém Distribuovaných Strategů",
+        "service_not_found": "Služba nenalezena",
+        "back_to_overview": "Zpět na přehled"
+    }
+}
+
+def get_language(request: Request) -> str:
+    """Get language from cookie or default to English."""
+    language = request.cookies.get("language", "en")
+    return language if language in TRANSLATIONS else "en"
+
+def get_translations(language: str) -> Dict[str, str]:
+    """Get translations for specified language."""
+    return TRANSLATIONS.get(language, TRANSLATIONS["en"])
 
 # Service configurations
 SERVICES = {
@@ -145,10 +187,36 @@ async def check_service_health(service_id: str) -> Dict:
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     """Main documentation page with service overview."""
+    language = get_language(request)
+    translations = get_translations(language)
+    
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "services": SERVICES
+        "services": SERVICES,
+        "translations": translations,
+        "current_language": language
     })
+
+
+@app.post("/api/language")
+async def set_language(request: Request):
+    """Set language preference."""
+    data = await request.json()
+    language = data.get("language", "en")
+    
+    if language not in TRANSLATIONS:
+        language = "en"
+    
+    response = JSONResponse({"status": "success", "language": language})
+    response.set_cookie(
+        key="language",
+        value=language,
+        max_age=365 * 24 * 60 * 60,  # 1 year
+        httponly=True,
+        secure=False,  # Set to True in production with HTTPS
+        samesite="lax"
+    )
+    return response
 
 
 @app.get("/api/services", response_class=JSONResponse)
@@ -205,15 +273,21 @@ async def get_all_health():
 async def service_docs(request: Request, service_id: str):
     """Show Swagger UI for a specific service."""
     if service_id not in SERVICES:
-        return HTMLResponse("<h1>Service not found</h1>", status_code=404)
+        language = get_language(request)
+        translations = get_translations(language)
+        return HTMLResponse(f"<h1>{translations['service_not_found']}</h1>", status_code=404)
     
     service = SERVICES[service_id]
+    language = get_language(request)
+    translations = get_translations(language)
     
     return templates.TemplateResponse("swagger.html", {
         "request": request,
         "service_id": service_id,
         "service_name": service["name"],
-        "service_description": service["description"]
+        "service_description": service["description"],
+        "translations": translations,
+        "current_language": language
     })
 
 
@@ -221,15 +295,21 @@ async def service_docs(request: Request, service_id: str):
 async def service_redoc(request: Request, service_id: str):
     """Show ReDoc for a specific service."""
     if service_id not in SERVICES:
-        return HTMLResponse("<h1>Service not found</h1>", status_code=404)
+        language = get_language(request)
+        translations = get_translations(language)
+        return HTMLResponse(f"<h1>{translations['service_not_found']}</h1>", status_code=404)
     
     service = SERVICES[service_id]
+    language = get_language(request)
+    translations = get_translations(language)
     
     return templates.TemplateResponse("redoc.html", {
         "request": request,
         "service_id": service_id,
         "service_name": service["name"],
-        "service_description": service["description"]
+        "service_description": service["description"],
+        "translations": translations,
+        "current_language": language
     })
 
 

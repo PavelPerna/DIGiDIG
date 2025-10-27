@@ -132,6 +132,7 @@ services:
     networks:
       - strategos-net
     volumes:
+      - ./:/app/project:ro  # Mount project root for common CSS access
       - client_data:/app/data
       - app_logs:/app/logs
       - test_data:/app/tests

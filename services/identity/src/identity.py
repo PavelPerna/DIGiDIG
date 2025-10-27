@@ -73,7 +73,7 @@ app = FastAPI(
     description="""
 ## Identity & Authentication Service
 
-Provides user authentication, authorization, and management capabilities for the DIGiDIG email system.
+Provides user authentication, authorization, and management capabilities for the DIGiDIG Strategos system.
 
 ### Features
 

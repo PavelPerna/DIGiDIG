@@ -40,7 +40,7 @@ app = FastAPI(
 async def auth_middleware(request: Request, call_next):
     """Middleware to handle authentication for protected routes"""
     # Public routes that don't require authentication
-    public_paths = ["/health", "/static", "/api/translations", "/api/language"]
+    public_paths = ["/health", "/static", "/lib/common", "/api/translations", "/api/language"]
     
     # Check if this is a public path
     is_public = any(request.url.path.startswith(path) for path in public_paths)
@@ -57,6 +57,11 @@ async def auth_middleware(request: Request, call_next):
     return response
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+# Mount lib/common directory for shared header CSS
+import os
+lib_common_dir = "/app/project/lib/common"  # Path to lib/common in Docker mount
+if os.path.exists(lib_common_dir):
+    app.mount("/lib/common", StaticFiles(directory=lib_common_dir), name="lib_common")
 templates = Jinja2Templates(directory="templates")
 
 class Email(BaseModel):

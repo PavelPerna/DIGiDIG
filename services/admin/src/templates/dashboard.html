@@ -10,27 +10,27 @@
 </head>
 <body>
     <!-- Header section -->
-    <div class="header">
-        <div class="header-left">
+    <div class="digidig-header">
+        <div class="digidig-header-left">
             <h1>Admin Dashboard</h1>
         </div>
-        <div class="header-right">
-            <div class="language-selector">
+        <div class="digidig-header-right">
+            <div class="digidig-language-selector">
                 <select id="langSelect" onchange="changeLanguage(this.value)">
                     <option value="cs" selected>Čeština</option>
                     <option value="en">English</option>
                 </select>
             </div>
-            <div class="avatar-wrapper">
-                <button class="avatar-button" onclick="toggleAvatarDropdown()" aria-haspopup="true" aria-expanded="false">
+            <div class="digidig-avatar-wrapper">
+                <button class="digidig-avatar-button" onclick="toggleAvatarDropdown()" aria-haspopup="true" aria-expanded="false">
                     <!-- simple avatar circle -->
-                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="8" r="3"></circle>
                         <path d="M21 21v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"></path>
                     </svg>
                 </button>
-                <div id="avatarDropdown" class="avatar-dropdown hidden">
-                    <button class="dropdown-item" onclick="doLogout()">Odhlásit</button>
+                <div id="avatarDropdown" class="digidig-avatar-dropdown hidden">
+                    <button class="digidig-dropdown-item" onclick="doLogout()">Odhlásit</button>
                 </div>
             </div>
         </div>
@@ -645,7 +645,7 @@
         // Restore the last opened users list after page load
         // Avatar dropdown toggle and logout
         function toggleAvatarDropdown() {
-            const btn = document.querySelector('.avatar-button');
+            const btn = document.querySelector('.digidig-avatar-button');
             const dd = document.getElementById('avatarDropdown');
             if (!btn || !dd) return;
             const expanded = btn.getAttribute('aria-expanded') === 'true';
@@ -680,9 +680,9 @@
 
         // Close avatar dropdown when clicking outside
         document.addEventListener('click', function(e) {
-            const wrapper = document.querySelector('.avatar-wrapper');
+            const wrapper = document.querySelector('.digidig-avatar-wrapper');
             const dd = document.getElementById('avatarDropdown');
-            const btn = document.querySelector('.avatar-button');
+            const btn = document.querySelector('.digidig-avatar-button');
             if (!wrapper || !dd || !btn) return;
             if (!wrapper.contains(e.target)) {
                 if (!dd.classList.contains('hidden')) {

@@ -46,7 +46,7 @@ All critical user workflows and service interactions are tested:| `identity/src/
 
 - Complete authentication flow
 
-- Full email system (SMTP→IMAP)### 🔴 Nízce pokryté moduly (<50%)
+- Full Strategos system (SMTP→IMAP)### 🔴 Nízce pokryté moduly (<50%)
 
 - Service health monitoring| Modul | Coverage | Poznámka |
 

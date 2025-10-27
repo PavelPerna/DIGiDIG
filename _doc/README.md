@@ -4,7 +4,7 @@
 [![CD Status](https://github.com/YOUR_USERNAME/DIGiDIG/workflows/CD/badge.svg)](https://github.com/YOUR_USERNAME/DIGiDIG/actions/workflows/cd.yml)
 [![Security Scan](https://github.com/YOUR_USERNAME/DIGiDIG/workflows/Security%20Scan/badge.svg)](https://github.com/YOUR_USERNAME/DIGiDIG/security)
 
-**Distributed Email System with Multi-Language Support, Comprehensive API Documentation & Full CI/CD Pipeline**
+**Distributed Strategos System with Multi-Language Support, Comprehensive API Documentation & Full CI/CD Pipeline**
 
 ## 🌟 Features
 

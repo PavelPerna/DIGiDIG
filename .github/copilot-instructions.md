@@ -52,3 +52,4 @@ Purpose: Give an AI coding agent the minimal, actionable knowledge to be product
   6. Follow existing logging and error-handling patterns for consistency.
   7. Follow SOLID, DRY, and KISS principles to maintain code quality and readability.
   8. For new services requiring authentication, use SSO service pattern: redirect to SSO for login, verify sessions via SSO `/verify` endpoint.
+  9. To refresh a service during development, use `make refresh <service>` to rebuild and restart the service container.

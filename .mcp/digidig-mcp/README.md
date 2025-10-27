@@ -1,6 +1,6 @@
 # DIGiDIG MCP Server
 
-This is an MCP Server for the DIGiDIG email system, providing tools to interact with the microservices architecture. It includes the following features:
+This is an MCP Server for the DIGiDIG Strategos system, providing tools to interact with the microservices architecture. It includes the following features:
 
 - **Service Health Monitoring**: Check the health status of all DIGiDIG services
 - **Email Management**: Send and retrieve emails through the DIGiDIG API

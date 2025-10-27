@@ -1,0 +1,363 @@
+/* APIDoc Service Styles - Consistent with SSO Login */
+
+:root {
+    --primary-color: #2db15a;
+    --primary-hover: #14532d;
+    --danger-color: #dc2626;
+    --success-color: #16a34a;
+    --warning-color: #ca8a04;
+    --background-light: #ffffff;
+    --background-dark: #0f141b;
+    --surface-light: #f9fafb;
+    --surface-dark: #29303b;
+    --text-light: #111827;
+    --text-dark: #f9fafb;
+    --border-light: #d1d5db;
+    --border-dark: #4b5563;
+    --card-light: #ffffff;
+    --card-dark: #1f2937;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #0a3213, #071121);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+    color: var(--text-light);
+    transition: all 0.3s ease;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    color: white;
+    margin-bottom: 3rem;
+}
+
+.header h1 {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    font-weight: 700;
+}
+
+.header p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    font-weight: 300;
+}
+
+/* Language Selector */
+.language-selector {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    z-index: 1000;
+}
+
+.language-selector select {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    background: var(--background-light);
+    color: var(--text-light);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.language-selector select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(45, 177, 90, 0.1);
+}
+
+/* Combined docs section */
+.combined-docs {
+    background: var(--card-light);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    text-align: center;
+    margin-bottom: 3rem;
+    border: 1px solid var(--border-light);
+}
+
+.combined-docs h2 {
+    color: var(--text-light);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.combined-docs p {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+/* Services grid */
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.service-card {
+    background: var(--card-light);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+    position: relative;
+    border: 1px solid var(--border-light);
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.06);
+}
+
+.service-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.service-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 0.75rem;
+}
+
+.service-description {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.service-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.tag {
+    background: var(--surface-light);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    color: #6b7280;
+    border: 1px solid var(--border-light);
+}
+
+.service-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+.btn-secondary {
+    background: var(--surface-light);
+    color: var(--text-light);
+    border: 1px solid var(--border-light);
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+/* Health status indicator */
+.health-status {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #d1d5db;
+    transition: all 0.3s ease;
+}
+
+.health-status.healthy {
+    background: var(--success-color);
+    box-shadow: 0 0 8px rgba(22, 163, 74, 0.5);
+}
+
+.health-status.unhealthy {
+    background: var(--danger-color);
+    box-shadow: 0 0 8px rgba(220, 38, 38, 0.5);
+}
+
+.health-status.unreachable {
+    background: var(--warning-color);
+    box-shadow: 0 0 8px rgba(202, 138, 4, 0.5);
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    color: white;
+    margin-top: 3rem;
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    body {
+        color: var(--text-dark);
+    }
+    
+    .combined-docs,
+    .service-card {
+        background: var(--card-dark);
+        border-color: var(--border-dark);
+    }
+    
+    .combined-docs h2,
+    .service-name {
+        color: var(--text-dark);
+    }
+    
+    .tag {
+        background: var(--surface-dark);
+        border-color: var(--border-dark);
+        color: #9ca3af;
+    }
+    
+    .btn-secondary {
+        background: var(--surface-dark);
+        color: var(--text-dark);
+        border-color: var(--border-dark);
+    }
+    
+    .btn-secondary:hover {
+        background: #374151;
+    }
+    
+    .language-selector select {
+        background: var(--surface-dark);
+        border-color: var(--border-dark);
+        color: var(--text-dark);
+    }
+}
+
+/* Dark mode toggle support */
+body.dark-mode {
+    color: var(--text-dark);
+}
+
+body.dark-mode .combined-docs,
+body.dark-mode .service-card {
+    background: var(--card-dark);
+    border-color: var(--border-dark);
+}
+
+body.dark-mode .combined-docs h2,
+body.dark-mode .service-name {
+    color: var(--text-dark);
+}
+
+body.dark-mode .tag {
+    background: var(--surface-dark);
+    border-color: var(--border-dark);
+    color: #9ca3af;
+}
+
+body.dark-mode .btn-secondary {
+    background: var(--surface-dark);
+    color: var(--text-dark);
+    border-color: var(--border-dark);
+}
+
+body.dark-mode .btn-secondary:hover {
+    background: #374151;
+}
+
+body.dark-mode .language-selector select {
+    background: var(--surface-dark);
+    border-color: var(--border-dark);
+    color: var(--text-dark);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 2rem;
+    }
+    
+    .header p {
+        font-size: 1rem;
+    }
+    
+    .language-selector {
+        position: static;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .services-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .service-card {
+        padding: 1.5rem;
+    }
+    
+    .service-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 1rem 0.5rem;
+    }
+    
+    .combined-docs,
+    .service-card {
+        padding: 1.5rem;
+    }
+    
+    .header h1 {
+        font-size: 1.75rem;
+    }
+}
