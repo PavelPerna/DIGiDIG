@@ -1,3 +1,5 @@
+@import url('/lib/common/header.css');
+
 :root {
     --bg-color: #1a1a1a;
     --text-color: #e0e0e0;
@@ -6,9 +8,12 @@
     --text-muted: #a0a0a0;
     --input-bg: #2d2d2d;
     --input-border: #404040;
+    --input-focus: #58a6ff;
     --button-bg: #2563eb;
     --button-hover: #1d4ed8;
     --border-color: #404040;
+    --surface: #161b22;
+    --surface-hover: #21262d;
     --card-bg: rgba(255, 255, 255, 0.05);
     --success-color: #4CAF50;
     --danger-color: #f44336;
