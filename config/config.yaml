@@ -53,6 +53,7 @@ services:
     host: sso
     port: 8006
     url: http://sso:8006
+    external_url: http://localhost:8006
 
 # Security Configuration
 security:

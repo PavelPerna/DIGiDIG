@@ -19,7 +19,7 @@ COPY services/sso/src/ /app/
 
 # Copy configuration files
 COPY config/ /app/config/
-COPY locales/ /app/locales/
+COPY locales/ /app/lib/locales/
 
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app \

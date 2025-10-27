@@ -30,34 +30,25 @@ logger = logging.getLogger(__name__)
 config = get_config()
 IDENTITY_URL = get_service_url('identity')
 SSO_URL = get_service_url('sso')
+SSO_EXTERNAL_URL = config.get('services', {}).get('sso', {}).get('external_url', SSO_URL)
 
 app = FastAPI(title="Admin Microservice")
 
-# Authentication middleware
-@app.middleware("http")
-async def auth_middleware(request: Request, call_next):
-    """Middleware to handle authentication for protected routes"""
-    # Public routes that don't require authentication
-    public_paths = ["/health", "/static", "/api/health", "/login", "/logout"]
+# Authentication dependency
+async def get_admin_user(request: Request):
+    """Get authenticated admin user or redirect to SSO"""
+    user = await get_user_from_token(request)
+    if not user:
+        # Redirect to SSO for authentication using external URL
+        redirect_url = urllib.parse.quote(str(request.url))
+        sso_login_url = f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}"
+        raise HTTPException(status_code=307, headers={"Location": sso_login_url})
     
-    # Check if this is a public path
-    is_public = any(request.url.path.startswith(path) or request.url.path == path for path in public_paths)
+    # Check if user has admin role
+    if not is_admin(user):
+        raise HTTPException(status_code=403, detail="Admin role required")
     
-    if not is_public and request.url.path != "/":
-        # Check authentication
-        user = await get_user_from_token(request)
-        if not user:
-            # Redirect to SSO for authentication
-            redirect_url = urllib.parse.quote(str(request.url))
-            sso_login_url = f"{SSO_URL}/?redirect_to={redirect_url}"
-            return RedirectResponse(url=sso_login_url, status_code=307)
-        
-        # Check if user has admin role
-        if not is_admin(user):
-            raise HTTPException(status_code=403, detail="Admin role required")
-    
-    response = await call_next(request)
-    return response
+    return user
 
 async def get_user_from_token(request: Request):
     """Get current user session or return None"""
@@ -68,8 +59,8 @@ async def get_user_from_token(request: Request):
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                f"{SSO_URL}/verify",
-                cookies={"access_token": token}
+                f"{IDENTITY_URL}/verify",
+                headers={"Authorization": f"Bearer {token}"}
             ) as response:
                 if response.status == 200:
                     return await response.json()
@@ -198,7 +189,36 @@ async def get_user(token: str):
         raise HTTPException(status_code=401, detail=f"Neplatný token: {str(e)}")
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request, user: dict = Depends(auth_middleware)):
+async def index(request: Request, token: str = None):
+    """Admin dashboard - handle SSO token if provided"""
+    # If token provided in URL (from SSO redirect), set it as cookie
+    if token:
+        # Verify token with Identity service first
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{IDENTITY_URL}/verify",
+                    headers={"Authorization": f"Bearer {token}"}
+                ) as resp:
+                    if resp.status == 200:
+                        user_data = await resp.json()
+                        # Check admin role
+                        if is_admin(user_data):
+                            # Token is valid and user is admin, set cookie and redirect
+                            response = RedirectResponse(url="/", status_code=302)
+                            response.set_cookie(
+                                key="access_token",
+                                value=token,
+                                max_age=1800,
+                                httponly=True,
+                                samesite="lax"
+                            )
+                            return response
+        except Exception as e:
+            logger.error(f"Token verification failed: {e}")
+    
+    # Use dependency for regular authentication
+    user = await get_admin_user(request)
     logger.info("Načítání admin dashboardu")
     
     # Check if user has admin role
@@ -246,54 +266,16 @@ async def index(request: Request, user: dict = Depends(auth_middleware)):
 async def login_redirect(request: Request):
     """Legacy login endpoint - redirect to SSO"""
     redirect_url = urllib.parse.quote(str(request.url).replace('/login', '/'))
-    sso_login_url = f"{SSO_URL}/?redirect_to={redirect_url}"
+    sso_login_url = f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}"
     return RedirectResponse(url=sso_login_url)
 
 @app.post("/login", response_class=HTMLResponse)
 async def login_post_redirect(request: Request):
     """Legacy POST login endpoint - redirect to SSO GET endpoint"""
     redirect_url = urllib.parse.quote(str(request.url).replace('/login', '/'))
-    sso_login_url = f"{SSO_URL}/?redirect_to={redirect_url}"
+    sso_login_url = f"{SSO_EXTERNAL_URL}/?redirect_to={redirect_url}"
     return RedirectResponse(url=sso_login_url)
 
-
-@app.post("/api/login")
-async def api_login(request: Request):
-    """Programmatic login that returns JSON (access_token) and propagates identity errors."""
-    try:
-        payload = await request.json()
-    except Exception:
-        return format_identity_response(status=400, body={"detail": "Invalid JSON payload"})
-
-    email = payload.get("email")
-    password = payload.get("password")
-    if not email or not password:
-        return format_identity_response(status=400, body={"detail": "Missing email or password"})
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            result = await identity_request(
-                session,
-                "POST",
-                "/login",
-                {"email": email, "password": password, "role": "admin"}
-            )
-            token = result.get("access_token")
-            refresh = result.get("refresh_token")
-            if not token:
-                return format_identity_response(status=500, body={"detail": "Identity did not return access_token"})
-            resp = JSONResponse(status_code=200, content={"access_token": token, "token_type": "bearer"})
-            # Set HttpOnly cookies for browser flows (secure flag false in dev; in prod set True)
-            resp.set_cookie('access_token', token, httponly=True, secure=False)
-            if refresh:
-                resp.set_cookie('refresh_token', refresh, httponly=True, secure=False)
-            return resp
-    except AdminIdentityError as e:
-        logger.info(f"Identity error during api login: status={e.status} body={e.body}")
-        return format_identity_response(status=e.status, body=e.body)
-    except Exception as e:
-        logger.exception(f"Error during api login: {str(e)}")
-        return format_identity_response(status=500, body={"detail": str(e)})
 
 @app.post("/manage-user")
 async def manage_user(
@@ -304,7 +286,7 @@ async def manage_user(
     password: str = Form(None),
     originalUsername: str = Form(None),
     id: Optional[int] = Form(None),
-    user: dict = Depends(auth_middleware)
+    user: dict = Depends(get_admin_user)
 ):
     operation = "update" if (originalUsername or id) else "create"
     target = originalUsername if originalUsername else username
@@ -360,7 +342,7 @@ async def manage_domain(
     request: Request,
     name: str = Form(...),
     oldName: str = Form(None),
-    user: dict = Depends(auth_middleware)
+    user: dict = Depends(get_admin_user)
 ):
     operation = "update" if oldName else "create"
     target_name = oldName if oldName else name
@@ -399,7 +381,7 @@ async def manage_domain(
 async def delete_domain(
     request: Request,
     name: str = Form(...),
-    user: dict = Depends(auth_middleware)
+    user: dict = Depends(get_admin_user)
 ):
     logger.info(f"Odstraňování domény: {name}")
     
@@ -430,7 +412,7 @@ async def delete_user(
     username: str = Form(None),
     domain: str = Form(None),
     id: Optional[int] = Form(None),
-    user: dict = Depends(auth_middleware)
+    user: dict = Depends(get_admin_user)
 ):
     target = id if id else (f"{username}@{domain}" if username and domain else username)
     logger.info(f"Odstraňování uživatele: {target}")
@@ -478,6 +460,7 @@ async def delete_user(
 
 
 @app.post("/logout")
+@app.get("/logout")
 async def logout(request: Request):
     """Logout endpoint: clears token cookie (if any) and returns JSON.
     The admin service primarily uses tokens passed in query/form; this endpoint lets the UI notify the server
@@ -500,25 +483,21 @@ async def logout(request: Request):
         # if we found an access token, try to revoke it; also check refresh_token cookie for opaque token
         refresh_token = request.cookies.get('refresh_token')
         if token:
-            # call identity revoke endpoint with the token in Authorization header
+            # call identity logout endpoint with the token in Authorization header
             async with aiohttp.ClientSession() as session:
                 try:
-                    await identity_request(session, 'POST', '/tokens/revoke', data=None, token=token)
-                except AdminIdentityError as e:
-                    # If identity returns non-2xx, still proceed to clear cookies but log
-                    logger.info(f"Identity revoke returned non-2xx: {e.status} {e.body}")
+                    async with session.post(
+                        f"{IDENTITY_URL}/logout",
+                        headers={"Authorization": f"Bearer {token}"}
+                    ) as logout_response:
+                        if logout_response.status == 200:
+                            logger.info("Successfully logged out from Identity service")
+                        else:
+                            logger.warning(f"Identity logout failed: {logout_response.status}")
                 except Exception as e:
-                    logger.exception(f"Error calling identity revoke: {str(e)}")
-        # If there's a refresh token cookie, try to revoke that too (opaque token)
-        if refresh_token:
-            async with aiohttp.ClientSession() as session:
-                try:
-                    # send refresh token in JSON body
-                    await identity_request(session, 'POST', '/tokens/revoke', data={'token': refresh_token})
-                except AdminIdentityError as e:
-                    logger.info(f"Identity revoke (refresh) returned non-2xx: {e.status} {e.body}")
-                except Exception as e:
-                    logger.exception(f"Error calling identity revoke for refresh token: {str(e)}")
+                    logger.exception(f"Error calling identity logout: {str(e)}")
+                    
+        # Don't handle refresh_token separately - logout endpoint handles everything
 
         # Return JSON response and clear cookies
         resp = JSONResponse(status_code=200, content={"status": "logged_out"})
@@ -540,7 +519,7 @@ SERVICES = {
 }
 
 @app.get("/services", response_class=HTMLResponse)
-async def services_page(request: Request, user: dict = Depends(auth_middleware)):
+async def services_page(request: Request, user: dict = Depends(get_admin_user)):
     """Service management page"""
     logger.info("Načítání stránky pro správu služeb")
     
@@ -579,200 +558,16 @@ async def services_page(request: Request, user: dict = Depends(auth_middleware))
             "error": f"Chyba: {str(e)}"
         })
 
-@app.get("/api/services/{service_name}/health")
-async def get_service_health(service_name: str, token: str = None):
-    """Get health status of a specific service"""
-    if service_name not in SERVICES:
-        return JSONResponse(status_code=404, content={"error": "Service not found"})
-    
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"{SERVICES[service_name]}/api/health", timeout=aiohttp.ClientTimeout(total=5)) as response:
-                return await response.json()
-    except Exception as e:
-        logger.error(f"Error getting health for {service_name}: {str(e)}")
-        return JSONResponse(status_code=500, content={"error": str(e), "status": "unreachable"})
-
-@app.get("/api/health")
+@app.get("/health")
 async def health_check():
     """Health check endpoint for monitoring"""
     return {
         "status": "healthy",
         "service": "admin",
-        "version": "1.0.0",
-        "dependencies": {
-            "identity": "http://identity:8001"
-        }
+        "version": "1.0.0"
     }
 
-@app.get("/api/services/{service_name}/stats")
-async def get_service_stats(service_name: str, request: Request, token: str = None):
-    """Get statistics of a specific service"""
-    if not token:
-        token = request.cookies.get('access_token')
-    try:
-        await get_user(token)
-    except Exception as e:
-        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
-    
-    if service_name not in SERVICES:
-        return JSONResponse(status_code=404, content={"error": "Service not found"})
-    
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"{SERVICES[service_name]}/api/stats", timeout=aiohttp.ClientTimeout(total=5)) as response:
-                return await response.json()
-    except Exception as e:
-        logger.error(f"Error getting stats for {service_name}: {str(e)}")
-        return JSONResponse(status_code=500, content={"error": str(e)})
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8005)
 
-@app.get("/api/services/{service_name}/config")
-async def get_service_config(service_name: str, request: Request, token: str = None):
-    """Get configuration of a specific service"""
-    if not token:
-        token = request.cookies.get('access_token')
-    try:
-        await get_user(token)
-    except Exception as e:
-        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
-    
-    if service_name not in SERVICES:
-        return JSONResponse(status_code=404, content={"error": "Service not found"})
-    
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"{SERVICES[service_name]}/api/config", timeout=aiohttp.ClientTimeout(total=5)) as response:
-                return await response.json()
-    except Exception as e:
-        logger.error(f"Error getting config for {service_name}: {str(e)}")
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-@app.put("/api/services/{service_name}/config")
-async def update_service_config(service_name: str, request: Request, token: str = Form(None)):
-    """Update configuration of a specific service"""
-    if not token:
-        token = request.cookies.get('access_token')
-    try:
-        await get_user(token)
-    except Exception as e:
-        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
-    
-    if service_name not in SERVICES:
-        return JSONResponse(status_code=404, content={"error": "Service not found"})
-    
-    try:
-        config = await request.json()
-        async with aiohttp.ClientSession() as session:
-            async with session.put(
-                f"{SERVICES[service_name]}/api/config",
-                json=config,
-                timeout=aiohttp.ClientTimeout(total=10)
-            ) as response:
-                return await response.json()
-    except Exception as e:
-        logger.error(f"Error updating config for {service_name}: {str(e)}")
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-@app.post("/api/services/smtp/restart")
-async def restart_smtp_service(request: Request, token: str = Form(None)):
-    """Restart SMTP service"""
-    if not token:
-        token = request.cookies.get('access_token')
-    try:
-        await get_user(token)
-    except Exception as e:
-        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
-    
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"{SERVICES['smtp']}/api/smtp/restart",
-                timeout=aiohttp.ClientTimeout(total=15)
-            ) as response:
-                return await response.json()
-    except Exception as e:
-        logger.error(f"Error restarting SMTP: {str(e)}")
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-@app.post("/api/services/{service_name}/restart")
-async def restart_service(service_name: str, request: Request, token: str = None):
-    """Restart a specific service using docker compose - admin only"""
-    if not token:
-        token = request.cookies.get('access_token')
-    
-    # Verify user and check admin role
-    try:
-        user = await get_user(token)
-        
-        # Check if user has admin role
-        roles = user.get("roles", [])
-        if "admin" not in roles:
-            logger.warning(f"Non-admin user {user.get('username')} attempted to restart service {service_name}")
-            return JSONResponse(status_code=403, content={
-                "error": "Forbidden",
-                "message": "Admin role required to restart services"
-            })
-    except Exception as e:
-        logger.error(f"Authentication failed: {str(e)}")
-        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
-    
-    # List of valid services (must match docker-compose.yml service names)
-    valid_services = ["identity", "smtp", "imap", "storage", "admin", "client", "apidocs", "postgres", "mongo"]
-    
-    if service_name not in valid_services:
-        return JSONResponse(status_code=404, content={"error": f"Service '{service_name}' not found"})
-    
-    try:
-        logger.info(f"Admin user {user.get('username')} restarting service: {service_name}")
-        
-        # Use docker compose restart command with explicit project directory
-        # The docker-compose.yml is mounted at /app/project/
-        cmd = ["docker", "compose", "-f", "/app/project/docker-compose.yml", "restart", service_name]
-        
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=60,  # Increased timeout for service restart
-            cwd="/app/project",
-            env={"PATH": "/usr/local/bin:/usr/bin:/bin"}  # Ensure Docker CLI is in PATH
-        )
-        
-        if result.returncode == 0:
-            logger.info(f"Service {service_name} restarted successfully")
-            return JSONResponse(status_code=200, content={
-                "status": "success",
-                "message": f"Service '{service_name}' restarted successfully",
-                "output": result.stdout.strip() if result.stdout else "Service restarted",
-                "command": " ".join(cmd)
-            })
-        else:
-            logger.error(f"Failed to restart {service_name}: {result.stderr}")
-            return JSONResponse(status_code=500, content={
-                "status": "error",
-                "message": f"Failed to restart service '{service_name}'",
-                "error": result.stderr.strip() if result.stderr else "Unknown error",
-                "command": " ".join(cmd),
-                "stdout": result.stdout.strip() if result.stdout else ""
-            })
-    except subprocess.TimeoutExpired:
-        logger.error(f"Timeout restarting {service_name}")
-        return JSONResponse(status_code=504, content={
-            "status": "error",
-            "message": f"Restart timeout for service '{service_name}' (60s)",
-            "error": "Command timed out"
-        })
-    except FileNotFoundError as e:
-        logger.error(f"Docker command not found: {str(e)}")
-        return JSONResponse(status_code=500, content={
-            "status": "error",
-            "message": "Docker CLI not available in container",
-            "error": str(e)
-        })
-    except Exception as e:
-        logger.error(f"Error restarting {service_name}: {str(e)}")
-        return JSONResponse(status_code=500, content={
-            "status": "error",
-            "message": f"Unexpected error: {str(e)}",
-            "error": str(e)
-        })

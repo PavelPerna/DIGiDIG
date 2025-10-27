@@ -50,7 +50,6 @@ All notable changes to this project will be documented in this file.
 - Admin UI: switched to HttpOnly cookie-based auth for browser flows; added `/api/login` and improved `/logout` to call identity revoke and clear cookies.
 - Admin: better error forwarding from identity (non-2xx responses are now proxied instead of always returning 500).
 - UI polish: top-pane avatar + logout, green Add buttons, persisted expanded domain lists in localStorage.
-- Tests: added pytest-friendly integration test for login -> refresh -> logout -> old-refresh-fails.
-- Updated test files to use new environment variable names (`ADMIN_EMAIL` instead of `DEFAULT_ADMIN_USERNAME`)
+- Updated files to use new environment variable names (`ADMIN_EMAIL` instead of `DEFAULT_ADMIN_USERNAME`)
 - Repo: removed accidentally committed virtualenv artifacts and added `.gitignore`.
 

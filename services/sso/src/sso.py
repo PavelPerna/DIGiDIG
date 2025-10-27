@@ -38,45 +38,16 @@ IDENTITY_URL = get_service_url('identity')
 
 app = FastAPI(
     title="DIGiDIG SSO Service",
-    description="""
-## Single Sign-On (SSO) Service
-
-Provides centralized authentication and login functionality for all DIGiDIG services.
-
-### Features
-
-* **Centralized Login**: Single login page for all services
-* **Session Management**: Secure session handling with JWT tokens
-* **Multi-Service Redirect**: Seamless redirection to requesting services
-* **Internationalization**: Multi-language support
-* **Security**: Secure cookie handling and CSRF protection
-    """,
-    version="1.0.0",
-    contact={
-        "name": "DIGiDIG Team", 
-        "url": "https://github.com/PavelPerna/DIGiDIG",
-    },
-    license_info={
-        "name": "MIT",
-    },
-    tags_metadata=[
-        {
-            "name": "Authentication",
-            "description": "Login, logout, and session management"
-        },
-        {
-            "name": "Redirect",
-            "description": "Service redirection after authentication"
-        },
-        {
-            "name": "Health",
-            "description": "Service health and status monitoring"
-        }
-    ]
+    description="Single Sign-On service for DIGiDIG platform",
+    version="1.0.0"
 )
 
-# Mount static files and templates
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Mount static files and templates (create static directory if it doesn't exist)
+import os
+static_dir = "static"
+if not os.path.exists(static_dir):
+    os.makedirs(static_dir)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # Models
@@ -107,6 +78,19 @@ def set_language_cookie(response: Response, lang: str):
             samesite="lax"
         )
 
+def flatten_to_nested_dict(flat_dict: Dict[str, str]) -> Dict[str, Any]:
+    """Convert flat dictionary with dot notation to nested dictionary"""
+    nested = {}
+    for key, value in flat_dict.items():
+        keys = key.split('.')
+        current = nested
+        for k in keys[:-1]:
+            if k not in current:
+                current[k] = {}
+            current = current[k]
+        current[keys[-1]] = value
+    return nested
+
 async def validate_redirect_url(url: str) -> bool:
     """Validate that redirect URL is to a trusted DIGiDIG service"""
     if not url:
@@ -128,6 +112,17 @@ async def validate_redirect_url(url: str) -> bool:
             # Also add with port if specified
             if 'port' in service_config:
                 trusted_hosts.append(f"{service_config['host']}:{service_config['port']}")
+    
+    # Add localhost versions for external access
+    localhost_hosts = []
+    for host in trusted_hosts:
+        if ':' in host:
+            service_host, port = host.split(':')
+            localhost_hosts.append(f"localhost:{port}")
+        else:
+            localhost_hosts.append(host)
+    
+    trusted_hosts.extend(localhost_hosts)
     
     # Check if the host is in our trusted list
     return parsed.netloc in trusted_hosts
@@ -184,15 +179,14 @@ async def login_page(request: Request, redirect_to: Optional[str] = None):
             if redirect_to and await validate_redirect_url(redirect_to):
                 return RedirectResponse(url=redirect_to)
             else:
-                # Default redirect to client service
-                client_url = get_service_url('client')
-                return RedirectResponse(url=f"{client_url}/dashboard")
+                # Default redirect to client service - use external URL
+                return RedirectResponse(url="http://localhost:8004/dashboard")
     
     return templates.TemplateResponse("login.html", {
         "request": request,
         "redirect_to": redirect_to,
         "current_language": lang,
-        "translations": i18n.get_all()
+        "translations": flatten_to_nested_dict(i18n.get_all())
     })
 
 @app.post("/login", response_class=HTMLResponse)
@@ -216,16 +210,19 @@ async def login(
             "error": i18n.get("login.error.invalid_credentials"),
             "redirect_to": redirect_to,
             "current_language": lang,
-            "translations": i18n.get_all()
+            "translations": flatten_to_nested_dict(i18n.get_all())
         }, status_code=401)
     
-    # Create response with redirect
+    # Create response with redirect - pass token in URL for cross-domain cookies
+    access_token = auth_result["access_token"]
     if redirect_to and await validate_redirect_url(redirect_to):
-        response = RedirectResponse(url=redirect_to, status_code=302)
+        # Add token to redirect URL
+        separator = "&" if "?" in redirect_to else "?"
+        redirect_url = f"{redirect_to}{separator}token={access_token}"
+        response = RedirectResponse(url=redirect_url, status_code=302)
     else:
-        # Default redirect to client dashboard
-        client_url = get_service_url('client')
-        response = RedirectResponse(url=f"{client_url}/dashboard", status_code=302)
+        # Default redirect to client dashboard with token
+        response = RedirectResponse(url=f"http://localhost:8004/dashboard?token={access_token}", status_code=302)
     
     # Set authentication cookies
     response.set_cookie(
@@ -251,8 +248,28 @@ async def login(
     return response
 
 @app.post("/logout")
-async def logout(request: Request, redirect_to: Optional[str] = None):
+@app.get("/logout")
+async def logout(request: Request):
     """Logout user and clear session"""
+    # Get redirect_to from query parameters
+    redirect_to = request.query_params.get("redirect_to")
+    
+    # Try to logout from Identity service if we have a token
+    token = request.cookies.get("access_token")
+    if token:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{IDENTITY_URL}/logout",
+                    headers={"Authorization": f"Bearer {token}"}
+                ) as response:
+                    if response.status == 200:
+                        logger.info("Successfully logged out from Identity service")
+                    else:
+                        logger.warning(f"Identity logout failed: {response.status}")
+        except Exception as e:
+            logger.error(f"Error calling Identity logout: {e}")
+    
     # Create response
     if redirect_to and await validate_redirect_url(redirect_to):
         response = RedirectResponse(url=redirect_to)
@@ -265,34 +282,6 @@ async def logout(request: Request, redirect_to: Optional[str] = None):
     
     logger.info("User logged out")
     return response
-
-@app.get("/verify")
-async def verify_session(request: Request):
-    """Verify current session and return user info"""
-    token = request.cookies.get("access_token")
-    if not token:
-        raise HTTPException(status_code=401, detail="No authentication token")
-    
-    user_data = await verify_token(token)
-    if not user_data:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
-    return user_data
-
-@app.post("/api/language")
-async def set_language_endpoint(request: Request, lang: str = Form(...)):
-    """Set user language preference"""
-    i18n.set_language(lang)
-    response = JSONResponse({"success": True, "language": lang})
-    set_language_cookie(response, lang)
-    return response
-
-@app.get("/api/translations")
-async def get_translations(request: Request):
-    """Get all translations for current language"""
-    lang = get_language(request)
-    i18n.set_language(lang)
-    return JSONResponse(i18n.get_all())
 
 @app.get("/health")
 async def health_check():

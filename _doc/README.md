@@ -8,7 +8,7 @@
 
 ## 🌟 Features
 
-- **🚀 Full CI/CD Pipeline**: Automated testing, building, deployment with GitHub Actions
+- **🚀 Full CI/CD Pipeline**: Automated building, deployment with GitHub Actions
 - **🐳 Container Registry**: Docker images automatically built and published to GHCR
 - **🌍 Multi-Environment**: Staging and production deployment automation
 - **🔄 Health Monitoring**: Comprehensive health checks and automated rollback
@@ -107,7 +107,7 @@ See [Localization Guide](docs/LOCALIZATION.md) for details.
 Access comprehensive API documentation at **http://localhost:8010**
 
 Features:
-- **Interactive Testing**: Try APIs directly in the browser
+- **Interactive API**: Try APIs directly in the browser
 - **Service Health**: Real-time status monitoring
 - **Combined Specs**: View all APIs in one place
 - **Swagger UI & ReDoc**: Choose your preferred format
@@ -126,7 +126,6 @@ Configuration uses YAML files instead of environment variables:
 config/
 ├── config.yaml                 # Default (development) config
 ├── config.prod.example.yaml    # Production template
-├── config.test.yaml            # Test environment
 └── config.local.yaml           # Local overrides (git-ignored)
 ```
 
@@ -217,78 +216,11 @@ These steps will set up the project with secure configuration:
 3. Keep environment variables secure and never commit them to version control
 4. Regularly rotate JWT secrets and admin credentials
 
-## Testing
-
-DIGiDIG uses a **unified Docker testing system** for consistent test execution. All tests run in Docker containers with proper service networking.
-
-### Quick Start
-
-```bash
-# Run all tests
-make test
-
-# Quick health check
-make test-quick
-
-# Configuration tests only
-make test-config
-
-# Show all available test categories
-make test-help
-```
-
-### Available Test Categories
-
-- **`make test-quick`** - Fast health check of all services
-- **`make test-config`** - Configuration and service connectivity tests
-- **`make test-unit`** - Unit tests for individual components  
-- **`make test-integration`** - Full integration tests across services
-- **`make test-identity`** - Identity service authentication tests
-- **`make test-admin`** - Admin interface and management tests
-- **`make test-flow`** - Complete email flow (SMTP → Storage → IMAP)
-- **`make test-persistence`** - Database and storage persistence tests
-
-### Test Infrastructure
-
-- **Docker-based**: All tests run in containers with proper networking
-- **Automated setup**: Services are started automatically if needed
-- **Environment isolation**: Consistent test environment across machines
-- **Comprehensive coverage**: 49+ tests covering all major functionality
-
-📖 **See [Unified Docker Testing Guide](_doc/UNIFIED-DOCKER-TESTING.md) for complete documentation.**
-  - External domain handling
-
-### Test Structure
-
-```
-tests/
-├── Dockerfile              # Test container definition
-├── requirements-test.txt   # Test dependencies
-└── integration/
-    ├── test_identity_integration.py  # Identity integration tests
-    ├── test_identity_unit.py         # Identity unit tests
-    └── test_smtp_imap_flow.py        # Email flow tests
-```
-
-### Test Results
-
-Example test run:
-```
-✅ 9 passed in 3.90s
-   - 2 Identity integration tests
-   - 2 Identity unit tests
-   - 5 SMTP/IMAP flow tests
-⚠️  1 warning (deprecation in identity.py)
-```
-
-All tests run in isolated Docker container with access to service network.
-
 ## 🚀 CI/CD Pipeline
 
 DIGiDIG includes a comprehensive CI/CD pipeline with GitHub Actions:
 
 ### Continuous Integration
-- **Automated Testing**: Full test suite with PostgreSQL and MongoDB
 - **Code Quality**: Black, isort, Flake8 validation
 - **Security Scanning**: Trivy vulnerability scanning with GitHub Security integration
 

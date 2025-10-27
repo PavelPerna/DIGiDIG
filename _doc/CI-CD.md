@@ -2,50 +2,18 @@
 
 ## Overview
 
-DIGiDIG implements a comprehensive CI/CD pipeline using GitHub Actions, providing automated testing, building, deployment, and release management for all microservices.
+DIGiDIG implements a CI/CD pipeline using GitHub Actions, providing automated building, deployment, and release management for all microservices.
 
 ## Architecture
 
-The CI/CD system consists of three main workflows:
+The CI/CD system consists of two main workflows:
 
-1. **Continuous Integration (CI)** - Automated testing and quality checks
-2. **Continuous Deployment (CD)** - Docker registry and deployment automation
-3. **Release Management** - Automated releases with changelog generation
+1. **Continuous Deployment (CD)** - Docker registry and deployment automation
+2. **Release Management** - Automated releases with changelog generation
 
 ## Workflows
 
-### 1. Continuous Integration (.github/workflows/ci.yml)
-
-**Triggers:**
-- Pull requests to `main` branch
-- Pushes to `main` branch
-
-**Jobs:**
-
-#### Test Job
-- **Database Services:** PostgreSQL and MongoDB for realistic testing
-- **Integration Tests:** Full test suite using existing `make test` infrastructure
-- **Environment:** Ubuntu with Python 3.12
-- **Services Health Check:** Validates all service endpoints
-
-#### Lint Job
-- **Code Formatting:** Black formatter validation
-- **Import Sorting:** isort validation
-- **Code Quality:** Flake8 linting
-- **Fail Strategy:** `continue-on-error: true` (warns but doesn't block)
-
-#### Security Job
-- **Vulnerability Scanning:** Trivy security scanner
-- **SARIF Upload:** Results uploaded to GitHub Security tab
-- **Scope:** All container images and dependencies
-
-**Example Trigger:**
-```bash
-git push origin feature/my-feature
-# Triggers CI on push to any branch
-```
-
-### 2. Continuous Deployment (.github/workflows/cd.yml)
+### 1. Continuous Deployment (.github/workflows/cd.yml)
 
 **Triggers:**
 - Pushes to `main` branch (staging deployment)
@@ -85,7 +53,7 @@ git push origin v1.2.3
 # Triggers production deployment (requires manual approval)
 ```
 
-### 3. Release Management (.github/workflows/release.yml)
+### 2. Release Management (.github/workflows/release.yml)
 
 **Triggers:**
 - Git tags matching `v*` pattern
@@ -153,7 +121,6 @@ Comprehensive deployment automation with safety features:
 - **Backup Creation:** PostgreSQL and MongoDB automatic backup
 - **Health Checks:** Post-deployment service validation
 - **Rollback:** Automatic rollback on deployment failure
-- **Integration Tests:** Post-deployment test execution
 - **Docker Management:** Image cleanup and optimization
 
 **Safety Checks:**
@@ -243,18 +210,7 @@ https://github.com/YOUR_USERNAME/DIGiDIG/pkgs/container/digidig-SERVICE
 
 ### Common Issues
 
-#### 1. CI Tests Failing
-```bash
-# Check test logs in GitHub Actions
-# Run tests locally to debug
-make test
-
-# Check service health
-docker-compose ps
-docker-compose logs SERVICE_NAME
-```
-
-#### 2. Docker Registry Push Failures
+#### 1. Docker Registry Push Failures
 ```bash
 # Verify GHCR permissions
 echo $REGISTRY_PASSWORD | docker login ghcr.io -u $REGISTRY_USERNAME --password-stdin
@@ -262,7 +218,7 @@ echo $REGISTRY_PASSWORD | docker login ghcr.io -u $REGISTRY_USERNAME --password-
 # Check repository settings for package permissions
 ```
 
-#### 3. Deployment Health Check Failures
+#### 2. Deployment Health Check Failures
 ```bash
 # Run health check manually
 ./scripts/deployment/health-check.sh staging --details
@@ -271,7 +227,7 @@ echo $REGISTRY_PASSWORD | docker login ghcr.io -u $REGISTRY_USERNAME --password-
 docker-compose -f docker-compose.staging.yml logs SERVICE_NAME
 ```
 
-#### 4. Release Creation Issues
+#### 3. Release Creation Issues
 ```bash
 # Verify tag format
 git tag -l
@@ -286,8 +242,6 @@ git tag -l
 ```bash
 # Local development
 make install          # Setup local environment
-make test             # Run full test suite
-make test-build       # Build test containers
 
 # Docker operations
 docker-compose up -d  # Start all services
@@ -331,7 +285,6 @@ docker-compose logs -f
 ### CI/CD Pipeline Performance
 
 **Typical Execution Times:**
-- CI Workflow: 5-10 minutes
 - CD Workflow: 3-7 minutes per service
 - Release Workflow: 2-5 minutes
 - Deployment Script: 2-15 minutes (depending on environment)
@@ -345,8 +298,7 @@ docker-compose logs -f
 
 1. **Parallel Builds:** Matrix strategy reduces build time
 2. **Docker Layer Caching:** Speeds up subsequent builds
-3. **Selective Testing:** Run only relevant tests for PRs
-4. **Image Optimization:** Multi-stage builds reduce image size
+3. **Image Optimization:** Multi-stage builds reduce image size
 
 ## Best Practices
 
@@ -358,7 +310,7 @@ docker-compose logs -f
    # Make changes
    git commit -m "feat: add new feature"
    git push origin feature/my-feature
-   # Create PR (triggers CI)
+   # Create PR for review
    ```
 
 2. **Release Process:**
@@ -383,7 +335,6 @@ docker-compose logs -f
 
 - **Pre-commit Hooks:** Consider adding local pre-commit hooks
 - **Code Review:** All changes require PR review
-- **Testing:** Maintain high test coverage
 - **Documentation:** Update docs with code changes
 
 ### Security

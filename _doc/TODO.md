@@ -33,8 +33,9 @@ High level tasks (priority order)
 5. Add CSRF / request protection for browser flows
    - Because cookies are sent automatically, implement CSRF tokens for state-changing operations (or require `SameSite` plus anti-CSRF tokens where needed).
 
-6. Tests & CI
-   - Add integration tests covering: login (cookie set), refresh rotation, logout -> revoke, verify after revoke fails. Add a "logout all devices" test (revoke all refresh tokens for a user).
+6. Security & Monitoring
+   - Add audit logging for admin actions
+   - Implement rate limiting for sensitive endpoints
 
 7. UX polish & migration
    - Keep localStorage only for non-sensitive UI state (e.g., `openUsersDomain`).
@@ -60,7 +61,8 @@ Checklist (project TODO)
 - [ ] Frontend: Stop storing tokens in localStorage; rely on HttpOnly cookies
 - [ ] Auth: Implement refresh-token rotation and short-living access tokens
 - [ ] Security: Add CSRF protections where needed
-- [ ] Tests: Add integration tests for login/refresh/logout/revoke
+- [ ] Security: Add audit logging for admin actions
+- [ ] Security: Implement rate limiting for sensitive endpoints
 
 How to update
 -------------
@@ -81,11 +83,10 @@ docker compose build admin
 docker compose up -d admin
 ```
 
-- Run integration tests locally (example):
+- Check service locally (example):
 
 ```bash
-python3 -m pip install --user requests==2.31.0
-python3 admin/tests/integration_test.py
+curl -I http://localhost:8003/health
 ```
 
 Notes

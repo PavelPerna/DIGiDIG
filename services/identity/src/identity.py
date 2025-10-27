@@ -172,28 +172,28 @@ async def init_db():
                 await conn.execute("DROP TABLE IF EXISTS refresh_tokens")
 
                 await conn.execute("""
-                    CREATE TABLE domains (
+                    CREATE TABLE IF NOT EXISTS domains (
                         id SERIAL PRIMARY KEY,
                         name TEXT UNIQUE NOT NULL
                     )
                 """)
 
                 await conn.execute("""
-                    CREATE TABLE roles (
+                    CREATE TABLE IF NOT EXISTS roles (
                         id SERIAL PRIMARY KEY,
                         name TEXT UNIQUE NOT NULL
                     )
                 """)
 
                 await conn.execute("""
-                    CREATE TABLE revoked_tokens (
+                    CREATE TABLE IF NOT EXISTS revoked_tokens (
                         jti TEXT PRIMARY KEY,
                         expires_at TIMESTAMP NOT NULL
                     )
                 """)
 
                 await conn.execute("""
-                    CREATE TABLE refresh_tokens (
+                    CREATE TABLE IF NOT EXISTS refresh_tokens (
                         token TEXT PRIMARY KEY,
                         username TEXT NOT NULL,
                         expires_at TIMESTAMPTZ NOT NULL
@@ -201,7 +201,7 @@ async def init_db():
                 """)
 
                 await conn.execute("""
-                    CREATE TABLE users (
+                    CREATE TABLE IF NOT EXISTS users (
                         id SERIAL PRIMARY KEY,
                         username TEXT UNIQUE NOT NULL,
                         password TEXT NOT NULL,
@@ -210,7 +210,7 @@ async def init_db():
                 """)
 
                 await conn.execute("""
-                    CREATE TABLE user_roles (
+                    CREATE TABLE IF NOT EXISTS user_roles (
                         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                         role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
                         PRIMARY KEY (user_id, role_id)
@@ -288,6 +288,7 @@ async def _decode_token(authorization: str):
         jti = payload.get('jti')
         if jti:
             async with app.state.db_pool.acquire() as conn:
+                # Check revoked_tokens table
                 row = await conn.fetchrow('SELECT jti FROM revoked_tokens WHERE jti = $1', jti)
                 if row:
                     logger.info(f"Token jti {jti} is revoked")
@@ -482,6 +483,29 @@ async def refresh_token(body: dict):
 async def verify(authorization: str = Header(...)):
     payload = await _decode_token(authorization)
     return {"status": "OK", "username": payload.get("username"), "roles": payload.get("roles", [])}
+
+@app.post("/logout")
+async def logout(authorization: str = Header(...)):
+    """Logout user and invalidate token"""
+    payload = await _decode_token(authorization)
+    
+    # Get token ID and expiration from payload
+    token_id = payload.get("jti")
+    exp = payload.get("exp")
+    
+    if token_id and exp:
+        # Add token to revoked_tokens table
+        async with app.state.db_pool.acquire() as conn:
+            try:
+                exp_ts = datetime.fromtimestamp(exp, tz=timezone.utc)
+                await conn.execute(
+                    "INSERT INTO revoked_tokens (jti, expires_at) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+                    token_id, exp_ts
+                )
+            except Exception as e:
+                logger.error(f"Error revoking token: {e}")
+    
+    return {"status": "logged out", "username": payload.get("username")}
 
 
 @app.post("/domains")

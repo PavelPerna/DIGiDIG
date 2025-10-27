@@ -26,7 +26,8 @@ i18n = init_i18n(default_language='en', service_name='client')
 # Get configuration
 config = get_config()
 IDENTITY_URL = get_service_url('identity')
-SSO_URL = get_service_url('sso')
+SSO_URL = config.get('services.sso.external_url', get_service_url('sso'))
+SSO_INTERNAL_URL = get_service_url('sso')  # For inter-service API calls
 
 app = FastAPI(
     title="DIGiDIG Client Service",
@@ -45,12 +46,20 @@ async def auth_middleware(request: Request, call_next):
     is_public = any(request.url.path.startswith(path) for path in public_paths)
     
     if not is_public and request.url.path not in ["/", "/login", "/logout"]:
-        # Check authentication
-        user = await get_user_from_token(request)
-        if not user:
-            # Redirect to SSO for authentication
-            redirect_url = urllib.parse.quote(str(request.url))
-            return RedirectResponse(url=f"{SSO_URL}/?redirect_to={redirect_url}", status_code=307)
+        # Special case: allow dashboard with token parameter (SSO redirect)
+        if request.url.path == "/dashboard" and "token" in request.query_params:
+            # Let the dashboard endpoint handle token verification
+            pass
+        else:
+            # Check authentication
+            user = await get_user_from_token(request)
+            if not user:
+                # Redirect to SSO for authentication - use external URL for browser
+                external_url = f"http://localhost:8004{request.url.path}"
+                if request.url.query:
+                    external_url += f"?{request.url.query}"
+                redirect_url = urllib.parse.quote(external_url)
+                return RedirectResponse(url=f"{SSO_URL}/?redirect_to={redirect_url}", status_code=307)
     
     response = await call_next(request)
     return response
@@ -71,11 +80,11 @@ async def get_user_from_token(request: Request):
         return None
     
     try:
-        # Verify token with SSO service
+        # Verify token with Identity service directly
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                f"{SSO_URL}/verify",
-                cookies={"access_token": token}
+                f"{IDENTITY_URL}/verify",
+                headers={"Authorization": f"Bearer {token}"}
             ) as response:
                 if response.status == 200:
                     user_data = await response.json()
@@ -91,8 +100,11 @@ async def require_auth(request: Request):
     """Require authentication, redirect to SSO if not authenticated"""
     user = await get_user_from_token(request)
     if not user:
-        # Create redirect URL to SSO with current URL as return destination
-        redirect_url = urllib.parse.quote(str(request.url))
+        # Create redirect URL to SSO with current URL as return destination - use external URL
+        external_url = f"http://localhost:8004{request.url.path}"
+        if request.url.query:
+            external_url += f"?{request.url.query}"
+        redirect_url = urllib.parse.quote(external_url)
         sso_login_url = f"{SSO_URL}/?redirect_to={redirect_url}"
         raise HTTPException(status_code=307, headers={"Location": sso_login_url})
     return user
@@ -119,21 +131,6 @@ def set_language(response: Response, lang: str):
             samesite="lax"
         )
 
-@app.post("/api/language")
-async def set_language_endpoint(request: Request, lang: str = Form(...)):
-    """Set user language preference"""
-    i18n.set_language(lang)
-    response = JSONResponse({"success": True, "language": lang})
-    set_language(response, lang)
-    return response
-
-@app.get("/api/translations")
-async def get_translations(request: Request):
-    """Get all translations for current language"""
-    lang = get_language(request)
-    i18n.set_language(lang)
-    return JSONResponse(i18n.get_all())
-
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     """Root endpoint - redirect to dashboard if authenticated, otherwise to SSO"""
@@ -141,25 +138,80 @@ async def root(request: Request):
     if user:
         return RedirectResponse(url="/dashboard", status_code=303)
     else:
-        # Redirect to SSO for authentication
-        redirect_url = urllib.parse.quote(str(request.url).replace('/', '/dashboard'))
+        # Redirect to SSO for authentication - use external URL for dashboard
+        external_url = f"http://localhost:8004/dashboard"
+        if request.url.query:
+            external_url += f"?{request.url.query}"
+        redirect_url = urllib.parse.quote(external_url)
         return RedirectResponse(url=f"{SSO_URL}/?redirect_to={redirect_url}", status_code=307)
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_redirect(request: Request):
     """Legacy login endpoint - redirect to SSO"""
-    redirect_url = urllib.parse.quote(str(request.url).replace('/login', '/dashboard'))
+    external_url = f"http://localhost:8004/dashboard"
+    if request.url.query:
+        external_url += f"?{request.url.query}"
+    redirect_url = urllib.parse.quote(external_url)
     return RedirectResponse(url=f"{SSO_URL}/?redirect_to={redirect_url}", status_code=307)
 
 @app.post("/logout")
+@app.get("/logout")
 async def logout(request: Request):
-    """Logout endpoint - redirect to SSO logout"""
-    redirect_url = urllib.parse.quote(str(request.url).replace('/logout', '/'))
-    return RedirectResponse(url=f"{SSO_URL}/logout?redirect_to={redirect_url}", status_code=307)
+    """Logout endpoint - call Identity logout directly"""
+    # Get token from cookie
+    token = request.cookies.get('access_token')
+    
+    # Create response for redirect to home page
+    response = RedirectResponse(url="/", status_code=303)
+    
+    # Clear local cookies
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
+    
+    # Call Identity logout if we have token
+    if token:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{IDENTITY_URL}/logout",
+                    headers={"Authorization": f"Bearer {token}"}
+                ) as logout_response:
+                    if logout_response.status == 200:
+                        logger.info("Successfully logged out from Identity service")
+                    else:
+                        logger.warning(f"Identity logout failed: {logout_response.status}")
+        except Exception as e:
+            logger.error(f"Error calling Identity logout: {e}")
+    
+    return response
 
 @app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request, error: str = None):
+async def dashboard(request: Request, error: str = None, token: str = None):
     """Main dashboard - requires authentication"""
+    # If token provided in URL (from SSO redirect), set it as cookie
+    response = None
+    if token:
+        # Verify token with Identity service first
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{IDENTITY_URL}/verify",
+                    headers={"Authorization": f"Bearer {token}"}
+                ) as resp:
+                    if resp.status == 200:
+                        # Token is valid, set cookie and redirect without token in URL
+                        response = RedirectResponse(url="/dashboard", status_code=302)
+                        response.set_cookie(
+                            key="access_token",
+                            value=token,
+                            max_age=1800,
+                            httponly=True,
+                            samesite="lax"
+                        )
+                        return response
+        except Exception as e:
+            logger.error(f"Token verification failed: {e}")
+    
     try:
         user = await require_auth(request)
     except HTTPException as e:
@@ -228,25 +280,6 @@ async def send_email(request: Request, recipient: str = Form(...), subject: str 
     except Exception as e:
         logger.error(f"Error sending email: {e}")
         return RedirectResponse(url="/dashboard?error=connection_failed", status_code=303)
-
-@app.get("/api/health")
-async def health_check():
-    """Health check endpoint for monitoring"""
-    return {
-        "status": "healthy",
-        "service": "client",
-        "version": "1.0.0",
-        "dependencies": {
-            "identity": IDENTITY_URL
-        }
-    }
-
-@app.post("/logout")
-async def logout(response: Response):
-    """Logout user by clearing cookie"""
-    redirect_response = RedirectResponse(url="/", status_code=303)
-    redirect_response.delete_cookie(key="access_token")
-    return redirect_response
 
 @app.get("/health")
 async def health_check():

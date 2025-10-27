@@ -8,7 +8,6 @@ Reorganize the DIGiDIG project structure to follow modern conventions with clear
 ### Before → After
 ```
 DIGiDIG/                    DIGiDIG/
-├── tests/           →      ├── _test/
 ├── docs/            →      ├── _doc/
 ├── README.md        →      ├── _doc/README.md (+ symlink)
 ├── identity/        →      ├── services/identity/
@@ -22,20 +21,13 @@ DIGiDIG/                    DIGiDIG/
 
 ## 🔧 **Changes Made**
 
-### 1. **Testing Infrastructure** → `_test/`
-- ✅ Moved all test files from `tests/` to `_test/`
-- ✅ Updated `pyproject.toml` testpaths: `["_test"]`
-- ✅ Moved test artifacts: `htmlcov/`, `reports/`, `.pytest_cache/`
-- ✅ Updated Docker test paths in `_test/Dockerfile`
-- ✅ Fixed test import paths to use `services/identity/src/`
-
-### 2. **Documentation** → `_doc/`
+### 1. **Documentation** → `_doc/`
 - ✅ Moved all docs from `docs/` to `_doc/`
 - ✅ Moved `README.md`, `CHANGELOG.md`, `TODO.md` to `_doc/`
 - ✅ Created symlink: `README.md -> _doc/README.md` for compatibility
 - ✅ Updated `pyproject.toml` readme path: `"_doc/README.md"`
 
-### 3. **Microservices** → `services/`
+### 2. **Microservices** → `services/`
 - ✅ Moved all 7 microservices to `services/` directory:
   - `services/identity/` - Authentication & user management
   - `services/smtp/` - SMTP email server
@@ -45,7 +37,7 @@ DIGiDIG/                    DIGiDIG/
   - `services/admin/` - Administrative interface
   - `services/apidocs/` - API documentation hub
 
-### 4. **Configuration Updates**
+### 3. **Configuration Updates**
 
 #### Docker Compose Files
 - ✅ Updated all `docker-compose*.yml` files

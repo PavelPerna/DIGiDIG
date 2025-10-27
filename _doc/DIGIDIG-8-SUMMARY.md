@@ -128,29 +128,29 @@ Each service now maintains internal state for:
 - Session tracking and management
 - Configurable worker threads (default: 4)
 
-## Testing
+## Service Health Checks
 
-All endpoints have been implemented and are ready for testing:
+All endpoints have been implemented and are ready for health checks:
 
 ```bash
-# Test SMTP service
+# Check SMTP service
 curl http://localhost:8000/api/health
 curl http://localhost:8000/api/stats
 curl http://localhost:8000/api/smtp/queue
 
-# Test IMAP service
+# Check IMAP service
 curl http://localhost:8003/api/health
 curl http://localhost:8003/api/imap/sessions
 
-# Test Storage service
+# Check Storage service
 curl http://localhost:8002/api/health
 curl http://localhost:8002/api/storage/stats
 
-# Test Identity service
+# Check Identity service
 curl http://localhost:8001/api/health
 curl -H "Authorization: Bearer {token}" http://localhost:8001/api/identity/sessions
 
-# Test Admin service
+# Check Admin service
 # Open in browser: http://localhost:8004/services?token={token}
 ```
 
