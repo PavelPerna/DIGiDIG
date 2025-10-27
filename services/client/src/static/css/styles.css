@@ -1,4 +1,4 @@
-@import url('/lib/common/header.css');
+@import url('/static/css/header.css');
 
 :root {
     --bg-color: #0d1117;
