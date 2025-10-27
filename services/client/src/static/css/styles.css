@@ -1,3 +1,5 @@
+@import url('/static/css/header.css');
+
 :root {
     --bg-color: #0d1117;
     --text-color: #f0f6fc;
@@ -9,6 +11,8 @@
     --button-hover: #2ea043;
     --button-secondary: #21262d;
     --button-secondary-hover: #30363d;
+    --surface: #161b22;
+    --surface-hover: #21262d;
     --border-color: #30363d;
     --surface: #161b22;
     --surface-hover: #21262d;
