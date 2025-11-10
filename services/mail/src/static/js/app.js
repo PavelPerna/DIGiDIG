@@ -53,9 +53,9 @@ class MailApp {
 
     async makeRequest(url, options = {}) {
         const defaultOptions = {
+            credentials: 'include',  // Include cookies
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.getCookie('access_token')}`
             }
         };
 
