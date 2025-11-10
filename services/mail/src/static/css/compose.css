@@ -18,20 +18,18 @@
 }
 
 .message {
-    position: fixed;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    min-width: 400px;
-    max-width: 600px;
-    margin-top: var(--spacing-lg, 1rem);
+    display: block !important;
+    margin: 1rem 0 2rem 0;
     padding: 1rem 2rem;
     border-radius: 8px;
+    font-size: 1rem;
     font-weight: 500;
     text-align: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    animation: slideIn 0.3s ease-out;
+    animation: slideDown 0.3s ease-out;
+}
+
+.message:empty {
+    display: none !important;
 }
 
 .message.success {
@@ -46,13 +44,13 @@
     border: 2px solid #dc2626;
 }
 
-@keyframes slideIn {
+@keyframes slideDown {
     from {
         opacity: 0;
-        transform: translate(-50%, -20px);
+        transform: translateY(-20px);
     }
     to {
         opacity: 1;
-        transform: translate(-50%, 0);
+        transform: translateY(0);
     }
 }

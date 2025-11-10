@@ -105,20 +105,24 @@ class MailApp {
     }
 
     showMessage(message, type = 'success') {
-        console.log('[showMessage]', type, message);
+        console.log('[showMessage] CALLED with:', type, message);
         const messageEl = document.getElementById('message');
+        console.log('[showMessage] Element found:', messageEl);
+        console.log('[showMessage] Element display before:', messageEl ? messageEl.style.display : 'N/A');
+        
         if (messageEl) {
             messageEl.textContent = message;
             messageEl.className = `message ${type}`;
             messageEl.style.display = 'block';
+            console.log('[showMessage] Element display after:', messageEl.style.display);
+            console.log('[showMessage] Element className:', messageEl.className);
             
             // Auto-hide after 5 seconds
             setTimeout(() => {
                 messageEl.style.display = 'none';
             }, 5000);
         } else {
-            console.warn('[showMessage] #message element not found!');
-            // Fallback to alert if element not found
+            console.error('[showMessage] #message element NOT FOUND!');
             alert(message);
         }
     }

@@ -34,6 +34,8 @@ async function sendEmail(event) {
         });
         
         console.log('[sendEmail] Response:', response);
+        
+        // Show notification (removed alert)
         window.MailApp.showMessage('Email sent successfully!', 'success');
         clearForm();
     } catch (error) {

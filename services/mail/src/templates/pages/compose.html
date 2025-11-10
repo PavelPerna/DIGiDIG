@@ -2,6 +2,9 @@
     <h1>{{ i18n.get('mail.compose.title', 'Compose Email') }}</h1>
 </div>
 
+<!-- Success/Error message ABOVE the form -->
+<div id="message" class="message"></div>
+
 <div class="compose-form-container">
     <form id="compose-form" onsubmit="sendEmail(event)">
         <div class="form-group">
@@ -29,6 +32,3 @@
         </div>
     </form>
 </div>
-
-<!-- Success/Error messages -->
-<div id="message" class="message" style="display: none;"></div>
