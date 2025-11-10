@@ -89,7 +89,8 @@ class MailApp {
 
         if (topPane && mainLayout) {
             const topPaneHeight = topPane.offsetHeight;
-            mainLayout.style.paddingTop = `${topPaneHeight}px`;
+            // Don't add padding - top-pane is fixed, layout should start normally
+            // mainLayout.style.paddingTop = `${topPaneHeight}px`;
 
             // Update CSS custom property for consistency
             document.documentElement.style.setProperty('--top-pane-height', `${topPaneHeight}px`);
@@ -97,7 +98,7 @@ class MailApp {
             // Re-adjust on window resize
             window.addEventListener('resize', () => {
                 const newHeight = topPane.offsetHeight;
-                mainLayout.style.paddingTop = `${newHeight}px`;
+                // mainLayout.style.paddingTop = `${newHeight}px`;
                 document.documentElement.style.setProperty('--top-pane-height', `${newHeight}px`);
             });
         }

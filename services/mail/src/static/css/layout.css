@@ -48,8 +48,8 @@ body {
 /* Main Layout */
 .main-layout {
     display: flex;
-    min-height: calc(100vh - var(--top-pane-height)); /* Account for top pane height */
-    padding-top: var(--top-pane-height); /* Push content below sticky top pane */
+    min-height: 100vh;
+    /* Removed padding-top - top-pane is sticky, not fixed */
 }
 
 /* Left Pane - Menu */
