@@ -5,7 +5,6 @@ Loads configuration from YAML files with environment-based overrides
 Singleton pattern - use Config.instance() to access configuration
 """
 import os
-import socket
 try:
     import yaml
     _yaml_safe_load = yaml.safe_load
