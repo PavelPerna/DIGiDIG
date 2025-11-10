@@ -33,6 +33,78 @@ body {
     min-height: 100vh;
 }
 
+/* Container for main content */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* Email sections */
+.compose-section,
+.emails-section {
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.email-item {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.email-item:last-child {
+    margin-bottom: 0;
+}
+
+.email-body {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--input-border);
+    white-space: pre-wrap;
+}
+
+.timestamp {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.message {
+    background: var(--success);
+    color: #ffffff;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.error {
+    background: var(--danger);
+    color: #ffffff;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.no-emails {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem;
+}
+
 h1, h2, h3, h4, h5, h6 { 
     color: var(--text-color);
     margin-bottom: 1rem;

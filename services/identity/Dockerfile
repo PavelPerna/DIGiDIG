@@ -1,25 +1,23 @@
-FROM python:3.10-slim
+FROM ghcr.io/pavelperna/digidig-base:latest
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
-
 # Copy lib and config files (from project root)
-COPY lib/ ./lib/
+COPY digidig/ ./digidig/
 COPY config/ ./config/
 
-# Copy service-specific files
+# Copy service-specific requirements and install ONLY service-specific dependencies
 COPY services/identity/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --quiet --no-cache-dir -r requirements.txt
 
 COPY services/identity/src/ ./src/
 COPY services/identity/scripts/ ./scripts/
 
-ENV PYTHONPATH=/app:$PYTHONPATH
+ENV PYTHONPATH=/app
 
 RUN chmod +x /app/scripts/start.sh
 
-EXPOSE 8001
+EXPOSE 9101 9201
 
 ENV ADMIN_EMAIL=admin@example.com \
     ADMIN_PASSWORD=admin

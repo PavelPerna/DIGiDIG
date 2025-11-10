@@ -75,7 +75,7 @@ backup_service() {
 backup_all_services() {
     mkdir -p "$BACKUP_DIR"
     
-    local services=("identity" "smtp" "imap" "storage" "client" "admin" "apidocs")
+    local services=("identity" "smtp" "imap" "storage" "admin" "mail" "apidocs")
     
     echo -e "${YELLOW}Backing up all service data...${NC}"
     

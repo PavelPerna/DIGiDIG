@@ -14,7 +14,8 @@
 - **🔄 Health Monitoring**: Comprehensive health checks and automated rollback
 - **🌐 Multi-Language Support (i18n)**: English and Czech with easy extensibility
 - **📚 Comprehensive API Documentation**: Interactive Swagger UI and ReDoc for all services
-- **🏗️ Microservices Architecture**: Identity, Storage, SMTP, IMAP, Client, Admin
+- **🏗️ Microservices Architecture**: Identity, Storage, SMTP, IMAP, Mail, Admin
+- **⚖️ Load-Balanced Reverse Proxy**: Distributed connection handling across multiple ports
 - **🔐 JWT Authentication**: Secure token-based authentication
 - **⚙️ YAML Configuration**: Centralized, type-safe configuration management
 - **🐳 Docker-Based Deployment**: Easy setup with Docker Compose
@@ -23,11 +24,12 @@
 
 ## 📚 Documentation
 
-- **[CI/CD Pipeline](docs/CI-CD.md)** - Complete CI/CD automation guide
-- **[Localization Guide](docs/LOCALIZATION.md)** - Multi-language support
-- **[API Documentation](docs/API-DOCUMENTATION.md)** - Complete API reference
-- **[Configuration Guide](docs/CONFIGURATION.md)** - YAML configuration system
-- **[Migration Guide](docs/CONFIG-MIGRATION.md)** - Migrate from ENV to YAML
+- **[CI/CD Pipeline](_doc/CI-CD.md)** - Complete CI/CD automation guide
+- **[Localization Guide](_doc/LOCALIZATION.md)** - Multi-language support
+- **[API Documentation](_doc/API-DOCUMENTATION.md)** - Complete API reference
+- **[API Endpoints Reference](_doc/API-ENDPOINTS.md)** - REST API endpoint structure & examples
+- **[Configuration Guide](_doc/CONFIGURATION.md)** - YAML configuration system
+- **[Migration Guide](_doc/CONFIG-MIGRATION.md)** - Migrate from ENV to YAML
 
 ## 🚀 Quick Start
 
@@ -79,17 +81,28 @@ Check service health across environments:
 ./scripts/deployment/health-check.sh production --details
 ```
 
-## 🌐 Services
+## 🌐 Services & Load Balancing
 
-| Service | Port | Description | Documentation |
-|---------|------|-------------|---------------|
-| **Identity** | 8001 | Authentication & user management | [Swagger](http://localhost:8010/docs/identity) |
-| **Storage** | 8002 | Email storage & retrieval | [Swagger](http://localhost:8010/docs/storage) |
-| **SMTP** | 8003 | Email sending service | [Swagger](http://localhost:8010/docs/smtp) |
-| **IMAP** | 8007 | Email retrieval protocol | [Swagger](http://localhost:8010/docs/imap) |
-| **Client** | 8004 | Web-based email client | [Swagger](http://localhost:8010/docs/client) |
-| **Admin** | 8005 | Administration panel | [Swagger](http://localhost:8010/docs/admin) |
-| **API Docs** | 8010 | **API Documentation Hub** | [Open](http://localhost:8010) |
+DIGiDIG uses **load-balanced reverse proxies** for optimal scalability:
+
+### Production Access (Load Balanced)
+| Service Group | Port | Services | Access URLs |
+|---------------|------|----------|-------------|
+| **Core** | 443 | Admin, SSO, Identity | `https://admin.digidig.cz`, `https://sso.digidig.cz`, `https://identity.digidig.cz` |
+| **Communication** | 444 | SMTP, IMAP, Mail | `https://smtp.digidig.cz:444`, `https://imap.digidig.cz:444`, `https://mail.digidig.cz:444` |
+| **Data & API** | 445 | Storage, Client, API Docs, Test Suite, Services | `https://storage.digidig.cz:445`, `https://client.digidig.cz:445`, `https://apidocs.digidig.cz:445` |
+
+### Development Access (Direct)
+| Service | Internal Port | Description | Documentation |
+|---------|---------------|-------------|---------------|
+| **Identity** | 9101 | Authentication & user management | [Swagger](http://localhost:9110/docs/identity) |
+| **Storage** | 9102 | Email storage & retrieval | [Swagger](http://localhost:9110/docs/storage) |
+| **SMTP** | 9100 | Email sending service | [Swagger](http://localhost:9110/docs/smtp) |
+| **IMAP** | 9103 | Email retrieval protocol | [Swagger](http://localhost:9110/docs/imap) |
+| **Mail** | 9107 | Web-based email client | [Swagger](http://localhost:9110/docs/mail) |
+| **Admin** | 9105 | Administration panel | [Swagger](http://localhost:9110/docs/admin) |
+| **Test Suite** | 9108 | Automated test runner | [Swagger](http://localhost:9110/docs/test-suite) |
+| **API Docs** | 9110 | **API Documentation Hub** | [Open](http://localhost:9110) |
 
 ## 🎨 Multi-Language Support
 
@@ -104,7 +117,7 @@ See [Localization Guide](docs/LOCALIZATION.md) for details.
 
 ## 📖 API Documentation
 
-Access comprehensive API documentation at **http://localhost:8010**
+Access comprehensive API documentation at **http://localhost:9110**
 
 Features:
 - **Interactive API**: Try APIs directly in the browser
@@ -112,7 +125,25 @@ Features:
 - **Combined Specs**: View all APIs in one place
 - **Swagger UI & ReDoc**: Choose your preferred format
 
-See [API Documentation Guide](docs/API-DOCUMENTATION.md) for details.
+### API Endpoint Structure
+
+All REST API endpoints follow consistent structure under `/api/`:
+
+```
+/api/{service}/{resource}/{id}/{sub-resource}
+```
+
+**Examples:**
+- `/api/identity/register` - User registration
+- `/api/identity/users/{username}/preferences` - User preferences
+- `/api/smtp/send` - Send email
+- `/api/storage/emails` - List emails
+
+**Client Services** (mail, admin, client, sso, test-suite) have built-in proxy at `/api/{service}/*` that routes to backend services.
+
+**📖 See [API Endpoints Reference](_doc/API-ENDPOINTS.md) for complete endpoint listing.**
+
+**📖 See [API Documentation Guide](_doc/API-DOCUMENTATION.md) for interactive API details.**
 
 ## ⚙️ Configuration Management
 
@@ -238,7 +269,7 @@ All services are available as Docker images:
 docker pull ghcr.io/YOUR_USERNAME/digidig-identity:latest
 docker pull ghcr.io/YOUR_USERNAME/digidig-client:latest
 
-# Available services: identity, storage, smtp, imap, client, admin, apidocs
+# Available services: identity, storage, smtp, imap, mail, admin, apidocs
 ```
 
 ### Deployment Automation

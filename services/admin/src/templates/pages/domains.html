@@ -1,0 +1,60 @@
+<div class="page-header">
+    <h1>{{ i18n.get('admin.domains.title', 'Domain Management') }}</h1>
+    <button class="btn btn-primary" onclick="showAddDomainModal()">
+        {{ i18n.get('admin.domains.add', 'Add Domain') }}
+    </button>
+</div>
+
+<div class="domains-list">
+    {% if domains %}
+        <div class="domains-grid">
+            {% for domain in domains %}
+            <div class="domain-card">
+                <div class="domain-header">
+                    <h3>{{ domain.name }}</h3>
+                    <div class="domain-actions">
+                        <button class="btn btn-secondary" onclick="editDomain('{{ domain.name }}')">
+                            {{ i18n.get('common.edit', 'Edit') }}
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteDomain('{{ domain.name }}')">
+                            {{ i18n.get('common.delete', 'Delete') }}
+                        </button>
+                    </div>
+                </div>
+                <div class="domain-info">
+                    <p>{{ i18n.get('admin.domains.users_count', 'Users:') }} <span id="users-count-{{ domain.name }}">0</span></p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>{{ i18n.get('admin.domains.no_domains', 'No domains configured yet.') }}</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Add/Edit Domain Modal -->
+<div id="domain-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title">{{ i18n.get('admin.domains.add', 'Add Domain') }}</h2>
+            <button class="modal-close" onclick="closeDomainModal()">&times;</button>
+        </div>
+        <form id="domain-form" onsubmit="saveDomain(event)">
+            <input type="hidden" id="original-name" name="originalName">
+            <div class="form-group">
+                <label for="domain-name">{{ i18n.get('admin.domains.name', 'Domain Name') }}</label>
+                <input type="text" id="domain-name" name="name" required>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeDomainModal()">
+                    {{ i18n.get('common.cancel', 'Cancel') }}
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    {{ i18n.get('common.save', 'Save') }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

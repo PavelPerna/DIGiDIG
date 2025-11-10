@@ -67,13 +67,6 @@ GET http://localhost:8010/api/openapi/combined
 
 **Docs**: http://localhost:8010/docs/imap
 
-### Client Service (Port 8004)
-- **Web Interface**: Email client UI
-- **API Endpoints**: Dashboard, compose, send
-- **User Sessions**: Session management
-
-**Docs**: http://localhost:8010/docs/client
-
 ### Admin Service (Port 8005)
 - **Service Management**: Start, stop, restart services
 - **Monitoring**: System health and metrics

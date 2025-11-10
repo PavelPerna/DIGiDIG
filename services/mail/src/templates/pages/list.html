@@ -1,0 +1,42 @@
+<div class="page-header">
+    <h1>{{ i18n.get('mail.list.title', 'Inbox') }}</h1>
+    <button class="btn btn-primary" onclick="refreshEmails()">
+        {{ i18n.get('common.refresh', 'Refresh') }}
+    </button>
+</div>
+
+<div class="emails-list">
+    {% if emails %}
+        <div class="emails-table">
+            <div class="email-header">
+                <div class="email-from">{{ i18n.get('mail.list.from', 'From') }}</div>
+                <div class="email-subject">{{ i18n.get('mail.list.subject', 'Subject') }}</div>
+                <div class="email-date">{{ i18n.get('mail.list.date', 'Date') }}</div>
+            </div>
+            {% for email in emails %}
+            <div class="email-row" onclick="viewEmail('{{ email.id }}')">
+                <div class="email-from">{{ email.from or 'Unknown' }}</div>
+                <div class="email-subject">{{ email.subject or 'No subject' }}</div>
+                <div class="email-date">{{ email.date or 'Unknown' }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>{{ i18n.get('mail.list.no_emails', 'No emails in your inbox.') }}</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Email viewer modal -->
+<div id="email-modal" class="modal" style="display: none;">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h2 id="email-subject">{{ i18n.get('mail.view.subject', 'Email') }}</h2>
+            <button class="modal-close" onclick="closeEmailModal()">&times;</button>
+        </div>
+        <div id="email-content" class="email-content">
+            <!-- Email content will be loaded here -->
+        </div>
+    </div>
+</div>

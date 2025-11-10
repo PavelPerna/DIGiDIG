@@ -1,5 +1,4 @@
-fastapi==0.115.0
-uvicorn==0.30.6
-pydantic==2.9.2
+# Service-specific dependencies (common deps in base image)
+# Base image provides: fastapi, uvicorn, aiohttp, httpx, pydantic, pyyaml, jinja2, requests, python-multipart
+
 pymongo==4.8.0
-PyYAML>=6.0

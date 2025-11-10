@@ -14,40 +14,21 @@ import asyncio
 import hashlib
 import asyncpg
 
-# Add parent directory to path for config_loader import
-sys.path.insert(0, '/app/src')
-
-try:
-    from config_loader import config
-    USE_CONFIG = True
-except ImportError:
-    USE_CONFIG = False
-    print("Warning: Config module not found, using ENV variables")
-
-
-def get_required_env(key: str) -> str:
-    v = os.getenv(key)
-    if not v:
-        print(f"Missing required env: {key}")
-        sys.exit(2)
-    return v
-
-
+# Use config values or defaults
 async def main():
-    if USE_CONFIG:
-        admin_password = config.ADMIN_PASSWORD
-        admin_email = config.ADMIN_EMAIL
-        db_user = config.DB_USER
-        db_pass = config.DB_PASS
-        db_name = config.DB_NAME
-        db_host = config.DB_HOST
-    else:
-        admin_password = get_required_env("ADMIN_PASSWORD")
-        admin_email = get_required_env("ADMIN_EMAIL")
-        db_user = os.getenv("DB_USER", "postgres")
-        db_pass = os.getenv("DB_PASS", "securepassword")
-        db_name = os.getenv("DB_NAME", "strategos")
-        db_host = os.getenv("DB_HOST", "postgres")
+    import sys
+    sys.path.insert(0, '/app')
+    from digidig.config import get_config, get_db_config, get_jwt_secret
+
+    config = get_config()
+    db_config = get_db_config("postgres")
+
+    admin_password = config.get("security.admin.password", "admin")
+    admin_email = config.get("security.admin.email", "admin@example.com")
+    db_user = db_config["user"]
+    db_pass = db_config["password"]
+    db_name = db_config["database"]
+    db_host = db_config["host"]
     
     # Extract username and domain from ADMIN_EMAIL
     if "@" in admin_email:

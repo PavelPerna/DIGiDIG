@@ -182,6 +182,21 @@
                     </svg>
                 </button>
                 <div id="avatarDropdown" class="digidig-avatar-dropdown hidden">
+                    <div class="digidig-dropdown-section">
+                        <label class="digidig-dropdown-label">Language</label>
+                        <select id="languageSelect" onchange="changeLanguage(this.value)" class="digidig-dropdown-select">
+                            <option value="en">English</option>
+                            <option value="cs">Čeština</option>
+                        </select>
+                    </div>
+                    <div class="digidig-dropdown-section">
+                        <label class="digidig-dropdown-label">Dark Mode</label>
+                        <label class="digidig-toggle-switch">
+                            <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
+                            <span class="digidig-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="digidig-dropdown-divider"></div>
                     <button class="digidig-dropdown-item" onclick="doLogout()">Odhlásit</button>
                 </div>
             </div>
@@ -398,21 +413,15 @@
 
         // Avatar dropdown toggle and logout
         function toggleAvatarDropdown() {
-            const btn = document.querySelector('.digidig-avatar-button');
-            const dd = document.getElementById('avatarDropdown');
-            if (!btn || !dd) return;
-            const expanded = btn.getAttribute('aria-expanded') === 'true';
-            btn.setAttribute('aria-expanded', String(!expanded));
-            if (dd.classList.contains('hidden')) {
-                dd.classList.remove('hidden');
-            } else {
-                dd.classList.add('hidden');
+            const dropdown = document.getElementById('avatarDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
             }
         }
 
         async function doLogout() {
             try {
-                await fetch('/logout', { method: 'POST', credentials: 'same-origin' });
+                await fetch('/api/identity/logout', { method: 'POST', credentials: 'include' });
             } catch (e) {
                 // ignore network errors
             }
@@ -430,18 +439,118 @@
             }
         });
 
+        // Get cookie helper
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        // Load user preferences and update UI
+        async function loadUserPreferences() {
+            const accessToken = getCookie('access_token');
+            if (accessToken) {
+                try {
+                    const response = await fetch('http://localhost:8001/api/user/preferences', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const preferences = await response.json();
+                        
+                        // Update language selector
+                        const languageSelect = document.getElementById('languageSelect');
+                        if (languageSelect && preferences.language) {
+                            languageSelect.value = preferences.language;
+                        }
+                        
+                        // Update dark mode toggle
+                        const darkModeToggle = document.getElementById('darkModeToggle');
+                        if (darkModeToggle && preferences.dark_mode !== undefined) {
+                            darkModeToggle.checked = preferences.dark_mode;
+                            applyDarkMode(preferences.dark_mode);
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Failed to load server preferences:', error);
+                }
+            }
+        }
+
+        // Apply dark mode to UI
+        function applyDarkMode(enabled) {
+            if (enabled) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+        }
+
+        // Toggle dark mode
+        async function toggleDarkMode(enabled) {
+            applyDarkMode(enabled);
+            
+            const accessToken = getCookie('access_token');
+            if (accessToken) {
+                try {
+                    await fetch('http://localhost:8001/api/user/preferences', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`
+                        },
+                        body: JSON.stringify({ dark_mode: enabled })
+                    });
+                } catch (error) {
+                    console.warn('Failed to update dark mode preference:', error);
+                }
+            }
+        }
+
         async function changeLanguage(lang) {
             try {
-                await fetch('/api/language', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ language: lang })
-                });
+                // Update preferences via Identity service if user is authenticated
+                const accessToken = getCookie('access_token');
+                if (accessToken) {
+                    try {
+                        await fetch('http://localhost:8001/api/user/preferences', {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${accessToken}`
+                            },
+                            body: JSON.stringify({ language: lang })
+                        });
+                    } catch (error) {
+                        console.warn('Failed to update server preferences:', error);
+                    }
+                }
+
+                // Fallback to admin service for immediate reload (if endpoint exists)
+                try {
+                    await fetch('/api/language', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ language: lang })
+                    });
+                } catch (error) {
+                    console.warn('Admin language endpoint not available:', error);
+                }
+                
                 window.location.reload();
             } catch (error) {
                 console.error('Language change error:', error);
             }
         }
+
+        // Initialize preferences on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserPreferences();
+        });
     </script>
 </body>
 </html>

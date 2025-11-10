@@ -151,7 +151,7 @@ curl http://localhost:8001/api/health
 curl -H "Authorization: Bearer {token}" http://localhost:8001/api/identity/sessions
 
 # Check Admin service
-# Open in browser: http://localhost:8004/services?token={token}
+# Open in browser: http://localhost:8005/services?token={token}
 ```
 
 ## Documentation

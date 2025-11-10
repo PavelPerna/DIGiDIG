@@ -55,11 +55,11 @@ Security trade-offs
 
 Checklist (project TODO)
 ------------------------
-- [ ] Identity: Add refresh token model & store
-- [ ] Identity: Add POST /tokens/revoke and verify revocation on refresh/verify
-- [ ] Admin: Call identity revoke from `/logout` and delete cookies
+- [x] Identity: Add refresh token model & store
+- [x] Identity: Add POST /tokens/revoke and verify revocation on refresh/verify
+- [x] Admin: Call identity revoke from `/logout` and delete cookies
 - [ ] Frontend: Stop storing tokens in localStorage; rely on HttpOnly cookies
-- [ ] Auth: Implement refresh-token rotation and short-living access tokens
+- [x] Auth: Implement refresh-token rotation and short-living access tokens
 - [ ] Security: Add CSRF protections where needed
 - [ ] Security: Add audit logging for admin actions
 - [ ] Security: Implement rate limiting for sensitive endpoints

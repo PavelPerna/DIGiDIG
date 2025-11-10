@@ -17,8 +17,8 @@ Each service has its own dedicated data volume for configurations and service-sp
 - **smtp_data**: SMTP service configurations (e.g., `/app/data/smtp_config.json`)
 - **imap_data**: IMAP service configurations and cached data
 - **storage_data**: Storage service configurations and temporary files
-- **client_data**: Client service configurations and user preferences
 - **admin_data**: Admin service configurations and cached data
+- **mail_data**: Mail service configurations and user preferences
 - **apidocs_data**: API docs service configurations and generated docs
 
 ### Shared Volumes

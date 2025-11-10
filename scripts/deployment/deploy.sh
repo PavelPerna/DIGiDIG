@@ -197,7 +197,7 @@ main() {
     RETRY_COUNT=0
     
     while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
-        if curl -f http://localhost:8001/api/health >/dev/null 2>&1; then
+        if curl -f "${IDENTITY_HEALTH_URL:-http://localhost:9101/api/health}" >/dev/null 2>&1; then
             success "Identity service is healthy"
             break
         fi

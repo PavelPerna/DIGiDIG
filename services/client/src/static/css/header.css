@@ -3,7 +3,9 @@
 /* NEUPRAVOVAT BEZ SYNCHRONIZACE OBOU SLUŽEB! */
 
 /* Header root container */
-.digidig-header {
+/* Unified header and top-pane root container */
+.digidig-header,
+.digidig-top-pane {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
@@ -17,13 +19,16 @@
 }
 
 /* Left section */
-.digidig-header-left {
+.digidig-header-left,
+.digidig-top-pane-left {
     display: flex !important;
     align-items: center !important;
     gap: 1.5rem !important;
 }
 
-.digidig-header-left h1 {
+/* Welcome message/title */
+.digidig-header-left h1,
+.digidig-top-pane-title {
     margin: 0 !important;
     font-size: 1.5rem !important;
     color: var(--text-color) !important;
@@ -31,18 +36,21 @@
 }
 
 /* Right section */
-.digidig-header-right {
+.digidig-header-right,
+.digidig-top-pane-right {
     display: flex !important;
     align-items: center !important;
     gap: 1rem !important;
 }
 
 /* Language selector */
-.digidig-language-selector {
+.digidig-language-selector,
+.digidig-top-pane-language-only {
     position: relative !important;
 }
 
-.digidig-language-selector select {
+.digidig-language-selector select,
+.digidig-top-pane-language-only select {
     padding: 0.5rem 0.75rem !important;
     border-radius: 6px !important;
     border: 1px solid var(--input-border) !important;
@@ -53,17 +61,19 @@
     outline: none !important;
 }
 
-.digidig-language-selector select:focus {
+.digidig-language-selector select:focus,
+.digidig-top-pane-language-only select:focus {
     border-color: var(--input-focus) !important;
     box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3) !important;
 }
 
 /* Avatar wrapper */
-.digidig-avatar-wrapper {
+.digidig-avatar-wrapper,
+.digidig-avatar-dropdown {
     position: relative !important;
 }
 
-/* Avatar button - izolovaný od všech ostatních button stylů */
+/* Avatar button - unified for dropdown and top-pane */
 .digidig-avatar-button {
     background: #f0f0f0 !important;
     border: 2px solid #333 !important;
@@ -83,7 +93,7 @@
     box-sizing: border-box !important;
 }
 
-/* Avatar SVG icon - přepsání všech možných konfliktů */
+/* Avatar SVG icon - unified */
 .digidig-avatar-button svg {
     width: 28px !important;
     height: 28px !important;
@@ -104,8 +114,9 @@
     transform: scale(1.05) !important;
 }
 
-/* Avatar dropdown */
-.digidig-avatar-dropdown {
+/* Avatar dropdown menu (legacy and new) */
+.digidig-avatar-dropdown,
+.digidig-avatar-menu {
     position: absolute !important;
     top: 100% !important;
     right: 0 !important;
@@ -119,12 +130,14 @@
     overflow: hidden !important;
 }
 
-.digidig-avatar-dropdown.hidden {
+.digidig-avatar-dropdown.hidden,
+.digidig-avatar-menu[aria-hidden="true"] {
     display: none !important;
 }
 
 /* Dropdown items */
-.digidig-dropdown-item {
+.digidig-dropdown-item,
+.digidig-avatar-action-link {
     width: 100% !important;
     padding: 0.75rem 1rem !important;
     border: none !important;
@@ -143,24 +156,29 @@
     box-sizing: border-box !important;
 }
 
-.digidig-dropdown-item:hover {
+.digidig-dropdown-item:hover,
+.digidig-avatar-action-link:hover {
     background-color: var(--surface-hover) !important;
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
-    .digidig-header {
+    .digidig-header,
+    .digidig-top-pane {
         padding: 0.75rem 1rem !important;
         flex-direction: column !important;
         gap: 1rem !important;
     }
     
     .digidig-header-left,
-    .digidig-header-right {
+    .digidig-header-right,
+    .digidig-top-pane-left,
+    .digidig-top-pane-right {
         justify-content: center !important;
     }
     
-    .digidig-header-left h1 {
+    .digidig-header-left h1,
+    .digidig-top-pane-title {
         font-size: 1.25rem !important;
     }
 }

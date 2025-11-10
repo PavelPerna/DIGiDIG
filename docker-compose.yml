@@ -1,4 +1,43 @@
 services:
+
+  services:
+    build:
+      context: .
+      dockerfile: ./services/services/Dockerfile
+    image: ghcr.io/pavelperna/digidig-services:latest
+    restart: unless-stopped
+    ports:
+      - "${SERVICES_HTTP_PORT:-9120}:9120"   # HTTP
+      - "${SERVICES_HTTPS_PORT:-9220}:9220"  # HTTPS
+    environment:
+      - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
+      - SERVICES_HTTP_PORT=9120
+      - SERVICES_HTTPS_PORT=9220
+      - DIGIDIG_HOSTNAME=${HOSTNAME:-digidig.cz}
+    depends_on:
+      - identity
+      - smtp
+      - imap
+      - storage
+      - admin
+      - client
+      - test-suite
+      - mail
+      - apidocs
+      - sso
+    networks:
+      - strategos-net
+    volumes:
+      - ./config:/app/config:ro
+      - ./ssl:/app/ssl:ro
+      - app_logs:/app/logs
+      - test_data:/app/tests
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; resp = urllib.request.urlopen('http://localhost:9120/health', timeout=5); exit(0 if 200 <= resp.getcode() < 400 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
   postgres:
     image: postgres:15
     restart: unless-stopped
@@ -7,7 +46,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASS:-securepassword}
       - POSTGRES_DB=${DB_NAME:-strategos}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -25,7 +64,7 @@ services:
     environment:
       - MONGO_INITDB_DATABASE=strategos
     ports:
-      - "27017:27017"
+      - "${MONGO_PORT:-27017}:${MONGO_PORT:-27017}"
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand('ping').ok"]
       interval: 10s
@@ -41,49 +80,77 @@ services:
     build:
       context: .
       dockerfile: ./services/identity/Dockerfile
+    image: ghcr.io/pavelperna/digidig-identity:latest
     restart: unless-stopped
     ports:
-      - "8001:8001"
+      - "${IDENTITY_HTTP_PORT:-9101}:9101"   # HTTP
+      - "${IDENTITY_HTTPS_PORT:-9201}:9201"  # HTTPS
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
+      - IDENTITY_HTTP_PORT=9101
+      - IDENTITY_HTTPS_PORT=9201
+      - DIGIDIG_HOSTNAME=${HOSTNAME:-digidig.cz}
+      # Database connection settings (forwarded from top-level .env)
+      - DB_HOST=${DB_HOST:-postgres}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASS=${DB_PASS:-securepassword}
+      - DB_NAME=${DB_NAME:-strategos}
     networks:
       - strategos-net
     volumes:
+      - ./config:/app/config:ro
+      - ./ssl:/app/ssl:ro
       - identity_data:/app/data
       - app_logs:/app/logs
       - test_data:/app/tests
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; resp = urllib.request.urlopen('http://localhost:${IDENTITY_PORT:-9101}/health', timeout=5); exit(0 if 200 <= resp.getcode() < 400 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
 
   smtp:
     build:
       context: .
       dockerfile: ./services/smtp/Dockerfile
+    image: ghcr.io/pavelperna/digidig-smtp:latest
     restart: unless-stopped
     ports:
-      - "8000:8000"   # FastAPI REST API
-      - "2525:2525"   # SMTP server
-    environment:
-      - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
-      - SMTP_SERVER_PORT=2525
-    depends_on:
-      - storage
-      - identity
+      - "${SMTP_REST_PORT:-9100}:${SMTP_REST_PORT:-9100}"   # FastAPI REST API
+      - "${SMTP_SMTP_PORT:-25}:${SMTP_SMTP_PORT:-25}"       # SMTP (RFC 5321)
+      - "${SMTP_SMTPS_PORT:-465}:${SMTP_SMTPS_PORT:-465}"   # SMTPS (RFC 8314)
+      - "${SMTP_SUBMISSION_PORT:-587}:${SMTP_SUBMISSION_PORT:-587}" # SMTP Submission (RFC 6409)
     networks:
       - strategos-net
     volumes:
+      - ./config:/app/config:ro
       - smtp_data:/app/data
       - app_logs:/app/logs
       - test_data:/app/tests
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; resp = urllib.request.urlopen('http://localhost:${SMTP_REST_PORT:-9100}/health', timeout=5); exit(0 if 200 <= resp.getcode() < 400 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
 
   imap:
     build:
       context: .
       dockerfile: ./services/imap/Dockerfile
+    image: ghcr.io/pavelperna/digidig-imap:latest
     restart: unless-stopped
     ports:
-      - "8003:8003"
+      # REST API port for the IMAP service (used by health, admin, UI)
+      - "${IMAP_REST_PORT:-9103}:${IMAP_REST_PORT:-9103}"
+      # IMAP protocol ports (RFC 3501)
+      - "${IMAP_PROTOCOL_PORT:-143}:${IMAP_PROTOCOL_PORT:-143}"     # IMAP (cleartext)
+      - "${IMAP_S_PROTOCOL_PORT:-993}:${IMAP_S_PROTOCOL_PORT:-993}" # IMAPS (SSL/TLS)
     environment:
       - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
     depends_on:
@@ -92,64 +159,70 @@ services:
     networks:
       - strategos-net
     volumes:
+      - ./config:/app/config:ro
       - imap_data:/app/data
       - app_logs:/app/logs
       - test_data:/app/tests
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; resp = urllib.request.urlopen('http://localhost:${IMAP_REST_PORT:-9103}/health', timeout=5); exit(0 if 200 <= resp.getcode() < 400 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
 
   storage:
     build:
       context: .
       dockerfile: ./services/storage/Dockerfile
+    image: ghcr.io/pavelperna/digidig-storage:latest
     restart: unless-stopped
     ports:
-      - "8002:8002"
+      - "${STORAGE_HTTP_PORT:-9102}:9102"   # HTTP
+      - "${STORAGE_HTTPS_PORT:-9202}:9202"  # HTTPS
     depends_on:
       mongo:
         condition: service_healthy
     environment:
       - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
+      - STORAGE_HTTP_PORT=9102
+      - STORAGE_HTTPS_PORT=9202
+      - DIGIDIG_HOSTNAME=${HOSTNAME:-digidig.cz}
     networks:
       - strategos-net
     volumes:
+      - ./config:/app/config:ro
+      - ./ssl:/app/ssl:ro
       - storage_data:/app/data
       - app_logs:/app/logs
       - test_data:/app/tests
-
-  client:
-    build:
-      context: .
-      dockerfile: ./services/client/Dockerfile
-    restart: unless-stopped
-    ports:
-      - "8004:8004"
-    environment:
-      - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
-    depends_on:
-      - identity
-      - smtp
-      - imap
-      - sso
-    networks:
-      - strategos-net
-    volumes:
-      - client_data:/app/data
-      - app_logs:/app/logs
-      - test_data:/app/tests
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; resp = urllib.request.urlopen('http://localhost:${STORAGE_PORT:-9102}/health', timeout=5); exit(0 if 200 <= resp.getcode() < 400 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
 
   sso:
     build:
       context: .
       dockerfile: ./services/sso/Dockerfile
+    image: ghcr.io/pavelperna/digidig-sso:latest
     restart: unless-stopped
     ports:
-      - "8006:8006"
+      - "${SSO_HTTP_PORT:-9106}:9106"   # HTTP
+      - "${SSO_HTTPS_PORT:-9206}:9206"  # HTTPS
     environment:
       - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
+      - SSO_HTTP_PORT=9106
+      - SSO_HTTPS_PORT=9206
+      - DIGIDIG_HOSTNAME=${HOSTNAME:-digidig.cz}
     depends_on:
       - identity
     networks:
       - strategos-net
     volumes:
+      - ./config:/app/config:ro
+      - ./ssl:/app/ssl:ro
       - sso_data:/app/data
       - app_logs:/app/logs
       - test_data:/app/tests
@@ -158,11 +231,16 @@ services:
     build:
       context: .
       dockerfile: ./services/admin/Dockerfile
+    image: ghcr.io/pavelperna/digidig-admin:latest
     restart: unless-stopped
     ports:
-      - "8005:8005"
+      - "${ADMIN_HTTP_PORT:-9105}:9105"      # HTTP
+      - "${ADMIN_HTTPS_PORT:-9205}:9205"     # HTTPS
     environment:
       - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
+      - ADMIN_HTTP_PORT=9105
+      - ADMIN_HTTPS_PORT=9205
+      - DIGIDIG_HOSTNAME=${HOSTNAME:-digidig.cz}
     depends_on:
       - identity
     networks:
@@ -170,40 +248,150 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro  # Docker socket for restart functionality
       - ./:/app/project:ro  # Mount project root for docker-compose.yml access
+      - ./config:/app/config:ro
+      - ./ssl:/app/ssl:ro
       - admin_data:/app/data
       - app_logs:/app/logs
       - test_data:/app/tests
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; resp = urllib.request.urlopen('http://localhost:9105/health', timeout=5); exit(0 if 200 <= resp.getcode() < 400 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
 
-  apidocs:
+  client:
     build:
       context: .
-      dockerfile: ./services/apidocs/Dockerfile
+      dockerfile: ./services/client/Dockerfile
+    image: ghcr.io/pavelperna/digidig-client:latest
     restart: unless-stopped
     ports:
-      - "8010:8010"
+      - "${CLIENT_HTTP_PORT:-9104}:9104"   # HTTP
+      - "${CLIENT_HTTPS_PORT:-9204}:9204"  # HTTPS
     environment:
       - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
-      - IDENTITY_URL=http://identity:8001
-      - STORAGE_URL=http://storage:8002
-      - SMTP_URL=http://smtp:8000
-      - IMAP_URL=http://imap:8003
-      - CLIENT_URL=http://client:8004
-      - ADMIN_URL=http://admin:8005
-      - SSO_URL=http://sso:8006
+      - CLIENT_HTTP_PORT=9104
+      - CLIENT_HTTPS_PORT=9204
+      - DIGIDIG_HOSTNAME=${HOSTNAME:-digidig.cz}
+    depends_on:
+      - identity
+    networks:
+      - strategos-net
+    volumes:
+      - ./config:/app/config:ro
+      - ./ssl:/app/ssl:ro
+      - client_data:/app/data
+      - app_logs:/app/logs
+      - test_data:/app/tests
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; resp = urllib.request.urlopen('http://localhost:9104/health', timeout=5); exit(0 if 200 <= resp.getcode() < 400 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  test-suite:
+    build:
+      context: .
+      dockerfile: ./services/test-suite/Dockerfile
+    image: ghcr.io/pavelperna/digidig-test-suite:latest
+    restart: unless-stopped
+    ports:
+      - "${TEST_SUITE_HTTP_PORT:-9108}:9108"   # HTTP
+      - "${TEST_SUITE_HTTPS_PORT:-9208}:9208"  # HTTPS
+    environment:
+      - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
+      - TEST_SUITE_HTTP_PORT=9108
+      - TEST_SUITE_HTTPS_PORT=9208
+      - DIGIDIG_HOSTNAME=${HOSTNAME:-digidig.cz}
+    depends_on:
+      - identity
+    networks:
+      - strategos-net
+    volumes:
+      - ./config:/app/config:ro
+      - ./ssl:/app/ssl:ro
+      - test_suite_data:/app/data
+      - app_logs:/app/logs
+      - test_data:/app/tests
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; resp = urllib.request.urlopen('http://localhost:${TEST_SUITE_PORT:-9108}/health', timeout=5); exit(0 if 200 <= resp.getcode() < 400 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  mail:
+    build:
+      context: .
+      dockerfile: ./services/mail/Dockerfile
+    image: ghcr.io/pavelperna/digidig-mail:latest
+    restart: unless-stopped
+    ports:
+      - "${MAIL_HTTP_PORT:-9107}:9107"   # HTTP
+      - "${MAIL_HTTPS_PORT:-9207}:9207"  # HTTPS
+    environment:
+      - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
+      - MAIL_HTTP_PORT=9107
+      - MAIL_HTTPS_PORT=9207
+      - DIGIDIG_HOSTNAME=${HOSTNAME:-digidig.cz}
     depends_on:
       - identity
       - storage
       - smtp
       - imap
-      - client
+    networks:
+      - strategos-net
+    volumes:
+      - ./config:/app/config:ro
+      - ./ssl:/app/ssl:ro
+      - mail_data:/app/data
+      - app_logs:/app/logs
+      - test_data:/app/tests
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; resp = urllib.request.urlopen('http://localhost:9107/health', timeout=5); exit(0 if 200 <= resp.getcode() < 400 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  apidocs:
+    build:
+      context: .
+      dockerfile: ./services/apidocs/Dockerfile
+    image: ghcr.io/pavelperna/digidig-apidocs:latest
+    restart: unless-stopped
+    ports:
+      - "${APIDOCS_HTTP_PORT:-9110}:9110"   # HTTP
+      - "${APIDOCS_HTTPS_PORT:-9210}:9210"  # HTTPS
+    environment:
+      - DIGIDIG_ENV=${DIGIDIG_ENV:-dev}
+      - APIDOCS_HTTP_PORT=9110
+      - APIDOCS_HTTPS_PORT=9210
+      - DIGIDIG_HOSTNAME=${HOSTNAME:-digidig.cz}
+    depends_on:
+      - identity
+      - storage
+      - smtp
+      - imap
       - admin
+      - mail
       - sso
     networks:
       - strategos-net
     volumes:
+      - ./config:/app/config:ro
+      - ./ssl:/app/ssl:ro
       - apidocs_data:/app/data
       - app_logs:/app/logs
       - test_data:/app/tests
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; resp = urllib.request.urlopen('http://localhost:${APIDOCS_PORT:-9110}/health', timeout=5); exit(0 if 200 <= resp.getcode() < 400 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
 
 networks:
   strategos-net:
@@ -225,9 +413,13 @@ volumes:
     driver: local
   storage_data:
     driver: local
+  admin_data:
+    driver: local
   client_data:
     driver: local
-  admin_data:
+  test_suite_data:
+    driver: local
+  mail_data:
     driver: local
   sso_data:
     driver: local
@@ -239,3 +431,4 @@ volumes:
     driver: local
   test_data:
     driver: local
+

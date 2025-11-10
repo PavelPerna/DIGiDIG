@@ -1,54 +1,104 @@
-## DIGiDIG — Copilot / AI Agent Instructions
+# GitHub Copilot Instructions for DIGiDIG Project
 
-Purpose: Give an AI coding agent the minimal, actionable knowledge to be productive in this repository.
+## ⚠️ CRITICAL RULES - READ FIRST EVERY TIME ⚠️
 
-- Architectural snapshot
-  - DIGiDIG is a small microservices system implemented in Python (FastAPI). Main services live in `services/`: `identity/`, `storage/`, `smtp/`, `imap/`, `client/`, `admin/`, `sso/`, and `apidocs/`.
-  - Services communicate over an internal Docker network. Service URLs are configured in `config/config.yaml` under `services.*` and are accessed programmatically via `lib/common/config.py` (`get_service_url` / `get_config`). Example: `config.get('services.identity.url')`.
-  - **SSO Service**: Centralized authentication service that handles login/logout for all services. Other services redirect unauthenticated users to SSO and verify sessions via cookies.
-  - Identity service is the auth authority (JWT). SSO service authenticates with Identity and manages session cookies. Other services verify sessions with SSO service.
+### 🚨 ABSOLUTE REQUIREMENTS - NEVER VIOLATE THESE:
 
-- Configuration & conventions (critical)
-  - Centralized YAML config lives under `config/` (default file `config/config.yaml`). Environment overrides use `DIGIDIG_ENV` and `config/config.{env}.yaml`. The loader is in `lib/common/config.py` and `lib/config_models.py` documents expected shapes.
-  - Prefer reading configuration via `lib.common.config.get_config()` or convenience helpers `get_service_url()` and `get_db_config()` — do not reimplement ad-hoc env parsing.
-  - JWT secret and other sensitive values are present in dev config files but must be overridden in production (see root `README.md` and `config/config.prod.example.yaml`).
+1. **ALWAYS USE .venv - NEVER SYSTEM PYTHON**
+   - ❌ FORBIDDEN: Running any Python command without `.venv` active
+   - ❌ FORBIDDEN: Using `python3` or `pip` directly
+   - ✅ REQUIRED: Use `.venv/bin/python` and `.venv/bin/pip` explicitly
+   - ✅ REQUIRED: Check terminal has `(.venv)` in prompt before running commands
+   - ✅ REQUIRED: If terminal lacks .venv, activate it first: `source .venv/bin/activate`
 
-- Dev workflows & commands (what actually works)
-  - Install / run locally: `make install` then `docker compose up` per root `README.md` (project uses docker-compose for local integration). Use `DIGIDIG_ENV=prod` and copy `config.prod.example.yaml` for prod runs.
-  - Tests: **Unified Docker testing system** - tests live in `_test/` (unit and integration subdirectories). Use `make test` (all tests), `make test-quick` (health checks), `make test-unit` (core unit tests), `make test-integration`, or `python3 unified_test_runner.py <category>` directly. All tests run in Docker for consistent environment.
-  - Service-specific tests: `make test-identity`, `make test-admin`, `make test-flow` (email flow), etc. See `make test-help` for full list.
-  - Quick service run (for a single service during dev): each service has `src/<service>.py` and can be launched with `uvicorn` locally (but CI/dev uses Docker Compose). See `services/client/src/client.py` and `services/identity/src/identity.py` for examples.
+2. **NEVER RUN COMMANDS DIRECTLY ON USER'S MACHINE**
+   - ❌ FORBIDDEN: `sudo apt-get install`, `certbot`, manual Docker commands
+   - ❌ FORBIDDEN: Any system-level changes outside Makefile
+   - ✅ REQUIRED: ALL operations must be in Makefile targets
+   - ✅ REQUIRED: Use `make <target>` for all operations
+   - ✅ REQUIRED: If functionality doesn't exist in Makefile, ADD IT TO MAKEFILE FIRST
 
-- Project-specific patterns and gotchas
-  - Identity DB initialization is destructive in dev: `services/identity/src/identity.py`'s `init_db()` drops & recreates tables and seeds a default admin. Take care when running identity locally against a real DB — it can wipe tables.
-  - Many services expose both a REST API and web UI (Jinja2 templates under `src/templates` and static under `src/static`). Changes to templates/static may require cache clear (use `make clear-cache-view` or `make refresh <service>`).
-  - Inter-service calls use internal URLs stored in the config (example: `client` uses `IDENTITY_URL` env var and calls `/verify` to validate tokens). Prefer `get_service_url('storage')` for programmatic access.
-  - i18n: translations live under `locales/{en,cs}` and services use `lib/common/i18n.py`. Client sets language via cookie (`/api/language` endpoint in `services/client/src/client.py`).
+3. **ALWAYS VERIFY YOUR CHANGES IMMEDIATELY**
+   - ❌ FORBIDDEN: Making changes without testing them
+   - ❌ FORBIDDEN: Assuming something works without verification
+   - ✅ REQUIRED: After ANY change, run `make install` or appropriate make target
+   - ✅ REQUIRED: Check logs/output to confirm changes work
+   - ✅ REQUIRED: Test the feature you just implemented
 
-- Integration points / examples
-  - **SSO Authentication Flow**: Services redirect to `http://sso:8006/?redirect_to=<encoded_url>` for authentication. SSO authenticates with Identity service and sets secure cookies.
-  - **Session Verification**: Services verify sessions by calling SSO `/verify` endpoint or checking `access_token` cookie directly.
-  - Token verification: `POST /verify` in `services/identity/src/identity.py` — SSO service calls this to validate JWTs from login.
-  - Storing emails: SMTP → POST `/store` on `storage` (see `services/storage/README.md`). IMAP reads from `storage` via `/emails`.
-  - API docs hub: `services/apidocs/` aggregates OpenAPI specs from services; add new service spec by updating `src/apidocs.py`'s `SERVICES` dict.
+4. **LET'S ENCRYPT IS PRIORITY - NOT SELF-SIGNED**
+   - ❌ FORBIDDEN: Defaulting to self-signed certificates
+   - ❌ FORBIDDEN: Ignoring user's repeated requests for Let's Encrypt
+   - ✅ REQUIRED: Always attempt Let's Encrypt FIRST in `make install`
+   - ✅ REQUIRED: Self-signed is ONLY fallback when Let's Encrypt fails
+   - ✅ REQUIRED: Clearly report WHY Let's Encrypt failed if it does
 
-- How to change config safely (example)
-  - Use `lib.common.config.load_config(config_path, env)` or `get_config()`; prefer not to mutate `config` directly. Example to read identity URL: `from lib.common.config import get_service_url; url = get_service_url('identity')`.
+5. **ALWAYS USE CORRECT HOSTNAMES FROM CONFIG**
+   - ❌ FORBIDDEN: Hardcoding `localhost` or IP addresses
+   - ❌ FORBIDDEN: Ignoring hostname in config.yaml or .env
+   - ✅ REQUIRED: Read hostname from config.yaml `external_url` or .env `HOSTNAME`
+   - ✅ REQUIRED: Use config values in URLs, not assumptions
 
-- Code-style and structure notes for PRs
-  - Each service follows a FastAPI app in `src/`. Add new endpoints in that module and keep templates/static under `src/templates` and `src/static` respectively.
-  - Use `pydantic` models for request/response shapes; config model definitions are in `lib/config_models.py` — re-use them when validating config.
-  - Logging is via the standard `logging` module and services log to stdout (Docker-friendly). Keep message formats consistent with existing services for easier debugging.
+6. **COMMUNICATE CLEARLY AND VERIFY UNDERSTANDING**
+   - ❌ FORBIDDEN: Making assumptions about what user wants
+   - ❌ FORBIDDEN: Repeating same mistakes after correction
+   - ✅ REQUIRED: If uncertain, ask clarifying questions
+   - ✅ REQUIRED: Acknowledge when you've made an error
+   - ✅ REQUIRED: Learn from corrections and don't repeat them
 
-- Tests and CI guidance
-  - Tests are executed in Docker for consistent environment. Use `make test` and consult `_test/` for integration flows (identity, smtp/imaps flows). Unit tests under `_test/unit` show config-loading expectations.
+7. **CLIENT SERVICES ARCHITECTURE - UNIFIED API PROXY**
+   - ❌ FORBIDDEN: Adding business logic API endpoints to client services
+   - ❌ FORBIDDEN: Hardcoding service URLs in JavaScript
+   - ✅ REQUIRED: Client services (mail, admin, client, test-suite, apidocs, sso) serve HTML pages ONLY
+   - ✅ REQUIRED: ServiceClient base class provides generic `/api/{service}/*` proxy endpoint
+   - ✅ REQUIRED: Proxy routes `/api/smtp/*` → `smtp:9100/api/*`, `/api/identity/*` → `identity:9101/api/*`, etc.
+   - ✅ REQUIRED: Proxy is needed because HttpOnly cookies don't work cross-origin
+   - ✅ REQUIRED: JavaScript MUST call `/api/{service}/endpoint` (e.g., `/api/smtp/send`, `/api/identity/session/verify`)
+   - ✅ REQUIRED: All server services use `api_version=None` for `/api/` prefix (not `/api/v1/`)
+   - ✅ REQUIRED: All client services MUST have httpx in requirements.txt (for proxy)
+   - ✅ REQUIRED: All server services (identity, smtp, storage, imap) MUST have httpx in requirements.txt
 
-- Quick checklist for the AI agent when making changes
-  1. Does the change require config keys? Update `config/config.yaml` example and `lib/config_models.py` if the shape changes.
-  2. Will it affect inter-service calls? Update `services/apidocs/` and service READMEs if new endpoints should be discoverable.
-  3. Avoid destructive DB init in CI; respect `DIGIDIG_ENV` to skip destructive paths.
-  4. If adding UI templates, put them under `src/templates` and add related static files under `src/static`.
-  5. Run relevant tests via `make test-<service>` or `make test-integration` to ensure no regressions.
-  6. Follow existing logging and error-handling patterns for consistency.
-  7. Follow SOLID, DRY, and KISS principles to maintain code quality and readability.
-  8. For new services requiring authentication, use SSO service pattern: redirect to SSO for login, verify sessions via SSO `/verify` endpoint.
+8. **MAKEFILE USAGE**
+   - ✅ REQUIRED: Use `make refresh <service_name>` for single service rebuild (ONE service at a time)
+   - ✅ REQUIRED: Use `make build` for all services rebuild
+   - ✅ REQUIRED: Use `make install` for full setup
+   - ✅ REQUIRED: Use `make up` to start services
+   - ✅ REQUIRED: Docker cache can cause issues - requirements.txt changes need rebuild
+
+9. **SERVICE CLASS-BASED ARCHITECTURE**
+   - ❌ FORBIDDEN: Using `app = FastAPI()` directly in service files
+   - ❌ FORBIDDEN: Defining routes with `@app.get/post/put/delete` in module scope
+   - ✅ REQUIRED: All server services MUST inherit from `ServiceServer` class
+   - ✅ REQUIRED: All client services MUST inherit from `ServiceClient` class
+   - ✅ REQUIRED: Define routes in `register_routes(self)` method, using `@self.app.get/post/put/delete`
+   - ✅ REQUIRED: Create instance: `service = ServerName()` then `app = service.get_app()`
+   - ✅ REQUIRED: ServiceBase provides `/health` endpoint automatically (don't redefine unless needed)
+   - ✅ REQUIRED: ServiceServer provides `/api/status` endpoint automatically
+   - ✅ EXAMPLE:
+     ```python
+     class ServerSMTP(ServiceServer):
+         def __init__(self):
+             super().__init__(name='smtp', port=9100, api_version=None)
+             self.register_routes()
+         
+         def register_routes(self):
+             @self.app.post('/api/send')
+             async def send(payload: dict):
+                 return {'status': 'queued'}
+     
+     smtp_service = ServerSMTP()
+     app = smtp_service.get_app()
+     ```
+
+### 📋 WORKFLOW CHECKLIST - FOLLOW FOR EVERY TASK:
+
+1. ✅ Check terminal has `.venv` active (look for `(.venv)` in prompt)
+2. ✅ Read config.yaml/.env for current settings (hostname, ports, etc.)
+3. ✅ Plan changes in Makefile, NOT as direct commands
+4. ✅ Make changes to code/config
+5. ✅ Test changes with `make install` or appropriate target
+6. ✅ Verify logs/output show success
+7. ✅ Report results to user with evidence (logs, output)
+
+---
+
+For complete project documentation, see `.github/instructions.md`.

@@ -1,295 +1,89 @@
-from fastapi import FastAPI, Request, Form, Depends, HTTPException, Response
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-import aiohttp
 import os
 import sys
-from pydantic import BaseModel
-import logging
-import urllib.parse
-from datetime import datetime, timezone
 
-# Add parent directory to path for common imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
-from lib.common.config import get_config, get_service_url
-from lib.common.i18n import init_i18n, get_i18n
+from digidig.models.service.client import ServiceClient
+from digidig.config import get_config, get_service_url, get_service_internal_url
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import Request
+import aiohttp
 
-# Logging setup
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Initialize i18n
-i18n = init_i18n(default_language='en', service_name='client')
-
-# Get configuration
+# Client implemented using ServiceClient pattern
 config = get_config()
-IDENTITY_URL = get_service_url('identity')
-SSO_URL = config.get('services.sso.external_url', get_service_url('sso'))
-SSO_INTERNAL_URL = get_service_url('sso')  # For inter-service API calls
+CLIENT_PORT = config.get('services.client.http_port', 9104)
+HOST = config.get('services.client.external_url', 'localhost')
+# Internal URLs for API calls (Docker network)
+IDENTITY_INTERNAL_URL = get_service_internal_url('identity')
+SSO_INTERNAL_URL = get_service_internal_url('sso')
+# External URLs for redirects
+IDENTITY_EXTERNAL_URL = get_service_url('identity', ssl=True)
+SSO_EXTERNAL_URL = get_service_url('sso', ssl=True)
 
-app = FastAPI(
-    title="DIGiDIG Client Service",
-    description="Email client interface for DIGiDIG system",
-    version="1.0.0"
-)
 
-# Authentication middleware
-@app.middleware("http")
-async def auth_middleware(request: Request, call_next):
-    """Middleware to handle authentication for protected routes"""
-    # Public routes that don't require authentication
-    public_paths = ["/health", "/static", "/api/translations", "/api/language"]
+async def check_session(request: Request):
+    """Check if user has valid session, return user info or None"""
+    access_token = request.cookies.get("access_token")
     
-    # Check if this is a public path
-    is_public = any(request.url.path.startswith(path) for path in public_paths)
-    
-    if not is_public and request.url.path not in ["/", "/login", "/logout"]:
-        # Special case: allow dashboard with token parameter (SSO redirect)
-        if request.url.path == "/dashboard" and "token" in request.query_params:
-            # Let the dashboard endpoint handle token verification
-            pass
-        else:
-            # Check authentication
-            user = await get_user_from_token(request)
-            if not user:
-                # Redirect to SSO for authentication - use external URL for browser
-                external_url = f"http://localhost:8004{request.url.path}"
-                if request.url.query:
-                    external_url += f"?{request.url.query}"
-                redirect_url = urllib.parse.quote(external_url)
-                return RedirectResponse(url=f"{SSO_URL}/?redirect_to={redirect_url}", status_code=307)
-    
-    response = await call_next(request)
-    return response
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
-
-class Email(BaseModel):
-    sender: str
-    recipient: str
-    subject: str
-    body: str
-
-async def get_user_from_token(request: Request):
-    """Extract user info from JWT token in cookie"""
-    token = request.cookies.get("access_token")
-    if not token:
+    if not access_token:
         return None
     
     try:
-        # Verify token with Identity service directly
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                f"{IDENTITY_URL}/verify",
-                headers={"Authorization": f"Bearer {token}"}
+                f"{IDENTITY_INTERNAL_URL}/api/session/verify",
+                cookies={"access_token": access_token}
             ) as response:
                 if response.status == 200:
-                    user_data = await response.json()
-                    return user_data
-                else:
-                    logger.warning(f"Token validation failed: {response.status}")
-                    return None
-    except Exception as e:
-        logger.error(f"Error validating token: {e}")
+                    return await response.json()
+                return None
+    except Exception:
         return None
 
-async def require_auth(request: Request):
-    """Require authentication, redirect to SSO if not authenticated"""
-    user = await get_user_from_token(request)
-    if not user:
-        # Create redirect URL to SSO with current URL as return destination - use external URL
-        external_url = f"http://localhost:8004{request.url.path}"
-        if request.url.query:
-            external_url += f"?{request.url.query}"
-        redirect_url = urllib.parse.quote(external_url)
-        sso_login_url = f"{SSO_URL}/?redirect_to={redirect_url}"
-        raise HTTPException(status_code=307, headers={"Location": sso_login_url})
-    return user
 
-async def get_session(request: Request):
-    """Get current user session or redirect to login"""
-    user = await get_user_from_token(request)
-    if not user:
-        return None
-    return user
-
-def get_language(request: Request) -> str:
-    """Get current language from cookie or default to 'en'"""
-    return request.cookies.get("language", "en")
-
-def set_language(response: Response, lang: str):
-    """Set language cookie"""
-    if lang in ['cs', 'en']:
-        response.set_cookie(
-            key="language",
-            value=lang,
-            max_age=365*24*60*60,  # 1 year
-            httponly=True,
-            samesite="lax"
+class ClientApp(ServiceClient):
+    def __init__(self):
+        static_dir = os.path.join(os.path.dirname(__file__), 'static')
+        templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
+        super().__init__(
+            name='client',
+            description='Client UI stub',
+            port=CLIENT_PORT,
+            mount_lib=True,
+            static_dir=static_dir,
+            templates_dir=templates_dir
         )
+        self.register_routes()
 
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    """Root endpoint - redirect to dashboard if authenticated, otherwise to SSO"""
-    user = await get_user_from_token(request)
-    if user:
-        return RedirectResponse(url="/dashboard", status_code=303)
-    else:
-        # Redirect to SSO for authentication - use external URL for dashboard
-        external_url = f"http://localhost:8004/dashboard"
-        if request.url.query:
-            external_url += f"?{request.url.query}"
-        redirect_url = urllib.parse.quote(external_url)
-        return RedirectResponse(url=f"{SSO_URL}/?redirect_to={redirect_url}", status_code=307)
+    def register_routes(self):
+        @self.app.get('/health')
+        async def health():
+            return {'service': 'client', 'status': 'healthy', 'port': CLIENT_PORT}
 
-@app.get("/login", response_class=HTMLResponse)
-async def login_redirect(request: Request):
-    """Legacy login endpoint - redirect to SSO"""
-    external_url = f"http://localhost:8004/dashboard"
-    if request.url.query:
-        external_url += f"?{request.url.query}"
-    redirect_url = urllib.parse.quote(external_url)
-    return RedirectResponse(url=f"{SSO_URL}/?redirect_to={redirect_url}", status_code=307)
+        @self.app.get('/', response_class=HTMLResponse)
+        async def index(request: Request):
+            # Check session
+            user = await check_session(request)
+            
+            if not user:
+                # Not authenticated - redirect to SSO
+                return RedirectResponse(url=f"{SSO_EXTERNAL_URL}/?app=client", status_code=303)
+            
+            # User is authenticated - show home page
+            context = {
+                'request': request,
+                'username': user.get('username', 'Guest'),
+                'identity_url': IDENTITY_EXTERNAL_URL,
+                'user': user
+            }
+            return self.templates.TemplateResponse('index.html', context)
 
-@app.post("/logout")
-@app.get("/logout")
-async def logout(request: Request):
-    """Logout endpoint - call Identity logout directly"""
-    # Get token from cookie
-    token = request.cookies.get('access_token')
-    
-    # Create response for redirect to home page
-    response = RedirectResponse(url="/", status_code=303)
-    
-    # Clear local cookies
-    response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
-    
-    # Call Identity logout if we have token
-    if token:
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{IDENTITY_URL}/logout",
-                    headers={"Authorization": f"Bearer {token}"}
-                ) as logout_response:
-                    if logout_response.status == 200:
-                        logger.info("Successfully logged out from Identity service")
-                    else:
-                        logger.warning(f"Identity logout failed: {logout_response.status}")
-        except Exception as e:
-            logger.error(f"Error calling Identity logout: {e}")
-    
-    return response
 
-@app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request, error: str = None, token: str = None):
-    """Main dashboard - requires authentication"""
-    # If token provided in URL (from SSO redirect), set it as cookie
-    response = None
-    if token:
-        # Verify token with Identity service first
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{IDENTITY_URL}/verify",
-                    headers={"Authorization": f"Bearer {token}"}
-                ) as resp:
-                    if resp.status == 200:
-                        # Token is valid, set cookie and redirect without token in URL
-                        response = RedirectResponse(url="/dashboard", status_code=302)
-                        response.set_cookie(
-                            key="access_token",
-                            value=token,
-                            max_age=1800,
-                            httponly=True,
-                            samesite="lax"
-                        )
-                        return response
-        except Exception as e:
-            logger.error(f"Token verification failed: {e}")
-    
-    try:
-        user = await require_auth(request)
-    except HTTPException as e:
-        # Redirect to SSO
-        return RedirectResponse(url=e.headers["Location"], status_code=307)
-    
-    # Get username and domain from verified token
-    username = user.get("username", "user")
-    domain = user.get("domain", "example.com")
-    user_email = f"{username}@{domain}"
-    
-    # Fetch emails from Storage service
-    emails = []
-    try:
-        async with aiohttp.ClientSession() as http_session:
-            storage_url = os.getenv("STORAGE_URL", "http://storage:8002")
-            async with http_session.get(
-                f"{storage_url}/emails",
-                params={"user_id": user_email}
-            ) as response:
-                if response.status == 200:
-                    emails = await response.json()
-                else:
-                    logger.warning(f"Failed to fetch emails: {response.status}")
-    except Exception as e:
-        logger.error(f"Error fetching emails: {e}")
-    
-    # Process error parameter
-    error_message = None
-    if error == "send_failed":
-        error_message = "Nepodařilo se odeslat e-mail"
-    elif error == "connection_failed":
-        error_message = "Chyba připojení k SMTP serveru"
-    
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "username": username,
-        "emails": emails,
-        "error": error_message
-    })
+client = ClientApp()
+app = client.get_app()
+templates = client.templates
 
-@app.post("/send", response_class=HTMLResponse)
-async def send_email(request: Request, recipient: str = Form(...), subject: str = Form(...), body: str = Form(...)):
-    # Get current user from token
-    user = await get_user_from_token(request)
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-    
-    # Get username and domain from verified token and construct sender email
-    username = user.get("username", "unknown")
-    domain = user.get("domain", "example.com")
-    sender = f"{username}@{domain}"
-    
-    email = Email(sender=sender, recipient=recipient, subject=subject, body=body)
-    
-    try:
-        async with aiohttp.ClientSession() as http_session:
-            smtp_url = os.getenv("SMTP_URL", "http://smtp:8000")
-            async with http_session.post(f"{smtp_url}/api/send", json=email.dict()) as response:
-                if response.status == 200:
-                    return RedirectResponse(url="/dashboard", status_code=303)
-                else:
-                    error_text = await response.text()
-                    logger.error(f"Failed to send email: {response.status} - {error_text}")
-                    return RedirectResponse(url="/dashboard?error=send_failed", status_code=303)
-    except Exception as e:
-        logger.error(f"Error sending email: {e}")
-        return RedirectResponse(url="/dashboard?error=connection_failed", status_code=303)
 
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "service": "client",
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8004)
+    uvicorn.run(app, host='0.0.0.0', port=CLIENT_PORT)

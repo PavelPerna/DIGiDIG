@@ -1,0 +1,58 @@
+{
+  "login": {
+    "title": "DIGiDIG Login",
+    "subtitle": "Single Sign-On",
+    "username": "Username or Email",
+    "username_placeholder": "Enter your username or email",
+    "password": "Password", 
+    "password_placeholder": "Enter your password",
+    "submit": "Sign In",
+    "no_account": "Don't have an account?",
+    "sign_up": "Sign Up",
+    "error": {
+      "invalid_credentials": "Invalid username or password",
+      "network_error": "Network error. Please try again.",
+      "server_error": "Server error. Please try again later."
+    },
+    "success": {
+      "logged_in": "Successfully logged in"
+    }
+  },
+  "logout": {
+    "success": "Successfully logged out",
+    "confirm": "Are you sure you want to logout?"
+  },
+  "session": {
+    "expired": "Your session has expired. Please login again.",
+    "invalid": "Invalid session. Please login again."
+  },
+  "registration": {
+    "title": "DIGiDIG Registration",
+    "subtitle": "Create Your Account",
+    "first_name": "First Name",
+    "first_name_placeholder": "Enter your first name",
+    "last_name": "Last Name",
+    "last_name_placeholder": "Enter your last name",
+    "username": "Username",
+    "username_placeholder": "Choose a username",
+    "email": "Email Address",
+    "email_placeholder": "Enter your email address",
+    "password": "Password",
+    "password_placeholder": "Create a strong password",
+    "confirm_password": "Confirm Password",
+    "confirm_password_placeholder": "Confirm your password",
+    "submit": "Create Account",
+    "or_continue_with": "or continue with",
+    "google": "Continue with Google",
+    "facebook": "Continue with Facebook",
+    "twitter": "Continue with Twitter",
+    "microsoft": "Continue with Microsoft",
+    "have_account": "Already have an account?",
+    "sign_in": "Sign In",
+    "password_mismatch": "Passwords do not match",
+    "password_too_short": "Password must be at least 8 characters long",
+    "invalid_email": "Invalid email address",
+    "success": "Account created successfully! Please log in.",
+    "error": "An error occurred during registration"
+  }
+}

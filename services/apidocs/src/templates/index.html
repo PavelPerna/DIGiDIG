@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DIGiDIG API Documentation</title>
+    <title>DIGiDIG REST API Documentation</title>
+    <link rel="stylesheet" href="/static/swagger-dark-theme.css">
     <style>
+        /* Main page specific styles */
         * {
             margin: 0;
             padding: 0;
@@ -12,9 +14,10 @@
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
             min-height: 100vh;
             padding: 40px 20px;
+            color: #f9fafb;
         }
         .container {
             max-width: 1200px;
@@ -41,16 +44,18 @@
             margin-bottom: 40px;
         }
         .service-card {
-            background: white;
+            background: #374151;
             border-radius: 12px;
             padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
             transition: transform 0.3s, box-shadow 0.3s;
             position: relative;
+            border: 1px solid #4b5563;
         }
         .service-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            border-color: #6b7280;
         }
         .service-icon {
             font-size: 3em;
@@ -59,11 +64,11 @@
         .service-name {
             font-size: 1.5em;
             font-weight: 600;
-            color: #333;
+            color: #f9fafb;
             margin-bottom: 10px;
         }
         .service-description {
-            color: #666;
+            color: #d1d5db;
             margin-bottom: 20px;
             line-height: 1.6;
         }
@@ -74,11 +79,11 @@
             margin-bottom: 20px;
         }
         .tag {
-            background: #f0f0f0;
+            background: #4b5563;
             padding: 4px 12px;
             border-radius: 12px;
             font-size: 0.85em;
-            color: #555;
+            color: #e5e7eb;
         }
         .service-actions {
             display: flex;
@@ -97,18 +102,18 @@
             transition: all 0.3s;
         }
         .btn-primary {
-            background: #667eea;
+            background: #4f46e5;
             color: white;
         }
         .btn-primary:hover {
-            background: #5568d3;
+            background: #3730a3;
         }
         .btn-secondary {
-            background: #f0f0f0;
-            color: #333;
+            background: #6b7280;
+            color: #f9fafb;
         }
         .btn-secondary:hover {
-            background: #e0e0e0;
+            background: #4b5563;
         }
         .health-status {
             position: absolute;
@@ -138,19 +143,20 @@
             opacity: 0.8;
         }
         .combined-docs {
-            background: white;
+            background: #374151;
             border-radius: 12px;
             padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
             text-align: center;
             margin-bottom: 40px;
+            border: 1px solid #4b5563;
         }
         .combined-docs h2 {
-            color: #333;
+            color: #f9fafb;
             margin-bottom: 15px;
         }
         .combined-docs p {
-            color: #666;
+            color: #d1d5db;
             margin-bottom: 20px;
         }
     </style>
@@ -158,13 +164,29 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📚 DIGiDIG API Documentation</h1>
-            <p>Comprehensive API documentation for all services</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <div>
+                    <h1 style="margin: 0;">📚 DIGiDIG REST API Documentation</h1>
+                    <p style="margin: 0;">Comprehensive REST API documentation for backend services</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <select id="languageSelect" onchange="changeLanguage(this.value)" style="padding: 8px; border-radius: 6px; border: 1px solid #4b5563; background: #374151; color: #f9fafb; font-size: 0.9rem;">
+                            <option value="en">English</option>
+                            <option value="cs">Čeština</option>
+                        </select>
+                        <label style="display: flex; align-items: center; gap: 8px; color: #d1d5db; font-size: 0.9rem;">
+                            <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)" style="margin: 0;">
+                            Dark Mode
+                        </label>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="combined-docs">
-            <h2>🔗 Combined API Documentation</h2>
-            <p>View all services in a single unified documentation</p>
+            <h2>🔗 Combined REST API Documentation</h2>
+            <p>View all backend services in a single unified REST API documentation</p>
             <a href="/api/openapi/combined" class="btn btn-primary" style="display: inline-block; max-width: 200px;">
                 View Combined API
             </a>
@@ -203,6 +225,94 @@
     </div>
 
     <script>
+        // Translations for apidocs
+        const translations = {
+            en: {
+                title: '📚 DIGiDIG REST API Documentation',
+                subtitle: 'Comprehensive REST API documentation for backend services',
+                combinedTitle: '🔗 Combined REST API Documentation',
+                combinedDesc: 'View all backend services in a single unified REST API documentation',
+                viewCombined: 'View Combined API',
+                footer: 'DIGiDIG © 2025 | Distributed Email System'
+            },
+            cs: {
+                title: '📚 DIGiDIG REST API Dokumentace',
+                subtitle: 'Komplexní REST API dokumentace pro backend služby',
+                combinedTitle: '🔗 Kombinovaná REST API Dokumentace',
+                combinedDesc: 'Zobrazit všechny backend služby v jednotné REST API dokumentaci',
+                viewCombined: 'Zobrazit kombinované API',
+                footer: 'DIGiDIG © 2025 | Distribuovaný emailový systém'
+            }
+        };
+
+        // Get/set cookie functions
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/;SameSite=Lax";
+        }
+
+        // Apply dark mode
+        function applyDarkMode(enabled) {
+            if (enabled) {
+                document.body.style.background = 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%)';
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.style.background = 'linear-gradient(135deg, #1f2937 0%, #111827 100%)';
+                document.body.classList.remove('dark-mode');
+            }
+        }
+
+        // Toggle dark mode
+        function toggleDarkMode(enabled) {
+            applyDarkMode(enabled);
+            setCookie('dark_mode', enabled ? 'true' : 'false', 365);
+        }
+
+        // Update UI language
+        function updateUI(lang) {
+            const t = translations[lang] || translations.en;
+            
+            // Update main title and subtitle
+            document.querySelector('h1').textContent = t.title;
+            document.querySelector('h1').nextElementSibling.textContent = t.subtitle;
+            
+            // Update combined docs section
+            document.querySelector('.combined-docs h2').textContent = t.combinedTitle;
+            document.querySelector('.combined-docs p').textContent = t.combinedDesc;
+            document.querySelector('.combined-docs .btn').textContent = t.viewCombined;
+            
+            // Update footer
+            document.querySelector('.footer p').textContent = t.footer;
+        }
+
+        // Change language
+        function changeLanguage(lang) {
+            setCookie('language', lang, 365);
+            updateUI(lang);
+        }
+
+        // Initialize preferences
+        function initializePreferences() {
+            // Load language preference
+            const savedLang = getCookie('language') || 'en';
+            document.getElementById('languageSelect').value = savedLang;
+            updateUI(savedLang);
+            
+            // Load dark mode preference
+            const savedDarkMode = getCookie('dark_mode') === 'true';
+            document.getElementById('darkModeToggle').checked = savedDarkMode;
+            applyDarkMode(savedDarkMode);
+        }
+
         // Check health status for all services
         async function checkHealth() {
             try {
@@ -221,9 +331,12 @@
             }
         }
 
-        // Check health on load and periodically
-        checkHealth();
-        setInterval(checkHealth, 30000); // Every 30 seconds
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePreferences();
+            checkHealth();
+            setInterval(checkHealth, 30000); // Every 30 seconds
+        });
     </script>
 </body>
 </html>

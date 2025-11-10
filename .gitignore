@@ -42,10 +42,16 @@ venv-test/
 **/__pycache__/
 
 # Editor configs
-.vscode/
 .idea/
 *.swp
 *~
+
+# Keep VS Code workspace settings but ignore some files
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/setup_venv.sh
+!.vscode/README.md
 
 # Environment variables
 .env
@@ -79,3 +85,10 @@ Thumbs.db
 # Coverage
 htmlcov/
 .coverage
+
+# SSL certificates and keys
+ssl/
+*.pem
+*.key
+*.crt
+*.csr

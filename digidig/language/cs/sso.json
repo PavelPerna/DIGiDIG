@@ -1,0 +1,58 @@
+{
+  "login": {
+    "title": "DIGiDIG Přihlášení",
+    "subtitle": "Jednotné přihlášení",
+    "username": "Uživatelské jméno nebo Email",
+    "username_placeholder": "Zadejte uživatelské jméno nebo email",
+    "password": "Heslo",
+    "password_placeholder": "Zadejte heslo",
+    "submit": "Přihlásit se",
+    "no_account": "Nemáte účet?",
+    "sign_up": "Zaregistrovat se",
+    "error": {
+      "invalid_credentials": "Neplatné uživatelské jméno nebo heslo",
+      "network_error": "Chyba sítě. Zkuste to znovu.",
+      "server_error": "Chyba serveru. Zkuste to znovu později."
+    },
+    "success": {
+      "logged_in": "Úspěšně přihlášen"
+    }
+  },
+  "logout": {
+    "success": "Úspěšně odhlášen",
+    "confirm": "Opravdu se chcete odhlásit?"
+  },
+  "session": {
+    "expired": "Vaše relace vypršela. Přihlaste se znovu.",
+    "invalid": "Neplatná relace. Přihlaste se znovu."
+  },
+  "registration": {
+    "title": "DIGiDIG Registrace",
+    "subtitle": "Vytvořte si účet",
+    "first_name": "Jméno",
+    "first_name_placeholder": "Zadejte své jméno",
+    "last_name": "Příjmení",
+    "last_name_placeholder": "Zadejte své příjmení",
+    "username": "Uživatelské jméno",
+    "username_placeholder": "Vyberte si uživatelské jméno",
+    "email": "Emailová adresa",
+    "email_placeholder": "Zadejte svou emailovou adresu",
+    "password": "Heslo",
+    "password_placeholder": "Vytvořte silné heslo",
+    "confirm_password": "Potvrzení hesla",
+    "confirm_password_placeholder": "Potvrďte své heslo",
+    "submit": "Vytvořit účet",
+    "or_continue_with": "nebo pokračujte s",
+    "google": "Pokračovat s Google",
+    "facebook": "Pokračovat s Facebook",
+    "twitter": "Pokračovat s Twitter",
+    "microsoft": "Pokračovat s Microsoft",
+    "have_account": "Již máte účet?",
+    "sign_in": "Přihlásit se",
+    "password_mismatch": "Hesla se neshodují",
+    "password_too_short": "Heslo musí mít alespoň 8 znaků",
+    "invalid_email": "Neplatná emailová adresa",
+    "success": "Účet byl úspěšně vytvořen! Přihlaste se prosím.",
+    "error": "Během registrace došlo k chybě"
+  }
+}

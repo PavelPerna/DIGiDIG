@@ -1,0 +1,21 @@
+{
+  "title": "DIGiDIG Components Test",
+  "subtitle": "Testing all UI components",
+  "authenticated_user": "authenticated user",
+  "checking_auth": "Checking authentication...",
+  "redirecting_login": "Redirecting to login...",
+  "status_success": "Authenticated as",
+  "status_error": "Failed",
+  "component_status": "Component Status",
+  "language_selector": "Language Selector",
+  "dark_mode_switch": "Dark Mode Switch",
+  "avatar_dropdown": "Avatar Dropdown",
+  "top_pane": "Top Pane",
+  "initializing": "Initializing...",
+  "user_preferences": "User Preferences",
+  "loading_prefs": "Loading preferences...",
+  "language": "Language",
+  "dark_mode": "Dark Mode",
+  "test_results": "Test Results",
+  "starting_tests": "Initializing component tests..."
+}
