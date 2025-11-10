@@ -1,19 +1,22 @@
-FROM python:3.10-slim
+FROM ghcr.io/pavelperna/digidig-base:latest
 
 WORKDIR /app
 
 # Copy lib and config files (from project root)
-COPY lib/ ./lib/
+COPY digidig/ ./digidig/
 COPY config/ ./config/
 
 # Copy service-specific files
 COPY services/imap/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --quiet --no-cache-dir -r requirements.txt
 
 COPY services/imap/src/imap.py .
 
-ENV PYTHONPATH=/app:$PYTHONPATH
+ENV PYTHONPATH=/app
+ARG PORT=9103
+ENV PORT=${PORT}
 
-EXPOSE 8003
+EXPOSE ${PORT}
 
-CMD ["uvicorn", "imap:app", "--host", "0.0.0.0", "--port", "8003"]
+# Use shell form so ${PORT} is expanded at container runtime
+CMD ["sh","-c","uvicorn imap:app --host 0.0.0.0 --port ${PORT}"]

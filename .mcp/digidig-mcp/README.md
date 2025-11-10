@@ -13,7 +13,7 @@ This is an MCP Server for the DIGiDIG email system, providing tools to interact 
 
 ### DIGiDIG-Specific Tools
 
-1. **get_digidig_service_health()** - Check health status of all services (identity, storage, smtp, imap, client, admin, apidocs)
+1. **get_digidig_service_health()** - Check health status of all services (identity, storage, smtp, imap, mail, admin, apidocs)
 2. **get_digidig_emails(recipient, limit)** - Retrieve emails from storage service with optional filtering
 3. **send_digidig_email(sender, recipient, subject, body)** - Send emails through SMTP service
 4. **get_digidig_users()** - Get user information from identity service (requires authentication)
@@ -31,7 +31,7 @@ IDENTITY_URL=http://localhost:8001
 STORAGE_URL=http://localhost:8002  
 SMTP_URL=http://localhost:8000
 IMAP_URL=http://localhost:8003
-CLIENT_URL=http://localhost:8004
+MAIL_URL=http://localhost:8007
 ADMIN_URL=http://localhost:8005
 APIDOCS_URL=http://localhost:8010
 ```

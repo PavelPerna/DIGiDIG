@@ -1,0 +1,23 @@
+/* Minimal fallback styles for the DIGiDIG top pane.
+   These are defensive rules to ensure the header cannot grow unexpectedly
+   when the shared /lib static mount isn't available. They intentionally are
+   small and safe to include as a local fallback. */
+
+.digidig-top-pane {
+    max-height: 5rem !important;
+    overflow: hidden !important;
+    width: 100%;
+}
+
+.digidig-top-pane .digidig-top-pane-content {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+}
+
+.digidig-top-pane svg,
+.digidig-top-pane .digidig-logo-icon {
+    max-height: 3.5rem !important;
+    height: 2rem !important;
+    width: auto !important;
+}

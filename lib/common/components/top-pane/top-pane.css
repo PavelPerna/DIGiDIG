@@ -1,0 +1,19 @@
+/* Top Bar - jen layout, žádný styling */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.top-bar-left {
+    display: flex;
+    gap: 1rem;
+}
+
+.top-bar-right {
+    display: flex;
+    gap: 1rem;
+}

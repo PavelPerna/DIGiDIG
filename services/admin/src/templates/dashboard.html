@@ -4,31 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
+    <meta name="digidig-authenticated" content="{% if token %}true{% else %}false{% endif %}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/datagrid.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', path='css/password-validation.css') }}">
+        <!-- DIGiDIG shared top-pane styles -->
+        <link rel="stylesheet" href="/lib/common/components/language-selector/language-selector.css">
+        <link rel="stylesheet" href="/lib/common/components/dark-mode-switch/dark-mode-switch.css">
+        <link rel="stylesheet" href="/lib/common/components/avatar-dropdown/avatar-dropdown.css">
+        <link rel="stylesheet" href="/lib/common/components/top-pane/top-pane.css">
 </head>
 <body>
-    <!-- Top pane: title and avatar -->
-    <div class="top-pane">
-        <div class="top-left">
-            <h1>Admin Dashboard</h1>
-        </div>
-        <div class="top-right">
-            <div class="avatar-wrapper">
-                <button class="avatar-button" onclick="toggleAvatarDropdown()" aria-haspopup="true" aria-expanded="false">
-                    <!-- simple avatar circle -->
-                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="8" r="3"></circle>
-                        <path d="M21 21v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"></path>
-                    </svg>
-                </button>
-                <div id="avatarDropdown" class="avatar-dropdown hidden">
-                    <button class="dropdown-item" onclick="doLogout()">Odhlásit</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    {# Server-side include of shared top-pane component from lib/common/components #}
+    {% include 'top-pane/top-pane.html' %}
 
     <div class="main-layout">
         <!-- Left pane: menu -->
@@ -142,7 +130,46 @@
         </main>
     </div>
 
-    <!-- Domain Modal -->
+    <!-- Removed legacy avatar dropdown JS logic; new component handles all dropdown, preferences, and logout actions -->
+
+    <!-- DIGiDIG shared component scripts -->
+    <script src="/lib/common/components/shared/preferences-manager.js"></script>
+    <script src="/lib/common/components/shared/utils.js"></script>
+    <script src="/lib/common/components/language-selector/language-selector.js"></script>
+    <script src="/lib/common/components/dark-mode-switch/dark-mode-switch.js"></script>
+    <script src="/lib/common/components/avatar-dropdown/avatar-dropdown.js"></script>
+    <script src="/lib/common/components/top-pane/top-pane.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const topPaneElement = document.querySelector('[data-digidig-component="top-pane"]');
+            if (!topPaneElement) return;
+
+            // Mark auth state from server-side context (admin page rendered only for authenticated users)
+            const authMeta = document.querySelector('meta[name="digidig-authenticated"]');
+            if (authMeta && authMeta.content === 'true') {
+                topPaneElement.setAttribute('data-auth-state', 'authenticated');
+            } else {
+                topPaneElement.setAttribute('data-auth-state', 'anonymous');
+            }
+
+            // Initialize the top pane component
+            try {
+                if (window.DigiDigTopPane) {
+                    new window.DigiDigTopPane(topPaneElement, {
+                        title: null,
+                        logoText: 'DIGiDIG',
+                        logoUrl: '/',
+                        userInfoEndpoint: '{{ identity_url }}/api/user/preferences',
+                        logoutUrl: '/api/identity/logout',
+                        responsive: true
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to initialize shared top-pane in admin:', e);
+            }
+        });
+    </script>
     <div id="domainModal" class="modal hidden">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -635,71 +662,7 @@
         }
     </script>
 
-    <script>
-        // Restore the last opened users list after page load
-        // Avatar dropdown toggle and logout
-        function toggleAvatarDropdown() {
-            const btn = document.querySelector('.avatar-button');
-            const dd = document.getElementById('avatarDropdown');
-            if (!btn || !dd) return;
-            const expanded = btn.getAttribute('aria-expanded') === 'true';
-            btn.setAttribute('aria-expanded', String(!expanded));
-            if (dd.classList.contains('hidden')) {
-                dd.classList.remove('hidden');
-            } else {
-                dd.classList.add('hidden');
-            }
-        }
-
-        async function doLogout() {
-            // Call server-side logout to clear any cookie/session, then clear local UI state and redirect.
-            try {
-                await fetch('/logout', { method: 'POST', credentials: 'same-origin' });
-            } catch (e) {
-                // ignore network errors, still proceed with client-side cleanup
-            }
-            try {
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('openUsersDomain');
-            } catch (e) {
-                // ignore
-            }
-            // Redirect to empty root endpoint instead of explicit login page
-            window.location.href = '/';
-        }
-
-        function goToServices() {
-            window.location.href = '/services?token={{ token }}';
-        }
-
-        // Close avatar dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            const wrapper = document.querySelector('.avatar-wrapper');
-            const dd = document.getElementById('avatarDropdown');
-            const btn = document.querySelector('.avatar-button');
-            if (!wrapper || !dd || !btn) return;
-            if (!wrapper.contains(e.target)) {
-                if (!dd.classList.contains('hidden')) {
-                    dd.classList.add('hidden');
-                    btn.setAttribute('aria-expanded', 'false');
-                }
-            }
-        });
-
-        (function restoreOpenUsers() {
-            try {
-                const openDomain = localStorage.getItem('openUsersDomain');
-                if (openDomain) {
-                    const usersRow = document.getElementById(`users-${openDomain}`);
-                    if (usersRow) {
-                        usersRow.style.display = 'table-row';
-                    }
-                }
-            } catch (e) {
-                // ignore
-            }
-        })();
-    </script>
+    <!-- Removed legacy avatar dropdown JS logic; new component handles all dropdown, preferences, and logout actions -->
 
     <!-- Password Change Modal -->
     <div id="passwordModal" class="modal hidden">

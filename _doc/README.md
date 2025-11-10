@@ -8,13 +8,14 @@
 
 ## 🌟 Features
 
-- **🚀 Full CI/CD Pipeline**: Automated testing, building, deployment with GitHub Actions
+- **🚀 Full CI/CD Pipeline**: Automated building, deployment with GitHub Actions
 - **🐳 Container Registry**: Docker images automatically built and published to GHCR
 - **🌍 Multi-Environment**: Staging and production deployment automation
 - **🔄 Health Monitoring**: Comprehensive health checks and automated rollback
 - **🌐 Multi-Language Support (i18n)**: English and Czech with easy extensibility
 - **📚 Comprehensive API Documentation**: Interactive Swagger UI and ReDoc for all services
-- **🏗️ Microservices Architecture**: Identity, Storage, SMTP, IMAP, Client, Admin
+- **🏗️ Microservices Architecture**: Identity, Storage, SMTP, IMAP, Mail, Admin
+- **⚖️ Load-Balanced Reverse Proxy**: Distributed connection handling across multiple ports
 - **🔐 JWT Authentication**: Secure token-based authentication
 - **⚙️ YAML Configuration**: Centralized, type-safe configuration management
 - **🐳 Docker-Based Deployment**: Easy setup with Docker Compose
@@ -23,11 +24,12 @@
 
 ## 📚 Documentation
 
-- **[CI/CD Pipeline](docs/CI-CD.md)** - Complete CI/CD automation guide
-- **[Localization Guide](docs/LOCALIZATION.md)** - Multi-language support
-- **[API Documentation](docs/API-DOCUMENTATION.md)** - Complete API reference
-- **[Configuration Guide](docs/CONFIGURATION.md)** - YAML configuration system
-- **[Migration Guide](docs/CONFIG-MIGRATION.md)** - Migrate from ENV to YAML
+- **[CI/CD Pipeline](_doc/CI-CD.md)** - Complete CI/CD automation guide
+- **[Localization Guide](_doc/LOCALIZATION.md)** - Multi-language support
+- **[API Documentation](_doc/API-DOCUMENTATION.md)** - Complete API reference
+- **[API Endpoints Reference](_doc/API-ENDPOINTS.md)** - REST API endpoint structure & examples
+- **[Configuration Guide](_doc/CONFIGURATION.md)** - YAML configuration system
+- **[Migration Guide](_doc/CONFIG-MIGRATION.md)** - Migrate from ENV to YAML
 
 ## 🚀 Quick Start
 
@@ -79,17 +81,28 @@ Check service health across environments:
 ./scripts/deployment/health-check.sh production --details
 ```
 
-## 🌐 Services
+## 🌐 Services & Load Balancing
 
-| Service | Port | Description | Documentation |
-|---------|------|-------------|---------------|
-| **Identity** | 8001 | Authentication & user management | [Swagger](http://localhost:8010/docs/identity) |
-| **Storage** | 8002 | Email storage & retrieval | [Swagger](http://localhost:8010/docs/storage) |
-| **SMTP** | 8003 | Email sending service | [Swagger](http://localhost:8010/docs/smtp) |
-| **IMAP** | 8007 | Email retrieval protocol | [Swagger](http://localhost:8010/docs/imap) |
-| **Client** | 8004 | Web-based email client | [Swagger](http://localhost:8010/docs/client) |
-| **Admin** | 8005 | Administration panel | [Swagger](http://localhost:8010/docs/admin) |
-| **API Docs** | 8010 | **API Documentation Hub** | [Open](http://localhost:8010) |
+DIGiDIG uses **load-balanced reverse proxies** for optimal scalability:
+
+### Production Access (Load Balanced)
+| Service Group | Port | Services | Access URLs |
+|---------------|------|----------|-------------|
+| **Core** | 443 | Admin, SSO, Identity | `https://admin.digidig.cz`, `https://sso.digidig.cz`, `https://identity.digidig.cz` |
+| **Communication** | 444 | SMTP, IMAP, Mail | `https://smtp.digidig.cz:444`, `https://imap.digidig.cz:444`, `https://mail.digidig.cz:444` |
+| **Data & API** | 445 | Storage, Client, API Docs, Test Suite, Services | `https://storage.digidig.cz:445`, `https://client.digidig.cz:445`, `https://apidocs.digidig.cz:445` |
+
+### Development Access (Direct)
+| Service | Internal Port | Description | Documentation |
+|---------|---------------|-------------|---------------|
+| **Identity** | 9101 | Authentication & user management | [Swagger](http://localhost:9110/docs/identity) |
+| **Storage** | 9102 | Email storage & retrieval | [Swagger](http://localhost:9110/docs/storage) |
+| **SMTP** | 9100 | Email sending service | [Swagger](http://localhost:9110/docs/smtp) |
+| **IMAP** | 9103 | Email retrieval protocol | [Swagger](http://localhost:9110/docs/imap) |
+| **Mail** | 9107 | Web-based email client | [Swagger](http://localhost:9110/docs/mail) |
+| **Admin** | 9105 | Administration panel | [Swagger](http://localhost:9110/docs/admin) |
+| **Test Suite** | 9108 | Automated test runner | [Swagger](http://localhost:9110/docs/test-suite) |
+| **API Docs** | 9110 | **API Documentation Hub** | [Open](http://localhost:9110) |
 
 ## 🎨 Multi-Language Support
 
@@ -104,15 +117,33 @@ See [Localization Guide](docs/LOCALIZATION.md) for details.
 
 ## 📖 API Documentation
 
-Access comprehensive API documentation at **http://localhost:8010**
+Access comprehensive API documentation at **http://localhost:9110**
 
 Features:
-- **Interactive Testing**: Try APIs directly in the browser
+- **Interactive API**: Try APIs directly in the browser
 - **Service Health**: Real-time status monitoring
 - **Combined Specs**: View all APIs in one place
 - **Swagger UI & ReDoc**: Choose your preferred format
 
-See [API Documentation Guide](docs/API-DOCUMENTATION.md) for details.
+### API Endpoint Structure
+
+All REST API endpoints follow consistent structure under `/api/`:
+
+```
+/api/{service}/{resource}/{id}/{sub-resource}
+```
+
+**Examples:**
+- `/api/identity/register` - User registration
+- `/api/identity/users/{username}/preferences` - User preferences
+- `/api/smtp/send` - Send email
+- `/api/storage/emails` - List emails
+
+**Client Services** (mail, admin, client, sso, test-suite) have built-in proxy at `/api/{service}/*` that routes to backend services.
+
+**📖 See [API Endpoints Reference](_doc/API-ENDPOINTS.md) for complete endpoint listing.**
+
+**📖 See [API Documentation Guide](_doc/API-DOCUMENTATION.md) for interactive API details.**
 
 ## ⚙️ Configuration Management
 
@@ -126,7 +157,6 @@ Configuration uses YAML files instead of environment variables:
 config/
 ├── config.yaml                 # Default (development) config
 ├── config.prod.example.yaml    # Production template
-├── config.test.yaml            # Test environment
 └── config.local.yaml           # Local overrides (git-ignored)
 ```
 
@@ -217,78 +247,11 @@ These steps will set up the project with secure configuration:
 3. Keep environment variables secure and never commit them to version control
 4. Regularly rotate JWT secrets and admin credentials
 
-## Testing
-
-DIGiDIG uses a **unified Docker testing system** for consistent test execution. All tests run in Docker containers with proper service networking.
-
-### Quick Start
-
-```bash
-# Run all tests
-make test
-
-# Quick health check
-make test-quick
-
-# Configuration tests only
-make test-config
-
-# Show all available test categories
-make test-help
-```
-
-### Available Test Categories
-
-- **`make test-quick`** - Fast health check of all services
-- **`make test-config`** - Configuration and service connectivity tests
-- **`make test-unit`** - Unit tests for individual components  
-- **`make test-integration`** - Full integration tests across services
-- **`make test-identity`** - Identity service authentication tests
-- **`make test-admin`** - Admin interface and management tests
-- **`make test-flow`** - Complete email flow (SMTP → Storage → IMAP)
-- **`make test-persistence`** - Database and storage persistence tests
-
-### Test Infrastructure
-
-- **Docker-based**: All tests run in containers with proper networking
-- **Automated setup**: Services are started automatically if needed
-- **Environment isolation**: Consistent test environment across machines
-- **Comprehensive coverage**: 49+ tests covering all major functionality
-
-📖 **See [Unified Docker Testing Guide](_doc/UNIFIED-DOCKER-TESTING.md) for complete documentation.**
-  - External domain handling
-
-### Test Structure
-
-```
-tests/
-├── Dockerfile              # Test container definition
-├── requirements-test.txt   # Test dependencies
-└── integration/
-    ├── test_identity_integration.py  # Identity integration tests
-    ├── test_identity_unit.py         # Identity unit tests
-    └── test_smtp_imap_flow.py        # Email flow tests
-```
-
-### Test Results
-
-Example test run:
-```
-✅ 9 passed in 3.90s
-   - 2 Identity integration tests
-   - 2 Identity unit tests
-   - 5 SMTP/IMAP flow tests
-⚠️  1 warning (deprecation in identity.py)
-```
-
-All tests run in isolated Docker container with access to service network.
-
 ## 🚀 CI/CD Pipeline
 
 DIGiDIG includes a comprehensive CI/CD pipeline with GitHub Actions:
 
 ### Continuous Integration
-- **Automated Testing**: Full test suite with PostgreSQL and MongoDB
 - **Code Quality**: Black, isort, Flake8 validation
 - **Security Scanning**: Trivy vulnerability scanning with GitHub Security integration
 
@@ -306,7 +269,7 @@ All services are available as Docker images:
 docker pull ghcr.io/YOUR_USERNAME/digidig-identity:latest
 docker pull ghcr.io/YOUR_USERNAME/digidig-client:latest
 
-# Available services: identity, storage, smtp, imap, client, admin, apidocs
+# Available services: identity, storage, smtp, imap, mail, admin, apidocs
 ```
 
 ### Deployment Automation

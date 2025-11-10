@@ -19,40 +19,73 @@ database:
 services:
   identity:
     host: identity
-    port: 8001
-    url: http://identity:8001
-  
-  smtp:
-    host: smtp
-    smtp_port: 2525
-    rest_port: 8000
-    rest_url: http://smtp:8000
-  
-  imap:
-    host: imap
-    port: 143
-    rest_port: 8003
-    rest_url: http://imap:8003
-  
+    http_port: 9101
+    http_sslport: 9201
+    external_url: digidig.cz
+
   storage:
     host: storage
-    port: 8002
-    url: http://storage:8002
-  
-  admin:
-    host: admin
-    port: 8005
-    url: http://admin:8005
-  
-  client:
-    host: client
-    port: 8004
-    url: http://client:8004
-  
+    http_port: 9102
+    http_sslport: 9202
+    external_url: digidig.cz
+
+  smtp:
+    host: smtp
+    smtp_port: 25
+    smtp_sslport: 465
+    rest_port: 9100
+    rest_sslport: 9200
+    external_url: digidig.cz
+
+  imap:
+    host: imap
+    imap_port: 143
+    imap_sslport: 993
+    rest_port: 9103
+    rest_sslport: 9203
+    external_url: digidig.cz
+
   sso:
     host: sso
-    port: 8006
-    url: http://sso:8006
+    http_port: 9106
+    http_sslport: 9206
+    external_url: digidig.cz
+
+  client:
+    host: client
+    http_port: 9104
+    http_sslport: 9204
+    external_url: digidig.cz
+
+  admin:
+    host: admin
+    http_port: 9105
+    http_sslport: 9205
+    external_url: digidig.cz
+
+  mail:
+    host: mail
+    http_port: 9107
+    http_sslport: 9207
+    external_url: digidig.cz
+
+  apidocs:
+    host: apidocs
+    http_port: 9110
+    http_sslport: 9210
+    external_url: digidig.cz
+
+  test-suite:
+    host: test-suite
+    http_port: 9108
+    http_sslport: 9208
+    external_url: digidig.cz
+
+  services:
+    host: services
+    http_port: 9120
+    http_sslport: 9220
+    external_url: digidig.cz
 
 # Security Configuration
 security:
@@ -67,10 +100,10 @@ security:
     password: "admin"  # Change in production!
   
   cookie:
-    secure: false  # Set to true in production with HTTPS
+    secure: true  # HTTPS enabled
     samesite: "lax"
 
-# Email Configuration
+# Email Configurations
 email:
   domains:
     - "example.com"

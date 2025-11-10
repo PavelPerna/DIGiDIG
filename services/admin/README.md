@@ -1,134 +1,109 @@
-# Admin Service
+# DIGiDIG Admin Client App
 
-Admin webové rozhraní pro správu DIGiDIG systému.
+A client-side web application for DIGiDIG system administration.
 
-## Popis
+## Features
 
-Admin služba poskytuje webové rozhraní pro administrátory systému, kde mohou:
-- Spravovat domény
-- Monitorovat a konfigurovat mikroservisy (SMTP, IMAP, Storage, Identity)
-- Zobrazovat statistiky služeb
-- Restartovat SMTP server
+- **Domain Management**: Create, edit, and delete email domains
+- **Service Monitoring**: View health status of all DIGiDIG services
+- **SSO Authentication**: Secure login via SSO service
+- **Multi-language Support**: English and Czech translations
+- **Dark/Light Mode**: User preference for theme switching
+- **Responsive Design**: Works on desktop and mobile devices
 
-## Technologie
+## Architecture
 
-- **FastAPI** - Python async web framework
-- **Jinja2** - Templating engine pro HTML
-- **aiohttp** - Async HTTP klient pro komunikaci s dalšími službami
-- **JWT** - Autentizace pomocí tokenů z Identity služby
+This is a client application that communicates directly with DIGiDIG microservices:
+
+- **Identity Service**: User authentication and domain management
+- **SSO Service**: Single sign-on authentication
+- **SMTP/IMAP/Storage Services**: Service health monitoring
 
 ## API Endpoints
 
-### Web Interface
-- `GET /` - Login stránka nebo dashboard (s tokenem)
-- `POST /api/login` - Přihlášení uživatele (vrací JWT token)
-- `POST /logout` - Odhlášení uživatele
-- `GET /services` - Správa služeb (vyžaduje token)
+The app exposes only basic monitoring endpoints:
 
-### Service Management API
-- `GET /api/services` - Seznam všech služeb a jejich stavu
-- `GET /api/services/{service_name}/stats` - Statistiky konkrétní služby
-- `GET /api/services/{service_name}/config` - Konfigurace služby
-- `PUT /api/services/{service_name}/config` - Aktualizace konfigurace služby
-- `POST /api/services/{service_name}/restart` - Restart služby (pouze SMTP)
+- `GET /health` - Health check
+- `GET /stats` - Basic statistics
+- `GET /logs` - Application logs
 
-### Domain Management API
-- `GET /api/domains` - Seznam domén
-- `POST /api/domains` - Vytvoření nové domény
-- `DELETE /api/domains/{domain_id}` - Smazání domény
+## Configuration
 
-## Environment Variables
+Configuration is stored in `config/config.yaml`:
 
-```env
-ADMIN_PORT=8005                    # Port FastAPI aplikace
-IDENTITY_URL=http://identity:8001  # URL Identity služby
-SMTP_URL=http://smtp:8000          # URL SMTP služby
-IMAP_URL=http://imap:8003          # URL IMAP služby
-STORAGE_URL=http://storage:8002    # URL Storage služby
-JWT_SECRET=your_secret_key         # Sdílený secret s Identity službou
+```yaml
+app:
+  name: "DIGiDIG Admin Client"
+  port: 9105
+
+services:
+  identity: "http://10.1.1.26:8001"
+  sso: "http://10.1.1.26:8006"
+  # ... other services
 ```
 
-## Vývoj
+## Running the Application
 
-### Spuštění služby
 ```bash
-# Pomocí Docker Compose
-make up admin
-
-# Full rebuild (po změnách v kódu)
-make refresh admin
-
-# Restart (pro změny v templates/static)
-make clear-cache-view admin
+cd services/admin-new/src
+python app.py
 ```
 
-### Testování
-```bash
-# Health check
-curl http://localhost:8005/api/health
+The app will be available at `http://localhost:9105`
 
-# Login
-curl -X POST http://localhost:8005/api/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"admin"}'
+## Authentication Flow
 
-# Seznam služeb (s tokenem)
-curl http://localhost:8005/api/services \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
+1. User accesses admin app
+2. If not authenticated, redirect to SSO service
+3. SSO authenticates user and redirects back with token
+4. Admin app verifies token with Identity service
+5. User can access admin functions
 
-## Struktura projektu
+## Development
+
+### Project Structure
 
 ```
-admin/
-├── Dockerfile              # Docker image definice
-├── requirements.txt        # Python závislosti
-├── src/
-│   ├── admin.py           # Hlavní aplikace
-│   ├── static/            # CSS, JS, obrázky
-│   │   ├── css/
-│   │   │   ├── styles.css         # Globální styly
-│   │   │   ├── datagrid.css       # Layout a komponenty
-│   │   │   └── password-validation.css
-│   │   └── js/
-│   └── templates/         # Jinja2 templates
-│       ├── login.html
-│       ├── dashboard.html
-│       └── services.html
-└── tests/
-    └── integration_test.py
+src/
+├── app.py                 # FastAPI application
+├── templates/
+│   ├── layout.html       # Main layout with top/left/right panes
+│   └── pages/
+│       ├── domains.html  # Domain management page
+│       └── services.html # Service monitoring page
+└── static/
+    ├── css/
+    │   ├── layout.css   # Main layout styles
+    │   ├── domains.css  # Domain-specific styles
+    │   └── services.css # Service-specific styles
+    └── js/
+        ├── app.js       # Main app JavaScript
+        ├── domains.js   # Domain management logic
+        └── services.js  # Service monitoring logic
 ```
 
-## UI Features
+### Reusable Components
 
-### Dashboard
-- Správa domén (přidání, smazání)
-- Avatar dropdown s logout akcí
-- Responzivní dark mode design
+The app uses shared components from `lib/common/components/`:
 
-### Services Page
-- Grid zobrazení všech služeb (SMTP, IMAP, Storage, Identity)
-- Real-time status indikátory (healthy/unhealthy/unreachable)
-- Uptime statistiky
-- Modální dialogy pro detailní statistiky a konfiguraci
-- Restart tlačítko pro SMTP server
+- **Top Pane**: Header with logo, user avatar dropdown, language/theme switchers
+- **Language Selector**: Language switching functionality
+- **Dark Mode Switch**: Theme switching functionality
+- **Avatar Dropdown**: User menu with preferences and logout
+- **Preferences Manager**: Client-side preference persistence
+
+### Internationalization
+
+Translations are loaded from `locales/` directory:
+
+- `locales/en/common.json` - Common English translations
+- `locales/cs/common.json` - Common Czech translations
+- `locales/en/admin.json` - Admin-specific English translations
+- `locales/cs/admin.json` - Admin-specific Czech translations
 
 ## Security
 
-- Všechny chráněné endpointy vyžadují JWT token
-- Token validace proti Identity službě
-- Session management s logout funkcionalitou
-- Password hidden v konfiguračních dialozích
-
-## Závislosti na dalších službách
-
-- **Identity** - Pro autentizaci a autorizaci uživatelů
-- **SMTP** - Pro správu SMTP serveru a konfiguraci
-- **IMAP** - Pro monitoring IMAP služby
-- **Storage** - Pro monitoring Storage služby
-
-## Poznámky
-
-- Default admin účet: `admin@example.com` / `admin`
-- Token expiruje za 1 hodinu (nastavitelné přes Identity)
-- Browser cache může blokovat změny v templates - použij `Ctrl+Shift+R` pro hard refresh
+- JWT token verification with Identity service
+- HttpOnly cookies for token storage
+- Direct service communication (no proxy)
+- CSRF protection on forms

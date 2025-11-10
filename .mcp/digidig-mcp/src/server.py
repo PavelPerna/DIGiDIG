@@ -3,19 +3,30 @@ import random
 import aiohttp
 import os
 from mcp.server.fastmcp import FastMCP
+import sys
+from pathlib import Path
+
+# Add parent directory to path for common imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+
+from lib.common.config import get_config
+
+# Get configuration
+config = get_config()
+HOST = config.get('hostname') or os.getenv('HOSTNAME') or 'localhost'
 
 # Initialize FastMCP server
 server = FastMCP("digidig_mcp")
 
 # DIGiDIG service URLs - these would typically come from config
 DIGIDIG_SERVICES = {
-    "identity": os.getenv("IDENTITY_URL", "http://localhost:8001"),
-    "storage": os.getenv("STORAGE_URL", "http://localhost:8002"),
-    "smtp": os.getenv("SMTP_URL", "http://localhost:8000"),
-    "imap": os.getenv("IMAP_URL", "http://localhost:8003"),
-    "client": os.getenv("CLIENT_URL", "http://localhost:8004"),
-    "admin": os.getenv("ADMIN_URL", "http://localhost:8005"),
-    "apidocs": os.getenv("APIDOCS_URL", "http://localhost:8010")
+    "identity": config.get("services.identity.external_url", f"http://{HOST}:8001"),
+    "storage": config.get("services.storage.external_url", f"http://{HOST}:8002"),
+    "smtp": config.get("services.smtp.external_url", f"http://{HOST}:8000"),
+    "imap": config.get("services.imap.external_url", f"http://{HOST}:8003"),
+    "client": config.get("services.client.external_url", f"http://{HOST}:8004"),
+    "admin": config.get("services.admin.external_url", f"http://{HOST}:8005"),
+    "apidocs": config.get("services.apidocs.external_url", f"http://{HOST}:8010")
 }
 
 @server.tool()

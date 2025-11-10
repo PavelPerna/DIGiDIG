@@ -6,7 +6,7 @@ DIGiDIG uses YAML-based configuration files instead of environment variables for
 - **Maintainability**: All settings in one place
 - **Validation**: YAML syntax checking
 - **Version Control**: Easy to track changes
-- **Environment Management**: Separate configs for dev/test/prod
+- **Environment Management**: Separate configs for dev/prod
 - **Type Safety**: Structured configuration with clear hierarchy
 
 ## Configuration Files
@@ -15,7 +15,6 @@ DIGiDIG uses YAML-based configuration files instead of environment variables for
 config/
 ├── config.yaml                 # Main configuration (development defaults)
 ├── config.prod.example.yaml    # Production template (copy & customize)
-├── config.test.yaml            # Test environment overrides
 └── config.local.yaml           # Local overrides (git-ignored)
 ```
 
@@ -67,9 +66,6 @@ Set `DIGIDIG_ENV` environment variable to load environment-specific overrides:
 ```bash
 # Development (default)
 DIGIDIG_ENV=dev python app.py
-
-# Testing
-DIGIDIG_ENV=test python app.py
 
 # Production
 DIGIDIG_ENV=prod python app.py
@@ -171,18 +167,6 @@ db = get_db_config("postgres")
 DB_HOST = db["host"]
 DB_USER = db["user"]
 JWT_SECRET = config.get("security.jwt.secret")
-```
-
-## Testing
-
-Test configuration is automatically loaded when `DIGIDIG_ENV=test`:
-
-```python
-# In tests
-from common.config import load_config
-
-config = load_config(env="test")
-assert config.get("test.enabled") == True
 ```
 
 ## Validation

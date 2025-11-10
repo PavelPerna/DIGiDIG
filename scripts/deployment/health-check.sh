@@ -6,7 +6,7 @@
 set -e
 
 ENVIRONMENT=${1:-local}
-BASE_URL="http://localhost"
+BASE_URL=${BASE_URL:-"http://localhost"}
 
 # Environment-specific URLs
 case "$ENVIRONMENT" in
@@ -20,7 +20,7 @@ case "$ENVIRONMENT" in
         BASE_URL="http://localhost"
         ;;
     *)
-        echo "❌ Unknown environment: $ENVIRONMENT"
+        echo "\u274c Unknown environment: $ENVIRONMENT"
         echo "Usage: $0 [local|staging|production]"
         exit 1
         ;;
@@ -35,13 +35,15 @@ NC='\033[0m'
 
 # Service definitions
 declare -A SERVICES=(
-    ["identity"]="8001"
-    ["storage"]="8002"
-    ["smtp"]="8000"
-    ["imap"]="8003"
-    ["client"]="8004"
-    ["admin"]="8005"
-    ["apidocs"]="8010"
+    ["identity"]="${IDENTITY_PORT:-9101}"
+    ["storage"]="${STORAGE_PORT:-9102}"
+    # Use REST ports for service health checks; protocol ports (e.g. 143)
+    # are configured separately if needed.
+    ["smtp"]="${SMTP_REST_PORT:-9100}"
+    ["imap"]="${IMAP_REST_PORT:-9103}"
+    ["admin"]="${ADMIN_PORT:-9105}"
+    ["mail"]="${MAIL_PORT:-9107}"
+    ["apidocs"]="${APIDOCS_PORT:-9110}"
 )
 
 echo -e "${BLUE}🩺 DIGiDIG Health Check - $ENVIRONMENT environment${NC}"
@@ -130,26 +132,26 @@ if [[ $HEALTHY_SERVICES -gt 0 ]]; then
     echo "🧪 Running functional tests..."
     
     # Test API documentation
-    if curl -f -s -m 10 "$BASE_URL:8010" >/dev/null 2>&1; then
+    if curl -f -s -m 10 "$BASE_URL:9110" >/dev/null 2>&1; then
         echo -e "  ${GREEN}✅ API Documentation accessible${NC}"
     else
         echo -e "  ${RED}❌ API Documentation not accessible${NC}"
         EXIT_CODE=1
     fi
     
-    # Test client interface
-    if curl -f -s -m 10 "$BASE_URL:8004" >/dev/null 2>&1; then
-        echo -e "  ${GREEN}✅ Client interface accessible${NC}"
-    else
-        echo -e "  ${RED}❌ Client interface not accessible${NC}"
-        EXIT_CODE=1
-    fi
-    
     # Test admin interface
-    if curl -f -s -m 10 "$BASE_URL:8005" >/dev/null 2>&1; then
+    if curl -f -s -m 10 "$BASE_URL:9105" >/dev/null 2>&1; then
         echo -e "  ${GREEN}✅ Admin interface accessible${NC}"
     else
         echo -e "  ${RED}❌ Admin interface not accessible${NC}"
+        EXIT_CODE=1
+    fi
+    
+    # Test mail interface
+    if curl -f -s -m 10 "$BASE_URL:9107" >/dev/null 2>&1; then
+        echo -e "  ${GREEN}✅ Mail interface accessible${NC}"
+    else
+        echo -e "  ${RED}❌ Mail interface not accessible${NC}"
         EXIT_CODE=1
     fi
 fi

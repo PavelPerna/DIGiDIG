@@ -31,8 +31,8 @@ The service uses the centralized configuration system. Key settings:
 services:
   sso:
     host: sso
-    port: 8006
-    url: http://sso:8006
+    port: 9106
+    url: http://sso:9106
 
 security:
   cookie:

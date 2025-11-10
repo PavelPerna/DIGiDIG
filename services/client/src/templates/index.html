@@ -5,240 +5,142 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">Dashboard - DIGiDIG</title>
     <link rel="stylesheet" href="/static/css/styles.css">
-    <style>
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 1.5rem;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border-color);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-            margin-bottom: 1.5rem;
-        }
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-        .header-left h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            color: var(--text-color);
-        }
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .language-selector select {
-            padding: 0.5rem 0.75rem;
-            border-radius: 6px;
-            border: 1px solid var(--input-border);
-            background-color: var(--input-bg);
-            color: var(--text-color);
-            font-size: 0.875rem;
-        }
-        .language-selector select:focus {
-            outline: none;
-            border-color: var(--input-focus);
-            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
-        }
-        .logout-btn {
-            background: var(--danger);
-            color: white;
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.15s ease-in-out;
-        }
-        .logout-btn:hover {
-            background: var(--danger-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1.5rem;
-        }
-        .compose-section {
-            background: var(--surface);
-            border: 1px solid var(--border-color);
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            margin-bottom: 2rem;
-        }
-        .compose-section h2 {
-            margin-top: 0;
-            margin-bottom: 1.5rem;
-            color: var(--text-color);
-            font-size: 1.25rem;
-        }
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-        .form-group:last-child {
-            margin-bottom: 0;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-color);
-            font-weight: 600;
-            font-size: 0.875rem;
-        }
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.5rem 0.75rem;
-            border: 1px solid var(--input-border);
-            background-color: var(--input-bg);
-            color: var(--text-color);
-            border-radius: 6px;
-            font-size: 0.875rem;
-            font-family: inherit;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-            box-sizing: border-box;
-        }
-        .form-group input::placeholder,
-        .form-group textarea::placeholder {
-            color: var(--text-muted);
-        }
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--input-focus);
-            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
-        }
-        .form-group textarea {
-            min-height: 8rem;
-            resize: vertical;
-        }
-        .send-btn {
-            background-color: var(--button-bg);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s ease-in-out;
-        }
-        .send-btn:hover {
-            background-color: var(--button-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-        }
-        .emails-section {
-            background: var(--surface);
-            border: 1px solid var(--border-color);
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-        .emails-section h2 {
-            color: var(--text-color);
-            margin-top: 0;
-            margin-bottom: 1.5rem;
-            font-size: 1.25rem;
-        }
-        .email-item {
-            border: 1px solid var(--border-color);
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            border-radius: 6px;
-            background: var(--input-bg);
-            transition: background-color 0.15s ease-in-out;
-        }
-        .email-item:hover {
-            background: var(--surface-hover);
-        }
-        .email-item:last-child {
-            margin-bottom: 0;
-        }
-        .email-item strong {
-            color: var(--text-color);
-            font-weight: 600;
-        }
-        .email-item .email-body {
-            margin-top: 1rem;
-            line-height: 1.5;
-            color: var(--text-color);
-        }
-        .email-item .timestamp {
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            margin-top: 0.5rem;
-        }
-        .message, .error {
-            padding: 1rem;
-            border-radius: 6px;
-            margin-bottom: 1.5rem;
-            border-width: 1px;
-            border-style: solid;
-        }
-        .message {
-            background: rgba(35, 134, 54, 0.15);
-            color: #4fd65b;
-            border-color: rgba(35, 134, 54, 0.5);
-        }
-        .error {
-            background: rgba(218, 54, 51, 0.15);
-            color: #f85149;
-            border-color: rgba(218, 54, 51, 0.5);
-        }
-        .no-emails {
-            text-align: center;
-            color: var(--text-muted);
-            padding: 3rem 1rem;
-            font-style: italic;
-        }
-        
-        /* Responsive design */
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-            .header-left,
-            .header-right {
-                width: 100%;
-                justify-content: center;
-            }
-            .container {
-                padding: 0 1rem;
-            }
-            .compose-section,
-            .emails-section {
-                padding: 1.5rem;
-            }
-        }
-    </style>
+    
+    <!-- DIGiDIG Reusable Components -->
+    <link rel="stylesheet" href="/lib/common/components/language-selector/language-selector.css">
+    <link rel="stylesheet" href="/lib/common/components/dark-mode-switch/dark-mode-switch.css">
+    <link rel="stylesheet" href="/lib/common/components/avatar-dropdown/avatar-dropdown.css">
+    <link rel="stylesheet" href="/lib/common/components/top-pane/top-pane.css">
 </head>
 <body>
-    <div class="header">
-        <div class="header-left">
-            <h1 id="welcomeMsg">Welcome, {{ username }}!</h1>
-        </div>
-        <div class="header-right">
-            <div class="language-selector">
-                <select id="langSelect" onchange="changeLanguage(this.value)">
-                    <option value="en">English</option>
-                    <option value="cs">Čeština</option>
-                </select>
+    <!-- DIGiDIG Top Pane Component -->
+    <header class="digidig-top-pane" data-digidig-component="top-pane">
+        <div class="digidig-top-pane-content">
+            <!-- Left section - Logo and navigation -->
+            <div class="digidig-top-pane-left">
+                <div class="digidig-top-pane-logo">
+                    <a href="/" class="digidig-logo-link" aria-label="Go to homepage">
+                        <svg class="digidig-logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 1v6m0 6v6"/>
+                            <path d="m21 12-6-3-6 3-6-3"/>
+                        </svg>
+                        <span class="digidig-logo-text">DIGiDIG</span>
+                    </a>
+                </div>
             </div>
-            <form action="/logout" method="post" style="margin: 0;">
-                <button type="submit" class="logout-btn" id="logoutBtn">Logout</button>
-            </form>
+
+            <!-- Center section - Welcome message -->
+            <div class="digidig-top-pane-center">
+                <h1 class="digidig-top-pane-title" id="welcomeMsg">Welcome, {{ username }}!</h1>
+            </div>
+
+            <!-- Right section - User controls -->
+            <div class="digidig-top-pane-right">
+                <!-- Authenticated user controls -->
+                <div class="digidig-top-pane-user-controls" data-auth-required="true">
+                    <!-- Avatar dropdown component -->
+                    <div class="digidig-avatar-dropdown" data-digidig-component="avatar-dropdown">
+                        <!-- Avatar trigger button -->
+                        <button class="digidig-avatar-button" type="button" aria-haspopup="true" aria-expanded="false" aria-label="User menu">
+                            <div class="digidig-avatar-image">
+                                <svg class="digidig-avatar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                            </div>
+                            <span class="digidig-avatar-name">{{ username }}</span>
+                            <svg class="digidig-avatar-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6,9 12,15 18,9"/>
+                            </svg>
+                        </button>
+
+                        <!-- Dropdown menu -->
+                        <div class="digidig-avatar-menu" role="menu" aria-hidden="true">
+                            <div class="digidig-avatar-menu-content">
+                                <!-- User info section -->
+                                <div class="digidig-avatar-user-info">
+                                    <div class="digidig-avatar-user-avatar">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                            <circle cx="12" cy="7" r="4"/>
+                                        </svg>
+                                    </div>
+                                    <div class="digidig-avatar-user-details">
+                                        <div class="digidig-avatar-user-name">{{ username }}</div>
+                                        <div class="digidig-avatar-user-email">user@digidig.com</div>
+                                    </div>
+                                </div>
+
+                                <!-- Divider -->
+                                <div class="digidig-avatar-menu-divider"></div>
+
+                                <!-- Preferences section -->
+                                <div class="digidig-avatar-preferences">
+                                    <div class="digidig-avatar-preference-group">
+                                        <label class="digidig-avatar-preference-label">Language</label>
+                                        <div class="digidig-avatar-preference-control" data-digidig-component="language-selector">
+                                            <select class="digidig-language-select" aria-label="Select language">
+                                                <option value="en">English</option>
+                                                <option value="cs">Čeština</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="digidig-avatar-preference-group">
+                                        <div class="digidig-avatar-preference-control" data-digidig-component="dark-mode-switch">
+                                            <label class="digidig-switch-wrapper">
+                                                <input type="checkbox" class="digidig-switch-input" aria-label="Toggle dark mode">
+                                                <span class="digidig-switch-slider">
+                                                    <span class="digidig-switch-handle">
+                                                        <!-- Light mode icon -->
+                                                        <svg class="digidig-switch-icon digidig-switch-icon-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <circle cx="12" cy="12" r="5"/>
+                                                            <line x1="12" y1="1" x2="12" y2="3"/>
+                                                            <line x1="12" y1="21" x2="12" y2="23"/>
+                                                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                                                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                                                            <line x1="1" y1="12" x2="3" y2="12"/>
+                                                            <line x1="21" y1="12" x2="23" y2="12"/>
+                                                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                                                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                                                        </svg>
+                                                        <!-- Dark mode icon -->
+                                                        <svg class="digidig-switch-icon digidig-switch-icon-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                                                        </svg>
+                                                    </span>
+                                                </span>
+                                                <span class="digidig-switch-label">Dark Mode</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Divider -->
+                                <div class="digidig-avatar-menu-divider"></div>
+
+                                <!-- Actions section -->
+                                <div class="digidig-avatar-actions">
+                                    <a href="/logout" class="digidig-avatar-action-link" role="menuitem">
+                                        <svg class="digidig-avatar-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                            <polyline points="16,17 21,12 16,7"/>
+                                            <line x1="21" y1="12" x2="9" y2="12"/>
+                                        </svg>
+                                        <span id="logoutBtn">Logout</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Backdrop for closing dropdown -->
+                        <div class="digidig-avatar-backdrop" aria-hidden="true"></div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+    </header>
 
     <div class="container">
         {% if message %}
@@ -292,8 +194,71 @@
         </div>
     </div>
 
+    <!-- DIGiDIG Reusable Components Scripts -->
+    <script src="/lib/common/components/shared/preferences-manager.js"></script>
+    <script src="/lib/common/components/shared/utils.js"></script>
+    <script src="/lib/common/components/language-selector/language-selector.js"></script>
+    <script src="/lib/common/components/dark-mode-switch/dark-mode-switch.js"></script>
+    <script src="/lib/common/components/avatar-dropdown/avatar-dropdown.js"></script>
+    <script src="/lib/common/components/top-pane/top-pane.js"></script>
+
+    <!-- Fallback: Ensure avatar-dropdown is initialized if not handled by top-pane -->
     <script>
-        // Translations
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('[data-digidig-component="avatar-dropdown"]').forEach(element => {
+                if (!element._digidigComponent && window.DigiDigAvatarDropdown) {
+                    try {
+                        window.DigiDigUtils.Component.createComponent(window.DigiDigAvatarDropdown, element);
+                    } catch (error) {
+                        console.error('Failed to fallback-initialize avatar dropdown:', error);
+                    }
+                }
+                // Safe fallback: ensure button toggles the menu even if component failed
+                try {
+                    const btn = element.querySelector('.digidig-avatar-button');
+                    const menu = element.querySelector('.digidig-avatar-menu');
+                    const backdrop = element.querySelector('.digidig-avatar-backdrop') || document.createElement('div');
+                    if (backdrop && !backdrop.parentElement) {
+                        // ensure backdrop exists in DOM for closing
+                        backdrop.className = 'digidig-avatar-backdrop';
+                        backdrop.setAttribute('aria-hidden', 'true');
+                        document.body.appendChild(backdrop);
+                    }
+                    if (btn && menu) {
+                        // attach non-destructive toggle handler if none present
+                        const existing = btn.getAttribute('data-digidig-fallback');
+                        if (!existing) {
+                            btn.setAttribute('data-digidig-fallback', 'true');
+                            btn.addEventListener('click', (ev) => {
+                                ev.preventDefault();
+                                const isHidden = menu.getAttribute('aria-hidden') !== 'false';
+                                menu.setAttribute('aria-hidden', isHidden ? 'false' : 'true');
+                                btn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+                                element.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+                                if (!isHidden) {
+                                    backdrop.setAttribute('aria-hidden', 'true');
+                                } else {
+                                    backdrop.setAttribute('aria-hidden', 'false');
+                                }
+                            });
+                            // backdrop click closes menu
+                            backdrop.addEventListener('click', () => {
+                                menu.setAttribute('aria-hidden', 'true');
+                                btn.setAttribute('aria-expanded', 'false');
+                                element.setAttribute('aria-expanded', 'false');
+                                backdrop.setAttribute('aria-hidden', 'true');
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.warn('avatar-dropdown fallback attach error', e);
+                }
+            });
+        });
+    </script>
+
+    <script>
+        // Translations for the client interface
         const translations = {
             en: {
                 pageTitle: 'Dashboard - DIGiDIG',
@@ -325,38 +290,7 @@
             }
         };
 
-        // Get current language from cookie
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-            return 'en';
-        }
-
-        // Set current language cookie
-        function setCookie(name, value, days) {
-            const d = new Date();
-            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-            const expires = "expires=" + d.toUTCString();
-            document.cookie = name + "=" + value + ";" + expires + ";path=/;SameSite=Lax";
-        }
-
-        // Change language
-        function changeLanguage(lang) {
-            setCookie('language', lang, 365);
-            updateUI(lang);
-            
-            // Also update on server
-            fetch('/api/language', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `lang=${lang}`
-            });
-        }
-
-        // Update UI texts
+        // Update UI texts based on language
         function updateUI(lang) {
             const t = translations[lang] || translations.en;
             const username = '{{ username }}';
@@ -384,11 +318,48 @@
             }
         }
 
-        // Initialize on page load
+        // Initialize the client interface
         document.addEventListener('DOMContentLoaded', function() {
-            const currentLang = getCookie('language') || 'en';
-            document.getElementById('langSelect').value = currentLang;
-            updateUI(currentLang);
+            // Initialize top pane with client-specific options
+            const topPaneElement = document.querySelector('[data-digidig-component="top-pane"]');
+            if (topPaneElement && window.DigiDigTopPane) {
+                const topPane = new window.DigiDigTopPane(topPaneElement, {
+                    title: null, // We use welcome message instead
+                    logoText: 'DIGiDIG',
+                    logoUrl: '/',
+                    userInfoEndpoint: '{{ identity_url }}/api/user/info',
+                    logoutUrl: '/api/identity/logout',
+                    responsive: true
+                });
+
+                // Listen for language changes from components
+                topPaneElement.addEventListener('digidig:top-pane:language-change', (event) => {
+                    updateUI(event.detail.language);
+                });
+
+                // Listen for theme changes from components
+                topPaneElement.addEventListener('digidig:top-pane:theme-change', (event) => {
+                    // Theme is automatically applied by the dark mode switch component
+                    console.log('Theme changed to:', event.detail.theme);
+                });
+
+                // Listen for auth state changes
+                topPaneElement.addEventListener('digidig:top-pane:auth-state-change', (event) => {
+                    console.log('Auth state changed to:', event.detail.authState);
+                });
+            }
+
+            // Load current language and update UI
+            if (window.DigiDigPreferences) {
+                window.DigiDigPreferences.getPreference('language').then(lang => {
+                    updateUI(lang || 'en');
+                }).catch(error => {
+                    console.warn('Failed to load language preference:', error);
+                    updateUI('en');
+                });
+            } else {
+                updateUI('en');
+            }
         });
     </script>
 </body>

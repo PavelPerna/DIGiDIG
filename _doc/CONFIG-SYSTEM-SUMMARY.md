@@ -5,12 +5,11 @@
 ### 1. Configuration Files
 - ✅ `config/config.yaml` - Main configuration (development defaults)
 - ✅ `config/config.prod.example.yaml` - Production template
-- ✅ `config/config.test.yaml` - Test environment overrides
 - ✅ `.gitignore` - Updated to ignore sensitive configs
 
 ### 2. Configuration Loader (`common/config.py`)
 - ✅ YAML-based configuration management
-- ✅ Environment-specific overrides (dev/test/prod)
+- ✅ Environment-specific overrides (dev/prod)
 - ✅ Deep merge support for nested configs
 - ✅ Dot-notation access (`config.get("database.postgres.host")`)
 - ✅ Convenience functions for common settings
@@ -23,7 +22,6 @@
 
 ### 4. Examples
 - ✅ `identity/config_example.py` - How to use in services
-- ✅ `tests/unit/test_config.py` - Unit tests for config system
 
 ## 🎯 Key Features
 
@@ -69,9 +67,6 @@ secret = get_jwt_secret()
 ```bash
 # Development (default)
 docker compose up
-
-# Test
-DIGIDIG_ENV=test pytest
 
 # Production
 export DIGIDIG_ENV=prod
@@ -136,7 +131,6 @@ DIGiDIG/
 ├── config/
 │   ├── config.yaml                 # Main config (dev)
 │   ├── config.prod.example.yaml    # Production template
-│   ├── config.test.yaml            # Test overrides
 │   └── config.local.yaml           # Local (git-ignored)
 ├── common/
 │   ├── __init__.py
@@ -199,13 +193,7 @@ DIGiDIG/
 ## 🔍 Testing
 
 ```bash
-# Run config unit tests
-pytest tests/unit/test_config.py -v
-
-# Test with environment override
-DIGIDIG_ENV=test pytest
-
-# Test production config (without sensitive values)
+# Check production config (without sensitive values)
 DIGIDIG_ENV=prod docker compose config
 ```
 

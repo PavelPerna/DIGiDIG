@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - DIGiDIG Mail</title>
+    <meta name="digidig-authenticated" content="{% if user_info %}true{% else %}false{% endif %}">
+
+    <!-- Define variables for components -->
+    {% set user_name = user_info.get('username', 'User') if user_info else None %}
+    {% set user_email = user_info.get('email', '') if user_info else None %}
+
+    <!-- DIGiDIG shared styles -->
+    <link rel="stylesheet" href="/lib/common/components/top-pane/top-pane.css">
+    <link rel="stylesheet" href="/lib/common/components/auth-button/auth-button.css">
+
+    <!-- App-specific styles -->
+    <link rel="stylesheet" href="{{ url_for('static', path='css/layout.css') }}">
+    <link rel="stylesheet" href="/static/css/{{ current_page }}.css">
+</head>
+<body>
+    <!-- Server-side include of shared top-pane component -->
+    {% include 'top-pane/top-pane.html' %}
+
+    <div class="main-layout">
+        <!-- Left pane: menu -->
+        <aside class="left-pane">
+            <nav class="menu">
+                <ul>
+                    <li><a href="/list" class="menu-item {% if current_page == 'list' %}active{% endif %}">Inbox</a></li>
+                    <li><a href="/compose" class="menu-item {% if current_page == 'compose' %}active{% endif %}">Compose</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Right pane: content -->
+        <main class="right-pane">
+            {% if current_page == 'compose' %}
+                {% include 'pages/compose.html' %}
+            {% elif current_page == 'list' %}
+                {% include 'pages/list.html' %}
+            {% endif %}
+        </main>
+    </div>
+
+    <!-- Shared JavaScript utilities -->
+    <script src="/lib/common/components/shared/utils.js"></script>
+    <script src="/lib/common/components/shared/preferences-manager.js"></script>
+
+    <!-- Main DigiDig namespace -->
+    <script src="/lib/common/components/digidig.js"></script>
+
+    <!-- Component scripts -->
+    <script src="/lib/common/components/top-pane/top-pane.js"></script>
+    <script src="/lib/common/components/auth-button/auth-button.js"></script>
+
+    <!-- App-specific scripts -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/{{ current_page }}.js"></script>
+
+    <!-- Initialize components -->
+    <script>
+        // Global service URLs for JavaScript
+        window.DIGIDIG_SERVICE_URLS = {{ service_urls|tojson }};
+        // Global user info for JavaScript
+        {% if user_info %}
+        window.DIGIDIG_USER_INFO = {{ user_info|tojson }};
+        {% else %}
+        window.DIGIDIG_USER_INFO = null;
+        {% endif %}
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize preferences
+            window.DigiDigPreferences.getPreferences().then(function(prefs) {
+                // Apply language
+                if (prefs.language) {
+                    document.documentElement.lang = prefs.language;
+                }
+
+                // Apply dark mode
+                if (prefs.darkMode) {
+                    document.body.classList.add('dark-mode');
+                }
+            });
+
+            // Initialize top-pane with correct userInfoEndpoint
+            var topPaneElement = document.querySelector('[data-digidig-component="top-pane"]');
+            if (topPaneElement && window.DigiDigTopPane) {
+                // Override userInfoEndpoint to use proxy
+                topPaneElement._digidigOptions = {
+                    userInfoEndpoint: '/api/identity/session/verify'
+                };
+            }
+
+            // Initialize components using DigiDig.init()
+            DigiDig.init();
+        });
+    </script>
+</body>
+</html>

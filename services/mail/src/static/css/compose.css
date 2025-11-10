@@ -1,0 +1,56 @@
+/* Compose page specific styles */
+
+.compose-form-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+#compose-form {
+    background-color: var(--surface-color);
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 200px;
+}
+
+.message {
+    display: block !important;
+    margin: 1rem 0 2rem 0;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: center;
+    animation: slideDown 0.3s ease-out;
+}
+
+.message:empty {
+    display: none !important;
+}
+
+.message.success {
+    background-color: #10b981;
+    color: white;
+    border: 2px solid #059669;
+}
+
+.message.error {
+    background-color: #ef4444;
+    color: white;
+    border: 2px solid #dc2626;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

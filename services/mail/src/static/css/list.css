@@ -1,0 +1,124 @@
+/* List page specific styles */
+
+.emails-table {
+    background-color: var(--surface-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.email-header {
+    display: grid;
+    grid-template-columns: 200px 1fr 150px;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 600;
+}
+
+.email-row {
+    display: grid;
+    grid-template-columns: 200px 1fr 150px;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.email-row:hover {
+    background-color: var(--background-color);
+}
+
+.email-from,
+.email-subject,
+.email-date {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.email-subject {
+    font-weight: 500;
+}
+
+.email-date {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    text-align: right;
+}
+
+.email-content {
+    padding: var(--spacing-lg);
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.email-content h3 {
+    margin-bottom: var(--spacing-md);
+}
+
+.email-content .email-meta {
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.email-content .email-meta p {
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-secondary);
+}
+
+.email-content .email-body {
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.no-emails {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Message notification (same as compose) */
+.message {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    min-width: 400px;
+    max-width: 600px;
+    margin-top: var(--spacing-lg, 1rem);
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease-out;
+}
+
+.message.success {
+    background-color: #10b981;
+    color: white;
+    border: 2px solid #059669;
+}
+
+.message.error {
+    background-color: #ef4444;
+    color: white;
+    border: 2px solid #dc2626;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}

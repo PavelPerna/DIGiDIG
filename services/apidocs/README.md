@@ -103,7 +103,6 @@ IDENTITY_URL=http://identity:8001
 STORAGE_URL=http://storage:8002
 SMTP_URL=http://smtp:8000
 IMAP_URL=http://imap:8003
-CLIENT_URL=http://client:8004
 ADMIN_URL=http://admin:8005
 ```
 

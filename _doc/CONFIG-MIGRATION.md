@@ -147,9 +147,6 @@ config/config.yaml
 # Production
 cp config/config.prod.example.yaml config/config.prod.yaml
 # Edit with production values
-
-# Test
-config/config.test.yaml
 ```
 
 ## Benefits Summary

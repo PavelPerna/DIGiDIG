@@ -1,19 +1,24 @@
-FROM python:3.10-slim
+FROM ghcr.io/pavelperna/digidig-base:latest
 
 WORKDIR /app
 
 # Copy lib and config files (from project root)
-COPY lib/ ./lib/
+COPY digidig/ ./digidig/
 COPY config/ ./config/
 
 # Copy service-specific files
 COPY services/client/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --quiet --no-cache-dir -r requirements.txt
 
 COPY services/client/src/ .
 
-ENV PYTHONPATH=/app:$PYTHONPATH
+# Copy start script
+COPY services/client/start.sh /start.sh
+RUN chmod +x /start.sh
 
-EXPOSE 8004
+ENV PYTHONPATH=/app
 
-CMD ["uvicorn", "client:app", "--host", "0.0.0.0", "--port", "8004"]
+# Expose both HTTP and HTTPS ports
+EXPOSE 9104 9204
+
+CMD ["/start.sh"]

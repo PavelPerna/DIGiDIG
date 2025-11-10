@@ -1,0 +1,21 @@
+{
+  "title": "DIGiDIG Test Komponent",
+  "subtitle": "Testování všech UI komponent",
+  "authenticated_user": "ověřený uživatel",
+  "checking_auth": "Kontrola ověření...",
+  "redirecting_login": "Přesměrování na přihlášení...",
+  "status_success": "Ověřeno jako",
+  "status_error": "Selhalo",
+  "component_status": "Stav Komponent",
+  "language_selector": "Výběr Jazyka",
+  "dark_mode_switch": "Přepínač Tmavého Režimu",
+  "avatar_dropdown": "Rozbalovací Nabídka Avatara",
+  "top_pane": "Horní Panel",
+  "initializing": "Inicializace...",
+  "user_preferences": "Uživatelské Předvolby",
+  "loading_prefs": "Načítání předvoleb...",
+  "language": "Jazyk",
+  "dark_mode": "Tmavý Režim",
+  "test_results": "Výsledky Testů",
+  "starting_tests": "Inicializace testů komponent..."
+}
