@@ -13,7 +13,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from digidig.config import load_config
+from digidig.config import Config
 
 CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "config.yaml"
 if not CONFIG_PATH.exists():
@@ -21,6 +21,9 @@ if not CONFIG_PATH.exists():
     sys.exit(1)
 
 text = CONFIG_PATH.read_text()
+
+# Load config using singleton
+config = Config(config_path=str(CONFIG_PATH))
 
 # Simple helper to find a value under a service block. This is not a full YAML parser.
 # We search for the service name and then look for common keys beneath it.
