@@ -59,7 +59,17 @@ class MailApp {
             }
         };
 
-        const response = await fetch(url, { ...defaultOptions, ...options });
+        // Merge headers properly
+        const mergedOptions = {
+            ...defaultOptions,
+            ...options,
+            headers: {
+                ...defaultOptions.headers,
+                ...(options.headers || {})
+            }
+        };
+
+        const response = await fetch(url, mergedOptions);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }

@@ -7,27 +7,37 @@ function clearForm() {
 
 async function sendEmail(event) {
     event.preventDefault();
+    
+    console.log('[sendEmail] Starting...');
+    console.log('[sendEmail] User info:', window.DIGIDIG_USER_INFO);
 
     const formData = new FormData(event.target);
-    const userEmail = window.DIGIDIG_USER_INFO ? window.DIGIDIG_USER_INFO.email : 'anonymous@example.com';
+    // Get username from user info and append domain
+    const username = window.DIGIDIG_USER_INFO ? window.DIGIDIG_USER_INFO.username : 'anonymous';
+    const userEmail = username + '@example.com';
+    
     const emailData = {
         sender: userEmail,
         recipient: formData.get('to'),
         subject: formData.get('subject'),
         body: formData.get('body')
     };
+    
+    console.log('[sendEmail] Email data:', emailData);
 
     try {
         // Send email via SMTP service through proxy
-        await window.MailApp.makeRequest('/api/smtp/send', {
+        console.log('[sendEmail] Sending via /api/smtp/send...');
+        const response = await window.MailApp.makeRequest('/api/smtp/send', {
             method: 'POST',
             body: JSON.stringify(emailData)
         });
-
+        
+        console.log('[sendEmail] Response:', response);
         window.MailApp.showMessage('Email sent successfully!', 'success');
         clearForm();
     } catch (error) {
-        console.error('Error sending email:', error);
+        console.error('[sendEmail] Error:', error);
         window.MailApp.showMessage('Error sending email: ' + error.message, 'error');
     }
 }
