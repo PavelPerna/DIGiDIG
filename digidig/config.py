@@ -1,8 +1,11 @@
 """
 Configuration loader for DIGiDIG services
 Loads configuration from YAML files with environment-based overrides
+
+Singleton pattern - use Config.instance() to access configuration
 """
 import os
+import socket
 try:
     import yaml
     _yaml_safe_load = yaml.safe_load
@@ -21,11 +24,20 @@ from typing import Any, Dict, Optional
 
 
 class Config:
-    """Configuration manager that loads from YAML files"""
+    """
+    Configuration manager singleton that loads from YAML files
+    
+    Usage:
+        config = Config.instance()
+        db_config = config.db_config('postgres')
+        smtp_url = config.service_url('smtp', ssl=True)
+    """
+    
+    _instance: Optional['Config'] = None
     
     def __init__(self, config_path: Optional[str] = None, env: Optional[str] = None):
         """
-        Initialize configuration
+        Initialize configuration (internal - use Config.instance() instead)
         
         Args:
             config_path: Path to main config file (default: config/config.yaml)
@@ -70,6 +82,26 @@ class Config:
             env_config_file = self.config_file.parent / f"config.{env}.yaml"
             if env_config_file.exists():
                 self._load_config(env_config_file, override=True)
+    
+    @classmethod
+    def instance(cls, reload: bool = False) -> 'Config':
+        """
+        Get singleton configuration instance
+        
+        Args:
+            reload: Force reload configuration from files
+        
+        Returns:
+            Config singleton instance
+        """
+        if cls._instance is None or reload:
+            if reload and cls._instance is not None:
+                old_config_file = cls._instance.config_file
+                cls._instance = Config(config_path=str(old_config_file))
+            else:
+                cls._instance = Config()
+        
+        return cls._instance
     
     def _load_config(self, file_path: Path, override: bool = False):
         """Load configuration from YAML file"""
@@ -125,144 +157,96 @@ class Config:
     def all(self) -> Dict[str, Any]:
         """Get entire configuration"""
         return self._config.copy()
-
-
-# Global config instance (lazy loaded)
-_config_instance: Optional[Config] = None
-
-
-def get_config(reload: bool = False) -> Config:
-    """
-    Get global configuration instance
     
-    Args:
-        reload: Force reload configuration from files
-    """
-    global _config_instance
+    # === Service Configuration Methods ===
     
-    if _config_instance is None or reload:
-        # If reloading and we have an existing instance, use its config path
-        if reload and _config_instance is not None:
-            old_config_file = _config_instance.config_file
-            _config_instance = Config(config_path=str(old_config_file))
+    def db_config(self, db_type: str = "postgres") -> Dict[str, Any]:
+        """Get database configuration"""
+        return self.get_section(f"database.{db_type}")
+    
+    def service_external_domain(self, service_name: str) -> str:
+        """Get service external domain"""
+        return self.get(f"services.{service_name}.external_url", "digidig.cz")
+    
+    def service_http_port(self, service_name: str) -> int:
+        """Get service HTTP port"""
+        if service_name == 'smtp':
+            return self.get(f"services.{service_name}.rest_port", 9100)
+        elif service_name == 'imap':
+            return self.get(f"services.{service_name}.rest_port", 9103)
         else:
-            _config_instance = Config()
+            return self.get(f"services.{service_name}.http_port", 9100)
     
-    return _config_instance
-
-
-def load_config(config_path: Optional[str] = None, env: Optional[str] = None) -> Config:
-    """
-    Load configuration from specific path
+    def service_https_port(self, service_name: str) -> int:
+        """Get service HTTPS port"""
+        if service_name == 'smtp':
+            return self.get(f"services.{service_name}.rest_sslport", 9200)
+        elif service_name == 'imap':
+            return self.get(f"services.{service_name}.rest_sslport", 9203)
+        else:
+            return self.get(f"services.{service_name}.http_sslport", 9200)
     
-    Args:
-        config_path: Path to config file
-        env: Environment name (dev, test, prod)
-    """
-    return Config(config_path=config_path, env=env)
-
-
-# Convenience functions for common config access
-def get_db_config(db_type: str = "postgres") -> Dict[str, Any]:
-    """Get database configuration"""
-    return get_config().get_section(f"database.{db_type}")
-
-
-def get_service_external_domain(service_name: str) -> str:
-    """Get service external domain"""
-    return get_config().get(f"services.{service_name}.external_url", "digidig.cz")
-
-
-def get_service_http_port(service_name: str) -> int:
-    """Get service HTTP port"""
-    if service_name == 'smtp':
-        return get_config().get(f"services.{service_name}.rest_port", 9100)
-    elif service_name == 'imap':
-        return get_config().get(f"services.{service_name}.rest_port", 9103)
-    else:
-        return get_config().get(f"services.{service_name}.http_port", 9100)
-
-
-def get_service_https_port(service_name: str) -> int:
-    """Get service HTTPS port"""
-    if service_name == 'smtp':
-        return get_config().get(f"services.{service_name}.rest_sslport", 9200)
-    elif service_name == 'imap':
-        return get_config().get(f"services.{service_name}.rest_sslport", 9203)
-    else:
-        return get_config().get(f"services.{service_name}.http_sslport", 9200)
-
-
-def get_service_url(service_name: str, ssl: bool = False) -> str:
-    """Get service URL by name (HTTP or HTTPS) - for external/user-facing URLs"""
-    domain = get_service_external_domain(service_name)
-    if ssl:
-        port = get_service_https_port(service_name)
-        return f"https://{domain}:{port}"
-    else:
-        port = get_service_http_port(service_name)
-        return f"http://{domain}:{port}"
-
-
-def get_service_internal_url(service_name: str) -> str:
-    """Get internal service URL for Docker network communication (always HTTP)"""
-    port = get_service_http_port(service_name)
-    return f"http://{service_name}:{port}"
-
-
-def get_service_api_url(service_name: str, ssl: bool = True) -> str:
-    """
-    Get the best URL for API calls to another service.
-    
-    - If calling from within Docker (localhost hostname), use internal Docker service name
-    - If calling from outside Docker, use external URL
-    
-    This allows services to work both in single-server Docker Compose 
-    and distributed multi-server setups.
-    """
-    import socket
-    import os
-    
-    # Check if we're running in Docker by looking for .dockerenv or checking hostname
-    in_docker = os.path.exists('/.dockerenv') or os.environ.get('HOSTNAME', '').startswith(('digidig-', 'strategos-'))
-    
-    if in_docker:
-        # Use internal Docker network - service name with HTTPS port
+    def service_url(self, service_name: str, ssl: bool = False) -> str:
+        """Get service URL by name (HTTP or HTTPS) - for external/user-facing URLs"""
+        domain = self.service_external_domain(service_name)
         if ssl:
-            port = get_service_https_port(service_name)
-            return f"https://{service_name}:{port}"
+            port = self.service_https_port(service_name)
+            return f"https://{domain}:{port}"
         else:
-            port = get_service_http_port(service_name)
-            return f"http://{service_name}:{port}"
-    else:
-        # Use external URL for distributed setup
-        return get_service_url(service_name, ssl=ssl)
-
-
-def get_smtp_port(service_name: str = 'smtp', ssl: bool = False) -> int:
-    """Get SMTP port (for SMTP protocol, not REST)"""
-    if ssl:
-        return get_config().get(f"services.{service_name}.smtp_sslport", 465)
-    else:
-        return get_config().get(f"services.{service_name}.smtp_port", 25)
-
-
-def get_imap_port(service_name: str = 'imap', ssl: bool = False) -> int:
-    """Get IMAP port (for IMAP protocol, not REST)"""
-    if ssl:
-        return get_config().get(f"services.{service_name}.imap_sslport", 993)
-    else:
-        return get_config().get(f"services.{service_name}.imap_port", 143)
-
-
-def get_jwt_secret() -> str:
-    """Get JWT secret"""
-    return get_config().get("security.jwt.secret", "")
-
-
-def get_admin_credentials() -> Dict[str, str]:
-    """Get admin credentials"""
-    return {
-        "email": get_config().get("security.admin.email", ""),
-        "password": get_config().get("security.admin.password", "")
-    }
+            port = self.service_http_port(service_name)
+            return f"http://{domain}:{port}"
+    
+    def service_internal_url(self, service_name: str) -> str:
+        """Get internal service URL for Docker network communication (always HTTP)"""
+        port = self.service_http_port(service_name)
+        return f"http://{service_name}:{port}"
+    
+    def service_api_url(self, service_name: str, ssl: bool = True) -> str:
+        """
+        Get the best URL for API calls to another service.
+        
+        - If calling from within Docker, use internal Docker service name
+        - If calling from outside Docker, use external URL
+        
+        This allows services to work both in single-server Docker Compose 
+        and distributed multi-server setups.
+        """
+        # Check if we're running in Docker
+        in_docker = os.path.exists('/.dockerenv') or os.environ.get('HOSTNAME', '').startswith(('digidig-', 'strategos-'))
+        
+        if in_docker:
+            # Use internal Docker network
+            if ssl:
+                port = self.service_https_port(service_name)
+                return f"https://{service_name}:{port}"
+            else:
+                port = self.service_http_port(service_name)
+                return f"http://{service_name}:{port}"
+        else:
+            # Use external URL for distributed setup
+            return self.service_url(service_name, ssl=ssl)
+    
+    def smtp_port(self, service_name: str = 'smtp', ssl: bool = False) -> int:
+        """Get SMTP port (for SMTP protocol, not REST)"""
+        if ssl:
+            return self.get(f"services.{service_name}.smtp_sslport", 465)
+        else:
+            return self.get(f"services.{service_name}.smtp_port", 25)
+    
+    def imap_port(self, service_name: str = 'imap', ssl: bool = False) -> int:
+        """Get IMAP port (for IMAP protocol, not REST)"""
+        if ssl:
+            return self.get(f"services.{service_name}.imap_sslport", 993)
+        else:
+            return self.get(f"services.{service_name}.imap_port", 143)
+    
+    def jwt_secret(self) -> str:
+        """Get JWT secret"""
+        return self.get("security.jwt.secret", "")
+    
+    def admin_credentials(self) -> Dict[str, str]:
+        """Get admin credentials"""
+        return {
+            "email": self.get("security.admin.email", ""),
+            "password": self.get("security.admin.password", "")
+        }

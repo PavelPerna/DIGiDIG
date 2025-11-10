@@ -17,7 +17,7 @@ from fastapi import FastAPI, Header, Request
 from contextlib import asynccontextmanager
 import asyncpg
 from digidig.models.service.server import ServiceServer
-from digidig.config import get_config, get_db_config, get_jwt_secret
+from digidig.config import Config
 
 # RSA encryption for passwords
 try:
@@ -31,8 +31,8 @@ except ImportError:
     logging.warning("cryptography library not available, RSA encryption disabled")
 
 # Configuration
-config = get_config()
-db_config = get_db_config("postgres")
+config = Config.instance()
+db_config = config.db_config("postgres")
 IDENTITY_PORT = config.get("services.identity.port", 9101)
 
 # RSA Key Management for password encryption
@@ -320,7 +320,7 @@ class ServerIdentity(ServiceServer):
                 tok = body.get('token')
                 if not jti and tok:
                     try:
-                        jwt_secret = service_state.get("config", {}).get("jwt_secret") or get_jwt_secret()
+                        jwt_secret = service_state.get("config", {}).get("jwt_secret") or Config.instance().jwt_secret()
                         payload = jwt.decode(tok, jwt_secret, algorithms=["HS256"])
                         jti = payload.get('jti')
                         exp_ts = datetime.fromtimestamp(payload.get('exp'), tz=timezone.utc) if payload.get('exp') else None
@@ -338,7 +338,7 @@ class ServerIdentity(ServiceServer):
             if authorization and not jti:
                 try:
                     tok = authorization.split('Bearer ')[1]
-                    jwt_secret = service_state.get("config", {}).get("jwt_secret") or get_jwt_secret()
+                    jwt_secret = service_state.get("config", {}).get("jwt_secret") or Config.instance().jwt_secret()
                     payload = jwt.decode(tok, jwt_secret, algorithms=["HS256"])
                     jti = payload.get('jti')
                     exp_ts = datetime.fromtimestamp(payload.get('exp'), tz=timezone.utc) if payload.get('exp') else None
@@ -406,7 +406,7 @@ class ServerIdentity(ServiceServer):
             
             try:
                 # Decode token
-                jwt_secret = service_state.get("config", {}).get("jwt_secret") or get_jwt_secret()
+                jwt_secret = service_state.get("config", {}).get("jwt_secret") or Config.instance().jwt_secret()
                 payload = jwt.decode(access_token, jwt_secret, algorithms=["HS256"])
                 
                 # Check revocation
@@ -930,7 +930,7 @@ service_state = {
         "port": IDENTITY_PORT,
         "enabled": True,
         "timeout": config.get("services.identity.timeout", 30),
-        "jwt_secret": get_jwt_secret(),
+        "jwt_secret": config.jwt_secret(),
         "token_expiry_minutes": config.get("security.jwt.access_token_expire_minutes", 30),
         "refresh_token_days": config.get("security.jwt.refresh_token_expire_days", 7),
         "db_host": db_config.get("host"),
@@ -1132,7 +1132,7 @@ def _encode_token(username: str, roles: List[str]):
     # create JWT
     payload = {"username": username, "roles": roles, "exp": datetime.now(timezone.utc) + timedelta(hours=1), "jti": jti}
     # Use configured JWT secret from service_state (populated at startup)
-    jwt_secret = service_state.get("config", {}).get("jwt_secret") or get_jwt_secret()
+    jwt_secret = service_state.get("config", {}).get("jwt_secret") or Config.instance().jwt_secret()
     token = jwt.encode(payload, jwt_secret, algorithm="HS256")
     return token
 
@@ -1149,7 +1149,7 @@ async def _decode_token(authorization: str):
         else:
             token = authorization.strip()
         
-        jwt_secret = service_state.get("config", {}).get("jwt_secret") or get_jwt_secret()
+        jwt_secret = service_state.get("config", {}).get("jwt_secret") or Config.instance().jwt_secret()
         payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
         # check revocation by jti in both tables
         jti = payload.get('jti')
@@ -1341,7 +1341,7 @@ async def revoke_token(body: dict = None, authorization: str = Header(None)):
         tok = body.get('token')
         if not jti and tok:
             try:
-                jwt_secret = service_state.get("config", {}).get("jwt_secret") or get_jwt_secret()
+                jwt_secret = service_state.get("config", {}).get("jwt_secret") or Config.instance().jwt_secret()
                 payload = jwt.decode(tok, jwt_secret, algorithms=["HS256"])
                 jti = payload.get('jti')
                 exp_ts = datetime.fromtimestamp(payload.get('exp'), tz=timezone.utc) if payload.get('exp') else None
@@ -1359,7 +1359,7 @@ async def revoke_token(body: dict = None, authorization: str = Header(None)):
     if authorization and not jti:
         try:
             tok = authorization.split('Bearer ')[1]
-            jwt_secret = service_state.get("config", {}).get("jwt_secret") or get_jwt_secret()
+            jwt_secret = service_state.get("config", {}).get("jwt_secret") or Config.instance().jwt_secret()
             payload = jwt.decode(tok, jwt_secret, algorithms=["HS256"])
             jti = payload.get('jti')
             exp_ts = datetime.fromtimestamp(payload.get('exp'), tz=timezone.utc) if payload.get('exp') else None

@@ -4,10 +4,10 @@
 import sys
 sys.path.insert(0, '.')
 
-from digidig.config import get_config, get_service_http_port, get_service_https_port
+from digidig.config import Config
 
 def main():
-    config = get_config()
+    config = Config.instance()
     domain = config.get('external_url', 'digidig.cz').replace('https://', '').replace('http://', '')
     
     services = [
@@ -24,8 +24,8 @@ def main():
     
     print('🌐 Available Services:\n')
     for name, svc in services:
-        http_port = get_service_http_port(svc)
-        https_port = get_service_https_port(svc)
+        http_port = config.service_http_port(svc)
+        https_port = config.service_https_port(svc)
         print(f'  {name:15} http://{domain}:{http_port}  https://{domain}:{https_port}')
     
     print(f'\n🔍 Health checks: curl https://{domain}:920X/health')

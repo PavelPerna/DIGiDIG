@@ -64,15 +64,16 @@ class ServiceClient(ServiceBase):
 
     def _add_client_endpoints(self):
         """Add client-specific endpoints like stats, metrics, and API proxies."""
-        from digidig.config import get_service_internal_url
+        from digidig.config import Config
         from fastapi.responses import JSONResponse
         
+        config = Config.instance()
         # Map of service names to their internal URLs
         service_urls = {
-            'identity': get_service_internal_url('identity'),
-            'storage': get_service_internal_url('storage'),
-            'smtp': get_service_internal_url('smtp'),
-            'imap': get_service_internal_url('imap'),
+            'identity': config.service_internal_url('identity'),
+            'storage': config.service_internal_url('storage'),
+            'smtp': config.service_internal_url('smtp'),
+            'imap': config.service_internal_url('imap'),
         }
 
         @self.app.get("/stats")

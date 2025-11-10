@@ -12,11 +12,11 @@ from typing import Dict, Any
 from pydantic import BaseModel
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from digidig.models.service.server import ServiceServer
-from digidig.config import get_config
+from digidig.config import Config
 
 logger = logging.getLogger(__name__)
 
-config = get_config()
+config = Config.instance()
 
 try:
     IMAP_PROTOCOL_PORT = int(config.get('services.imap.port', os.getenv('IMAP_PROTOCOL_PORT', 143)))

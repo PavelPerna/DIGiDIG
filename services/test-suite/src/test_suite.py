@@ -5,7 +5,7 @@ import logging
 # Ensure project root is importable
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
-from digidig.config import get_config
+from digidig.config import Config
 from digidig.models.service.client import ServiceClient
 from digidig.language import I18n
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -13,7 +13,7 @@ from fastapi import Request
 
 logger = logging.getLogger(__name__)
 
-config = get_config()
+config = Config.instance()
 try:
     PORT = int(config.get('services.test_suite.port', 9108))
 except Exception:

@@ -6,18 +6,18 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 
 from digidig.models.service.client import ServiceClient
 
-from digidig.config import get_config, get_service_url
+from digidig.config import Config
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi import Request
 import httpx
 
-config = get_config()
+config = Config.instance()
 MAIL_PORT = config.get('services.mail.http_port', 9107)
 HOST = config.get('services.mail.external_url', 'localhost')
 # External URLs for user-facing redirects (templates)
-SSO_URL = get_service_url("sso", ssl=True)
-IDENTITY_URL = get_service_url("identity", ssl=True)
-STORAGE_URL = get_service_url("storage", ssl=True)
+SSO_URL = config.service_url("sso", ssl=True)
+IDENTITY_URL = config.service_url("identity", ssl=True)
+STORAGE_URL = config.service_url("storage", ssl=True)
 
 
 async def check_session(request: Request):

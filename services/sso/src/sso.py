@@ -2,17 +2,17 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from digidig.models.service.client import ServiceClient
-from digidig.config import get_config, get_service_url
+from digidig.config import Config
 from fastapi import Request, Form, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
 import httpx
 
 # SSO service configuration - handles login and redirects to apps
-config = get_config()
+config = Config.instance()
 SSO_PORT = int(config.get('services.sso.http_port', 9106))
 HOST = config.get('services.sso.external_url', 'localhost')
 # External URL for user display in templates
-IDENTITY_URL = get_service_url('identity', ssl=True)
+IDENTITY_URL = config.service_url('identity', ssl=True)
 
 
 class ClientSSO(ServiceClient):
@@ -64,7 +64,7 @@ class ClientSSO(ServiceClient):
                         access_token = data.get('access_token')
                         
                         # Get app home URL from config
-                        app_url = get_service_url(app_name, ssl=True)
+                        app_url = config.service_url(app_name, ssl=True)
                         
                         # Create redirect response and set cookie
                         redirect_response = RedirectResponse(url=app_url, status_code=303)

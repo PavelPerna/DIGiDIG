@@ -4,21 +4,21 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
 from digidig.models.service.client import ServiceClient
-from digidig.config import get_config, get_service_url, get_service_internal_url
+from digidig.config import Config
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi import Request
 import aiohttp
 
 # Client implemented using ServiceClient pattern
-config = get_config()
+config = Config.instance()
 CLIENT_PORT = config.get('services.client.http_port', 9104)
 HOST = config.get('services.client.external_url', 'localhost')
 # Internal URLs for API calls (Docker network)
-IDENTITY_INTERNAL_URL = get_service_internal_url('identity')
-SSO_INTERNAL_URL = get_service_internal_url('sso')
+IDENTITY_INTERNAL_URL = config.service_internal_url('identity')
+SSO_INTERNAL_URL = config.service_internal_url('sso')
 # External URLs for redirects
-IDENTITY_EXTERNAL_URL = get_service_url('identity', ssl=True)
-SSO_EXTERNAL_URL = get_service_url('sso', ssl=True)
+IDENTITY_EXTERNAL_URL = config.service_url('identity', ssl=True)
+SSO_EXTERNAL_URL = config.service_url('sso', ssl=True)
 
 
 async def check_session(request: Request):

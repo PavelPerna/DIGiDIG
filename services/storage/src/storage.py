@@ -11,11 +11,11 @@ from fastapi.responses import JSONResponse
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from digidig.models.service.server import ServiceServer
-from digidig.config import get_config
+from digidig.config import Config
 
 logger = logging.getLogger(__name__)
 
-config = get_config()
+config = Config.instance()
 HOST = config.get('hostname') or os.getenv('HOSTNAME') or 'localhost'
 try:
     STORAGE_PORT = int(config.get('services.storage.port', 9102))

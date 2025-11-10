@@ -2,18 +2,18 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from digidig.models.service.client import ServiceClient
-from digidig.config import get_config, get_service_url
+from digidig.config import Config
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi import Request
 import httpx
 
 # Admin client implemented using ServiceClient pattern (matches mail client)
-config = get_config()
+config = Config.instance()
 ADMIN_PORT = int(config.get('services.admin.http_port', 9105))
 HOST = config.get('services.admin.external_url', 'localhost')
 # External URLs for user-facing redirects
-IDENTITY_URL = get_service_url('identity')
-SSO_URL = get_service_url('sso')
+IDENTITY_URL = config.service_url('identity')
+SSO_URL = config.service_url('sso')
 
 
 

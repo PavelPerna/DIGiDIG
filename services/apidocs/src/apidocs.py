@@ -25,7 +25,7 @@ import os
 from fastapi import FastAPI, Request
 sys.path.insert(0, '/app')
 from digidig.models.service.client import ServiceClient
-from digidig.config import get_config
+from digidig.config import Config
 from fastapi.responses import HTMLResponse, JSONResponse
 import aiohttp
 import logging
@@ -37,7 +37,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Get configuration
-config = get_config()
+config = Config.instance()
 try:
     APIDOCS_PORT = int(os.getenv("APIDOCS_PORT", 9110))
 except Exception:
