@@ -7,6 +7,7 @@ from typing import Dict, Any, Optional
 from pydantic import BaseModel
 from pymongo import MongoClient
 from fastapi import HTTPException
+from fastapi.responses import JSONResponse
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from digidig.models.service.server import ServiceServer
@@ -108,14 +109,55 @@ class ServerStorage(ServiceServer):
                 if not email_dict.get('timestamp'):
                     email_dict['timestamp'] = datetime.utcnow().isoformat()
                 
-                emails_collection.insert_one(email_dict)
+                result = emails_collection.insert_one(email_dict)
                 service_state['requests_successful'] += 1
                 logger.info(f"Email from {email.sender} stored successfully")
-                return {'status': 'Email stored'}
+                return JSONResponse(
+                    content={'status': 'stored', 'id': str(result.inserted_id)},
+                    status_code=201
+                )
             except Exception as e:
                 service_state['requests_failed'] += 1
                 logger.error(f"Error storing email: {str(e)}")
-                return {'status': 'error', 'error': str(e)}
+                return JSONResponse(
+                    content={'status': 'error', 'error': str(e)},
+                    status_code=500
+                )
+
+        @self.app.get('/api/emails')
+        async def list_emails(user_email: Optional[str] = None, limit: int = 50):
+            """List emails for a user"""
+            logger.info(f"Listing emails for {user_email or 'all users'}")
+            service_state['requests_total'] += 1
+            service_state['last_request_time'] = datetime.utcnow().isoformat()
+            
+            try:
+                _, _, emails_collection = get_mongo_connection()
+                
+                # Build query
+                query = {}
+                if user_email:
+                    # Find emails sent TO or FROM this user
+                    query = {'$or': [{'recipient': user_email}, {'sender': user_email}]}
+                
+                # Get emails sorted by timestamp (newest first)
+                cursor = emails_collection.find(query).sort('timestamp', -1).limit(limit)
+                emails = []
+                for doc in cursor:
+                    # Convert ObjectId to string
+                    doc['_id'] = str(doc['_id'])
+                    emails.append(doc)
+                
+                service_state['requests_successful'] += 1
+                logger.info(f"Found {len(emails)} emails")
+                return {'emails': emails, 'count': len(emails)}
+            except Exception as e:
+                service_state['requests_failed'] += 1
+                logger.error(f"Error listing emails: {str(e)}")
+                return JSONResponse(
+                    content={'status': 'error', 'error': str(e)},
+                    status_code=500
+                )
 
         @self.app.get('/api/health')
         async def health_check():

@@ -4,31 +4,34 @@ async function refreshEmails() {
     try {
         // Get current user from session via proxy
         const sessionResponse = await window.MailApp.makeRequest('/api/identity/session/verify');
-        const userEmail = sessionResponse.username || 'admin@example.com'; // Fallback
+        const userEmail = sessionResponse.username + '@example.com'; // Add domain for email address
 
-        // TODO: Storage service doesn't have GET /emails endpoint yet
-        // For now, use empty array until storage implements it
-        const emails = [];
-        // const emails = await window.MailApp.makeRequest(`/api/storage/emails?user_id=${encodeURIComponent(userEmail)}`);
+        // Get emails from storage service via proxy
+        const response = await window.MailApp.makeRequest(`/api/storage/emails?user_email=${encodeURIComponent(userEmail)}`);
+        const emails = response.emails || [];
 
         // Update the emails list
         const emailsList = document.querySelector('.emails-list');
-        if (emailsList && emails.length > 0) {
-            const emailsTable = emailsList.querySelector('.emails-table');
-            if (emailsTable) {
-                const tbody = emailsTable.querySelector('tbody') || emailsTable;
-                tbody.innerHTML = emails.map(email => `
-                    <div class="email-row" onclick="viewEmail('${email._id || email.id || email.timestamp}')">
-                        <div class="email-from">${email.sender || 'Unknown'}</div>
-                        <div class="email-subject">${email.subject || 'No subject'}</div>
-                        <div class="email-date">${email.timestamp || 'Unknown'}</div>
+        if (emailsList) {
+            if (emails.length > 0) {
+                emailsList.innerHTML = `
+                    <div class="emails-table">
+                        ${emails.map(email => `
+                            <div class="email-row" onclick="viewEmail('${email._id}')">
+                                <div class="email-from">${email.sender || 'Unknown'}</div>
+                                <div class="email-subject">${email.subject || 'No subject'}</div>
+                                <div class="email-date">${new Date(email.timestamp).toLocaleString()}</div>
+                            </div>
+                        `).join('')}
                     </div>
-                `).join('');
+                `;
+            } else {
+                emailsList.innerHTML = '<p class="no-emails">No emails found</p>';
             }
         }
     } catch (error) {
         console.error('Error refreshing emails:', error);
-        alert('Error refreshing emails: ' + error.message);
+        window.MailApp.showMessage('Error refreshing emails: ' + error.message, 'error');
     }
 }
 
@@ -50,4 +53,6 @@ function closeEmailModal() {
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     console.log('List page JavaScript loaded');
+    // Auto-refresh emails on page load
+    refreshEmails();
 });
