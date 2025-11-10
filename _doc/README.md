@@ -24,10 +24,18 @@
 
 ## 📚 Documentation
 
+### Development & Workflow
+- **[Delegation Guide](_doc/DELEGATION-GUIDE.md)** - Understanding GitHub Copilot delegation & custom agents
+
+### CI/CD & Deployment
 - **[CI/CD Pipeline](_doc/CI-CD.md)** - Complete CI/CD automation guide
+
+### Localization & APIs
 - **[Localization Guide](_doc/LOCALIZATION.md)** - Multi-language support
 - **[API Documentation](_doc/API-DOCUMENTATION.md)** - Complete API reference
 - **[API Endpoints Reference](_doc/API-ENDPOINTS.md)** - REST API endpoint structure & examples
+
+### Configuration
 - **[Configuration Guide](_doc/CONFIGURATION.md)** - YAML configuration system
 - **[Migration Guide](_doc/CONFIG-MIGRATION.md)** - Migrate from ENV to YAML
 
