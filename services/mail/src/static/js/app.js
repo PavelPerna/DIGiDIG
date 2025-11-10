@@ -104,14 +104,21 @@ class MailApp {
     }
 
     showMessage(message, type = 'success') {
+        console.log('[showMessage]', type, message);
         const messageEl = document.getElementById('message');
         if (messageEl) {
             messageEl.textContent = message;
             messageEl.className = `message ${type}`;
             messageEl.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
             setTimeout(() => {
                 messageEl.style.display = 'none';
             }, 5000);
+        } else {
+            console.warn('[showMessage] #message element not found!');
+            // Fallback to alert if element not found
+            alert(message);
         }
     }
 }
