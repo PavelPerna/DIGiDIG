@@ -34,7 +34,7 @@ service_state = {
         'port': int(os.getenv('STORAGE_PORT', '8002')),
         'enabled': True,
         'timeout': int(os.getenv('STORAGE_TIMEOUT', '30')),
-        'mongo_uri': os.getenv('MONGO_URI', 'mongodb://mongo:9302'),
+        'mongo_uri': os.getenv('MONGO_URI', 'mongodb://mongo:27017'),
         'database_name': os.getenv('DB_NAME', 'strategos'),
         'max_document_size': int(os.getenv('STORAGE_MAX_DOC_SIZE', '16777216'))
     }

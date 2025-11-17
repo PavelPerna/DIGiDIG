@@ -45,7 +45,7 @@ from common.config import (
 
 # Get entire database config
 db_config = get_db_config("postgres")
-# Returns: {"host": "postgres", "port": 9303, "user": "...", ...}
+# Returns: {"host": "postgres", "port": 5432, "user": "...", ...}
 
 # Get service URL
 storage_url = get_service_url("storage")
@@ -83,14 +83,14 @@ The system loads configs in this order:
 database:
   postgres:
     host: postgres
-    port: 9303
+    port: 5432
     user: strategos
     password: secure_password
     database: strategos_db
   
   mongodb:
     host: mongo
-    port: 9302
+    port: 27017
     database: strategos_storage
 ```
 

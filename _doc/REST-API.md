@@ -265,7 +265,7 @@ All services support the following base configuration options:
 - `idle_timeout`: integer (default: 300)
 
 **Storage:**
-- `mongo_uri`: string (default: "mongodb://mongo:9302")
+- `mongo_uri`: string (default: "mongodb://mongo:27017")
 - `database_name`: string (default: "strategos")
 - `max_document_size`: integer (default: 16777216 - 16MB)
 

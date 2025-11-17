@@ -5,14 +5,14 @@
 database:
   postgres:
     host: postgres
-    port: 9303
+    port: 5432
     user: postgres
     password: securepassword  # Default from docker-compose. Change in production!
     database: strategos
   
   mongodb:
     host: mongo
-    port: 9302
+    port: 27017
     database: strategos_storage
 
 # Service URLs (internal Docker network)
