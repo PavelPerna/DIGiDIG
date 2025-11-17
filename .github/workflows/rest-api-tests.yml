@@ -9,21 +9,6 @@ on:
 jobs:
   rest-api-tests:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        ports: [5432:5432]
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: securepassword
-          POSTGRES_DB: strategos
-        options: >-
-          --health-cmd="pg_isready -U postgres" --health-interval=3s --health-timeout=5s --health-retries=5
-      mongo:
-        image: mongo:6
-        ports: [27017:27017]
-        options: >-
-          --health-cmd="mongosh --eval 'db.adminCommand(\"ping\")'" --health-interval=10s --health-timeout=10s --health-retries=15
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,15 +29,20 @@ jobs:
 
       - name: Start DIGiDIG test services
         run: |
-          docker compose up -d identity sso mail
+          # Start all required services for testing
+          docker compose up -d postgres mongo identity storage smtp imap sso mail
           echo "⏳ Waiting for services to be ready..."
-          sleep 30
+          sleep 60
 
       - name: Run REST API tests
         run: |
           .venv/bin/python -m pytest _test/unit/test_rest_api.py -v
+        env:
+          DIGIDIG_BASE_URL: http://localhost:9107
+          DIGIDIG_IDENTITY_URL: http://localhost:9101
+          DIGIDIG_SSO_URL: http://localhost:9106
 
       - name: Tear down DIGiDIG test services
         if: always()
         run: |
-          docker compose down identity sso mail
+          docker compose down

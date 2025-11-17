@@ -11,9 +11,9 @@ from urllib.parse import urljoin
 class TestRestAPI(unittest.TestCase):
     """Test REST API endpoints for DIGiDIG services"""
 
-    BASE_URL = "http://digidig.cz:9107"  # Mail service (HTTP)
-    IDENTITY_URL = "http://digidig.cz:9101"  # Identity service (HTTP)
-    SSO_URL = "http://digidig.cz:9106"  # SSO service (HTTP)
+    BASE_URL = os.getenv("DIGIDIG_BASE_URL", "http://digidig.cz:9107")  # Mail service (HTTP)
+    IDENTITY_URL = os.getenv("DIGIDIG_IDENTITY_URL", "http://digidig.cz:9101")  # Identity service (HTTP)
+    SSO_URL = os.getenv("DIGIDIG_SSO_URL", "http://digidig.cz:9106")  # SSO service (HTTP)
 
     @classmethod
     def setUpClass(cls):
