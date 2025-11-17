@@ -42,7 +42,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASS:-securepassword}
       - POSTGRES_DB=${DB_NAME:-strategos}
     ports:
-      - "${POSTGRES_PORT:-9301}:${POSTGRES_PORT:-9301}"
+      - "${POSTGRES_PORT:-9303}:${POSTGRES_PORT:-5432}"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -60,7 +60,7 @@ services:
     environment:
       - MONGO_INITDB_DATABASE=strategos
     ports:
-      - "${MONGO_PORT:-9302}:${MONGO_PORT:-9302}"
+      - "${MONGO_PORT:-9302}:${MONGO_PORT:-27017}"
     healthcheck:
       test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -91,7 +91,7 @@ services:
       - DIGIDIG_HOSTNAME=${HOSTNAME:-digidig.cz}
       # Database connection settings (forwarded from top-level .env)
       - DB_HOST=${DB_HOST:-postgres}
-      - DB_PORT=${DB_PORT:-9301}
+      - DB_PORT=${DB_PORT:-9303}
       - DB_USER=${DB_USER:-postgres}
       - DB_PASS=${DB_PASS:-securepassword}
       - DB_NAME=${DB_NAME:-strategos}

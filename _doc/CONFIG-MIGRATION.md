@@ -11,7 +11,7 @@ services:
   identity:
     environment:
       - DB_HOST=postgres
-      - DB_PORT=9301
+      - DB_PORT=9303
       - DB_USER=strategos
       - DB_PASS=strategos_password
       - DB_NAME=strategos_db
@@ -27,7 +27,7 @@ services:
 import os
 
 DB_HOST = os.getenv("DB_HOST", "postgres")
-DB_PORT = int(os.getenv("DB_PORT", "9301"))
+DB_PORT = int(os.getenv("DB_PORT", "9303"))
 DB_USER = os.getenv("DB_USER", "strategos")
 DB_PASS = os.getenv("DB_PASS", "password")
 DB_NAME = os.getenv("DB_NAME", "strategos_db")
@@ -43,7 +43,7 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin")
 database:
   postgres:
     host: postgres
-    port: 9301
+    port: 9303
     user: strategos
     password: strategos_password
     database: strategos_db
@@ -171,7 +171,7 @@ cp config/config.prod.example.yaml config/config.prod.yaml
 **Before:**
 ```python
 DB_HOST = os.getenv("DB_HOST", "postgres")
-DB_PORT = int(os.getenv("DB_PORT", "9301"))
+DB_PORT = int(os.getenv("DB_PORT", "9303"))
 DB_USER = os.getenv("DB_USER", "user")
 DB_PASS = os.getenv("DB_PASS", "pass")
 DB_NAME = os.getenv("DB_NAME", "db")

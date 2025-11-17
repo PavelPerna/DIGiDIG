@@ -55,7 +55,7 @@ def find_service_val(service_name, key_names):
 # Map config to env variables used in docker-compose.yml
 out = {}
 # DB ports and credentials
-out['POSTGRES_PORT'] = find_service_val('postgres', ['port']) or re.search(r"postgres:\s*\n.*port:\s*(\d+)", text) and re.search(r"postgres:\s*\n.*port:\s*(\d+)", text).group(1) or '9301'
+out['POSTGRES_PORT'] = find_service_val('postgres', ['port']) or re.search(r"postgres:\s*\n.*port:\s*(\d+)", text) and re.search(r"postgres:\s*\n.*port:\s*(\d+)", text).group(1) or '9303'
 # fallback for older format: database.postgres
 if out['POSTGRES_PORT'] is None:
     m = re.search(r"database:\s*\n\s*postgres:\s*\n\s*port:\s*(\d+)", text)
