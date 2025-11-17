@@ -25,19 +25,19 @@
 ## 📚 Documentation
 
 ### Development & Workflow
-- **[Delegation Guide](_doc/DELEGATION-GUIDE.md)** - Understanding GitHub Copilot delegation & custom agents
+- **[Delegation Guide](docs/DELEGATION-GUIDE.md)** - Understanding GitHub Copilot delegation & custom agents
 
 ### CI/CD & Deployment
-- **[CI/CD Pipeline](_doc/CI-CD.md)** - Complete CI/CD automation guide
+- **[CI/CD Pipeline](docs/CI-CD.md)** - Complete CI/CD automation guide
 
 ### Localization & APIs
-- **[Localization Guide](_doc/LOCALIZATION.md)** - Multi-language support
-- **[API Documentation](_doc/API-DOCUMENTATION.md)** - Complete API reference
-- **[API Endpoints Reference](_doc/API-ENDPOINTS.md)** - REST API endpoint structure & examples
+- **[Localization Guide](docs/LOCALIZATION.md)** - Multi-language support
+- **[API Documentation](docs/API-DOCUMENTATION.md)** - Complete API reference
+- **[API Endpoints Reference](docs/API-ENDPOINTS.md)** - REST API endpoint structure & examples
 
 ### Configuration
-- **[Configuration Guide](_doc/CONFIGURATION.md)** - YAML configuration system
-- **[Migration Guide](_doc/CONFIG-MIGRATION.md)** - Migrate from ENV to YAML
+- **[Configuration Guide](docs/CONFIGURATION.md)** - YAML configuration system
+- **[Migration Guide](docs/CONFIG-MIGRATION.md)** - Migrate from ENV to YAML
 
 ## 🚀 Quick Start
 
@@ -149,9 +149,9 @@ All REST API endpoints follow consistent structure under `/api/`:
 
 **Client Services** (mail, admin, client, sso, test-suite) have built-in proxy at `/api/{service}/*` that routes to backend services.
 
-**📖 See [API Endpoints Reference](_doc/API-ENDPOINTS.md) for complete endpoint listing.**
+**📖 See [API Endpoints Reference](docs/API-ENDPOINTS.md) for complete endpoint listing.**
 
-**📖 See [API Documentation Guide](_doc/API-DOCUMENTATION.md) for interactive API details.**
+**📖 See [API Documentation Guide](docs/API-DOCUMENTATION.md) for interactive API details.**
 
 ## ⚙️ Configuration Management
 

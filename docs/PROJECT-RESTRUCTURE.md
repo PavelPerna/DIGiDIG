@@ -8,8 +8,8 @@ Reorganize the DIGiDIG project structure to follow modern conventions with clear
 ### Before → After
 ```
 DIGiDIG/                    DIGiDIG/
-├── docs/            →      ├── _doc/
-├── README.md        →      ├── _doc/README.md (+ symlink)
+├── docs/            →      ├── docs/
+├── README.md        →      ├── docs/README.md (+ symlink)
 ├── identity/        →      ├── services/identity/
 ├── smtp/            →      ├── services/smtp/
 ├── imap/            →      ├── services/imap/
@@ -21,11 +21,11 @@ DIGiDIG/                    DIGiDIG/
 
 ## 🔧 **Changes Made**
 
-### 1. **Documentation** → `_doc/`
-- ✅ Moved all docs from `docs/` to `_doc/`
-- ✅ Moved `README.md`, `CHANGELOG.md`, `TODO.md` to `_doc/`
-- ✅ Created symlink: `README.md -> _doc/README.md` for compatibility
-- ✅ Updated `pyproject.toml` readme path: `"_doc/README.md"`
+### 1. **Documentation** → `docs/`
+- ✅ Moved all docs from `docs/` to `docs/`
+- ✅ Moved `README.md`, `CHANGELOG.md`, `TODO.md` to `docs/`
+- ✅ Created symlink: `README.md -> docs/README.md` for compatibility
+- ✅ Updated `pyproject.toml` readme path: `"docs/README.md"`
 
 ### 2. **Microservices** → `services/`
 - ✅ Moved all 7 microservices to `services/` directory:
@@ -46,15 +46,15 @@ DIGiDIG/                    DIGiDIG/
 
 #### Python Project Configuration
 - ✅ Updated `pyproject.toml`:
-  - Test paths: `testpaths = ["_test"]`
+  - Test paths: `testpaths = ["tests"]`
   - Coverage paths: Updated omit patterns
   - Package discovery: Exclude new directories
-  - HTML coverage output: `"_test/htmlcov"`
+  - HTML coverage output: `"tests/htmlcov"`
 
 #### Makefile Targets
-- ✅ Updated all test targets to use `_test/` directory
+- ✅ Updated all test targets to use `tests/` directory
 - ✅ Fixed tab indentation issues in Makefile
-- ✅ Changed test commands: `cd _test && ../.venv/bin/python run_tests.py`
+- ✅ Changed test commands: `cd tests && ../.venv/bin/python run_tests.py`
 
 ### 5. **Virtual Environment Cleanup**
 - ✅ Removed redundant `test_env/` directory
@@ -73,8 +73,8 @@ make test-unit
 ### Structure Validation
 ```bash
 ls -la services/  # ✅ All 7 services present
-ls -la _test/     # ✅ All test infrastructure moved
-ls -la _doc/      # ✅ All documentation organized
+ls -la tests/     # ✅ All test infrastructure moved
+ls -la docs/      # ✅ All documentation organized
 ```
 
 ## 🎯 **Benefits Achieved**
@@ -89,7 +89,7 @@ ls -la _doc/      # ✅ All documentation organized
 
 1. **Validate CI/CD pipelines** with new structure
 2. **Update README badges** to reflect new test paths
-3. **Consider service-specific documentation** in `_doc/services/`
+3. **Consider service-specific documentation** in `docs/services/`
 4. **Optimize test performance** with new structure
 
 ## 🔗 **Compatibility**

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "digidig"
 version = "1.0.0"
 description = "Distributed Email System with Multi-Language Support"
-readme = "_doc/README.md"
+readme = "docs/README.md"
 requires-python = ">=3.8"
 dependencies = [
     "fastapi>=0.100.0",
@@ -45,7 +45,7 @@ where = ["."]
 include = ["lib*"]
 
 [tool.pytest.ini_options]
-testpaths = ["_test", "services/*/tests"]
+testpaths = ["tests", "services/*/tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

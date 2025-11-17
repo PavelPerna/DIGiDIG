@@ -2,7 +2,7 @@ name: REST API Tests
 
 on:
   push:
-    branches: [ main, DIGIDIG-10-optimalization ]
+    branches: [ main, DIGIDIG-STRUCTURE-OPTIMIZATION ]
   pull_request:
     branches: [ main ]
 
@@ -36,7 +36,7 @@ jobs:
 
       - name: Run REST API tests
         run: |
-          .venv/bin/python -m pytest _test/unit/test_rest_api.py -v
+          .venv/bin/python -m pytest tests/unit/test_rest_api.py -v
         env:
           DIGIDIG_BASE_URL: http://localhost:9107
           DIGIDIG_IDENTITY_URL: http://localhost:9101

@@ -125,24 +125,24 @@ if [ "$GENERATE_CERT" = "yes" ]; then
             else
                 echo "Attempting Let's Encrypt with Docker certbot..."
                 echo "⚠️  This will temporarily bind port 80 for ACME challenge"
-                mkdir -p ssl letsencrypt
+                mkdir -p certs/letsencrypt
                 if docker run --rm \
                     -p 80:80 \
-                    -v $(pwd)/letsencrypt:/etc/letsencrypt \
-                    -v $(pwd)/ssl:/ssl \
+                    -v $(pwd)/certs/letsencrypt:/etc/letsencrypt \
+                    -v $(pwd)/certs:/ssl \
                     certbot/certbot certonly --standalone \
                     -d $HOSTNAME \
                     --email $le_email \
                     --agree-tos \
                     --non-interactive; then
-                    LIVE_DIR=$(sudo bash -c "ls -1d letsencrypt/live/\"$HOSTNAME\"* | tail -n 1")
-                    sudo cp "$LIVE_DIR/fullchain.pem" ssl/$HOSTNAME.pem
-                    sudo cp "$LIVE_DIR/privkey.pem" ssl/$HOSTNAME-key.pem
-                    sudo chown $(id -un):$(id -gn) ssl/$HOSTNAME.pem ssl/$HOSTNAME-key.pem
+                    LIVE_DIR=$(sudo bash -c "ls -1d certs/letsencrypt/live/\"$HOSTNAME\"* | tail -n 1")
+                    sudo cp "$LIVE_DIR/fullchain.pem" certs/$HOSTNAME.pem
+                    sudo cp "$LIVE_DIR/privkey.pem" certs/$HOSTNAME-key.pem
+                    sudo chown $(id -un):$(id -gn) certs/$HOSTNAME.pem certs/$HOSTNAME-key.pem
                     sudo cp ssl/$HOSTNAME.pem /etc/ssl/certs/
                     sudo cp ssl/$HOSTNAME-key.pem /etc/ssl/certs/
                     echo "✅ Let's Encrypt certificate installed"
-                    echo "💡 To renew: docker run --rm -p 80:80 -v $(pwd)/letsencrypt:/etc/letsencrypt certbot/certbot renew"
+                    echo "💡 To renew: docker run --rm -p 80:80 -v $(pwd)/certs/letsencrypt:/etc/letsencrypt certbot/certbot renew"
                 else
                     echo "❌ Let's Encrypt failed. Possible reasons:"
                     echo "  - Domain $HOSTNAME doesn't point to this server IP"
@@ -152,12 +152,12 @@ if [ "$GENERATE_CERT" = "yes" ]; then
                     echo ""
                     echo "Falling back to self-signed certificate..."
                     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-                        -keyout ssl/$HOSTNAME-key.pem \
-                        -out ssl/$HOSTNAME.pem \
+                        -keyout certs/$HOSTNAME-key.pem \
+                        -out certs/$HOSTNAME.pem \
                         -subj "/C=CZ/ST=Prague/L=Prague/O=DIGiDIG/CN=$HOSTNAME" 2>/dev/null
                     echo "✅ Self-signed certificate generated"
-                    sudo cp ssl/$HOSTNAME.pem /etc/ssl/certs/
-                    sudo cp ssl/$HOSTNAME-key.pem /etc/ssl/certs/
+                    sudo cp certs/$HOSTNAME.pem /etc/ssl/certs/
+                    sudo cp certs/$HOSTNAME-key.pem /etc/ssl/certs/
                 fi
             fi
             ;;

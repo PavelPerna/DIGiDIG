@@ -128,7 +128,7 @@ test-services-down:
 
 test-api:
 	@echo "Running REST API tests..."
-	.venv/bin/python -m pytest _test/unit/test_rest_api.py -v
+	.venv/bin/python -m pytest tests/unit/test_rest_api.py -v
 
 test: test-services-up
 	@echo "⏳ Waiting for services to be fully ready..."

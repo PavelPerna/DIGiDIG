@@ -25,7 +25,7 @@ services:
       - strategos-net
     volumes:
       - ./config:/app/config:ro
-      - ./ssl:/app/ssl:ro
+      - ./certs:/app/ssl:ro
       - app_logs:/app/logs
       - test_data:/app/tests
     healthcheck:
@@ -99,7 +99,7 @@ services:
       - strategos-net
     volumes:
       - ./config:/app/config:ro
-      - ./ssl:/app/ssl:ro
+      - ./certs:/app/ssl:ro
       - identity_data:/app/data
       - app_logs:/app/logs
       - test_data:/app/tests
@@ -187,7 +187,7 @@ services:
       - strategos-net
     volumes:
       - ./config:/app/config:ro
-      - ./ssl:/app/ssl:ro
+      - ./certs:/app/ssl:ro
       - storage_data:/app/data
       - app_logs:/app/logs
       - test_data:/app/tests
@@ -218,7 +218,7 @@ services:
       - strategos-net
     volumes:
       - ./config:/app/config:ro
-      - ./ssl:/app/ssl:ro
+      - ./certs:/app/ssl:ro
       - sso_data:/app/data
       - app_logs:/app/logs
       - test_data:/app/tests
@@ -252,7 +252,7 @@ services:
       - strategos-net
     volumes:
       - ./config:/app/config:ro
-      - ./ssl:/app/ssl:ro
+      - ./certs:/app/ssl:ro
       - mail_data:/app/data
       - app_logs:/app/logs
       - test_data:/app/tests

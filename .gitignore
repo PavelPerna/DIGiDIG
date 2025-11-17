@@ -83,13 +83,13 @@ Thumbs.db
 *.log
 
 # SSL certificates and keys
-ssl/
+certs/
 *.pem
 *.key
 *.crt
 *.csr
 
-letsencrypt/
-letsencrypt/*
+certs/letsencrypt/
+certs/letsencrypt/*
 certbot/
 certbot/*
