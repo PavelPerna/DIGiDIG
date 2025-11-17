@@ -1,19 +1,29 @@
-/* Top Bar - jen layout, žádný styling */
+
+/* Minimalistický top-pane */
 .top-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem;
-    background: var(--surface);
+    padding: 0.75rem 1.25rem;
+    background: var(--background-color);
     border-bottom: 1px solid var(--border-color);
 }
-
-.top-bar-left {
+.top-bar-left, .top-bar-right {
     display: flex;
     gap: 1rem;
+    align-items: center;
 }
-
-.top-bar-right {
-    display: flex;
-    gap: 1rem;
+.top-bar-left h1 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+.dark-mode .top-bar {
+    background: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+}
+.dark-mode .top-bar-left h1 {
+    color: var(--text-color);
+    background: var(--surface-color);
 }

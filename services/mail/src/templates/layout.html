@@ -11,14 +11,17 @@
     {% set user_email = user_info.get('email', '') if user_info else None %}
 
     <!-- DIGiDIG shared styles -->
+    <link rel="stylesheet" href="/digidig/assets/style.css">
     <link rel="stylesheet" href="/lib/common/components/top-pane/top-pane.css">
     <link rel="stylesheet" href="/lib/common/components/auth-button/auth-button.css">
+    <link rel="stylesheet" href="/lib/common/components/dark-mode-switch/dark-mode-switch.css">
+    <link rel="stylesheet" href="/lib/common/components/language-selector/language-selector.css">
 
     <!-- App-specific styles -->
     <link rel="stylesheet" href="{{ url_for('static', path='css/layout.css') }}">
     <link rel="stylesheet" href="/static/css/{{ current_page }}.css">
 </head>
-<body>
+<body{% if dark_mode %} class="dark-mode"{% endif %} data-page="{{ current_page }}">
     <!-- Server-side include of shared top-pane component -->
     {% include 'top-pane/top-pane.html' %}
 
@@ -27,8 +30,8 @@
         <aside class="left-pane">
             <nav class="menu">
                 <ul>
-                    <li><a href="/list" class="menu-item {% if current_page == 'list' %}active{% endif %}">Inbox</a></li>
-                    <li><a href="/compose" class="menu-item {% if current_page == 'compose' %}active{% endif %}">Compose</a></li>
+                    <li><a href="/list" class="menu-item {% if current_page in ['list', 'view'] %}active{% endif %}">{{ i18n.get('mail.menu.inbox', 'Inbox') }} <span id="menu-unread-count"></span></a></li>
+                    <li><a href="/compose" class="menu-item {% if current_page == 'compose' %}active{% endif %}">{{ i18n.get('mail.menu.compose', 'Compose') }}</a></li>
                 </ul>
             </nav>
         </aside>
@@ -37,6 +40,8 @@
         <main class="right-pane">
             {% if current_page == 'compose' %}
                 {% include 'pages/compose.html' %}
+            {% elif current_page == 'view' %}
+                {% include 'pages/view.html' %}
             {% elif current_page == 'list' %}
                 {% include 'pages/list.html' %}
             {% endif %}
@@ -53,6 +58,8 @@
     <!-- Component scripts -->
     <script src="/lib/common/components/top-pane/top-pane.js"></script>
     <script src="/lib/common/components/auth-button/auth-button.js"></script>
+    <script src="/lib/common/components/dark-mode-switch/dark-mode-switch.js"></script>
+    <script src="/lib/common/components/language-selector/language-selector.js"></script>
 
     <!-- App-specific scripts -->
     <script src="/static/js/app.js"></script>
@@ -68,6 +75,11 @@
         {% else %}
         window.DIGIDIG_USER_INFO = null;
         {% endif %}
+        // Global i18n for JavaScript components
+        window.DIGIDIG_I18N = {
+            logout: "{{ i18n.get('auth.logout', 'Logout') }}",
+            login: "{{ i18n.get('auth.login', 'Login') }}"
+        };
 
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize preferences
@@ -77,9 +89,11 @@
                     document.documentElement.lang = prefs.language;
                 }
 
-                // Apply dark mode
-                if (prefs.darkMode) {
+                // Apply dark mode only if not already applied server-side
+                if (prefs.darkMode && !document.body.classList.contains('dark-mode')) {
                     document.body.classList.add('dark-mode');
+                } else if (!prefs.darkMode && document.body.classList.contains('dark-mode')) {
+                    document.body.classList.remove('dark-mode');
                 }
             });
 
@@ -92,8 +106,7 @@
                 };
             }
 
-            // Initialize components using DigiDig.init()
-            DigiDig.init();
+            // Components auto-initialize themselves
         });
     </script>
 </body>

@@ -2,7 +2,7 @@
 # Unified smoke test for login functionality
 # Usage: ./scripts/smoke_login.sh [service_name] [test_endpoint]
 #   service_name: identity, sso (default: sso)
-#   test_endpoint: admin, client, etc. (default: admin)
+#   test_endpoint: services, mail, etc. (default: services)
 
 set -euo pipefail
 
@@ -11,7 +11,7 @@ CFG="$REPO_ROOT/config/config.yaml"
 
 # Parameters
 AUTH_SERVICE="${1:-sso}"
-TARGET_SERVICE="${2:-admin}"
+TARGET_SERVICE="${2:-services}"
 
 if [ ! -f "$CFG" ]; then
   echo "config/config.yaml not found" >&2
@@ -41,7 +41,7 @@ TARGET_URL="http://${TARGET_DOMAIN}:${TARGET_PORT}"
 
 # Fallback to defaults if config parsing fails
 AUTH_URL="${AUTH_URL:-http://localhost:9106}"
-TARGET_URL="${TARGET_URL:-http://localhost:9105}"
+TARGET_URL="${TARGET_URL:-http://localhost:9120}"
 
 echo "================================================"
 echo "DIGiDIG Smoke Test - Login Flow"

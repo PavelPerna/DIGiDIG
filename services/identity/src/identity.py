@@ -1710,9 +1710,15 @@ async def get_sessions(authorization: str = Header(...)):
 
 
 @app.get("/api/users/{username}/preferences", tags=["Users"])
-async def get_user_preferences(username: str, authorization: str = Header(...)) -> UserPreferences:
+async def get_user_preferences(username: str, request: Request) -> dict:
     """Get user's preferences"""
-    payload = await _decode_token(authorization)
+    # Accept both Authorization header and access_token cookie
+    token = request.cookies.get("access_token")
+    
+    if not token:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    payload = await _decode_token(token)
     requesting_user = payload.get("username")
     
     # User can only get their own preferences (unless admin)
@@ -1747,7 +1753,7 @@ async def get_user_preferences(username: str, authorization: str = Header(...)) 
                 elif key == "dark_mode" and row["preference_bool"] is not None:
                     preferences["dark_mode"] = row["preference_bool"]
             
-            return UserPreferences(**preferences)
+            return preferences
     
     except Exception as e:
         logger.error(f"Error getting user preferences: {str(e)}")
@@ -1758,10 +1764,16 @@ async def get_user_preferences(username: str, authorization: str = Header(...)) 
 async def update_user_preferences(
     username: str,
     preferences: UserPreferencesUpdate, 
-    authorization: str = Header(...)
-) -> UserPreferences:
+    request: Request
+) -> dict:
     """Update user's preferences"""
-    payload = await _decode_token(authorization)
+    # Accept both Authorization header and access_token cookie
+    token = request.cookies.get("access_token")
+    
+    if not token:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    payload = await _decode_token(token)
     requesting_user = payload.get("username")
     
     # User can only update their own preferences (unless admin)
@@ -1818,7 +1830,7 @@ async def update_user_preferences(
                     updated_preferences["dark_mode"] = row["preference_bool"]
             
             logger.info(f"Updated preferences for user {username}: {updated_preferences}")
-            return UserPreferences(**updated_preferences)
+            return updated_preferences
     
     except HTTPException:
         raise

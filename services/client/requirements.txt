@@ -1,3 +1,0 @@
-# Service-specific dependencies (common deps in base image)
-# Base image provides: fastapi, uvicorn, aiohttp, httpx, pydantic, pyyaml, jinja2, requests, python-multipart
-

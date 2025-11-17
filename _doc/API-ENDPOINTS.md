@@ -95,10 +95,10 @@ ServiceClient automaticky proxuje requesty na jednotlivé služby:
 **Request Body:**
 ```json
 {
-  "to": "recipient@example.com",
+  "sender": "sender@example.com",
+  "recipient": "recipient@example.com",
   "subject": "Subject",
-  "body": "Email content",
-  "from": "sender@example.com"
+  "body": "Email content"
 }
 ```
 
@@ -109,7 +109,39 @@ ServiceClient automaticky proxuje requesty na jednotlivé služby:
 | Method | Endpoint | Popis |
 |--------|----------|-------|
 | POST | `/api/emails` | Uložit email do MongoDB |
+| GET | `/api/emails` | Načíst seznam emailů pro uživatele |
+| GET | `/api/emails/{email_id}` | Načíst jednotlivý email podle ID |
+| PUT | `/api/emails/{email_id}/read` | Označit email jako přečtený/nepřečtený |
+| GET | `/api/emails/unread/count` | Získat počet nepřečtených emailů pro uživatele |
+| DELETE | `/api/emails/{email_id}` | Smazat email |
+| POST | `/api/emails/{email_id}/reply` | Vytvořit odpověď na email |
+| POST | `/api/emails/{email_id}/forward` | Přeposlat email |
 | GET | `/api/health` | Health check |
+
+**Email Endpoints:**
+
+**GET /api/emails**
+- Query parameters: `user_email` (optional) - email uživatele
+- Returns: `{"emails": [...], "count": N}`
+
+**GET /api/emails/{email_id}**
+- Returns: Email object s `_id`, `sender`, `recipient`, `subject`, `body`, `timestamp`, `read`, `folder`
+
+**PUT /api/emails/{email_id}/read**
+- Query parameters: `read` (boolean) - true pro přečtený, false pro nepřečtený
+- Returns: `{"status": "success", "read": boolean}`
+
+**GET /api/emails/unread/count**
+- Query parameters: `user_email` - email uživatele
+- Returns: `{"unread_count": N}`
+
+**POST /api/emails/{email_id}/reply**
+- Request body: `{"from": "sender@example.com", "body": "Reply content"}`
+- Returns: `{"status": "sent", "id": "new_email_id"}`
+
+**POST /api/emails/{email_id}/forward**
+- Request body: `{"from": "sender@example.com", "to": "recipient@example.com", "body": "Forward content"}`
+- Returns: `{"status": "sent", "id": "new_email_id"}`
 
 ---
 
@@ -227,7 +259,8 @@ curl -X POST http://mail.digidig.cz/api/smtp/send \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token>" \
   -d '{
-    "to": "user@example.com",
+    "sender": "sender@example.com",
+    "recipient": "user@example.com",
     "subject": "Test",
     "body": "Hello World"
   }'

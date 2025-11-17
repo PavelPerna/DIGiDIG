@@ -13,12 +13,8 @@ def main():
     services = [
         ('Identity', 'identity'),
         ('Storage', 'storage'),
-        ('Client', 'client'),
-        ('Admin', 'admin'),
         ('SSO', 'sso'),
         ('Mail', 'mail'),
-        ('Test Suite', 'test-suite'),
-        ('API Docs', 'apidocs'),
         ('Services', 'services')
     ]
     

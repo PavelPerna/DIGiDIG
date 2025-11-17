@@ -1,36 +1,6 @@
 /* DIGiDIG Admin Layout Styles */
 
-:root {
-    --primary-color: #2563eb;
-    --primary-hover: #1d4ed8;
-    --secondary-color: #6b7280;
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
-    --danger-color: #ef4444;
-    --background-color: #ffffff;
-    --surface-color: #f9fafb;
-    --text-color: #111827;
-    --text-secondary: #6b7280;
-    --border-color: #e5e7eb;
-    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --border-radius: 8px;
-    --spacing-xs: 0.25rem;
-    --spacing-sm: 0.5rem;
-    --spacing-md: 1rem;
-    --spacing-lg: 1.5rem;
-    --spacing-xl: 2rem;
-    --top-pane-height: 5rem; /* Height of the sticky top pane */
-}
 
-/* Dark mode variables */
-[data-theme="dark"] {
-    --background-color: #1f2937;
-    --surface-color: #374151;
-    --text-color: #f9fafb;
-    --text-secondary: #d1d5db;
-    --border-color: #4b5563;
-}
 
 * {
     box-sizing: border-box;

@@ -1,0 +1,114 @@
+.language-selector-flags {
+    position: relative;
+    display: inline-block;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+
+.language-selector-button-flags {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.08);
+    cursor: pointer;
+}
+
+.language-selector-button-flags .flag-container svg {
+    width: 18px;
+    height: 14px;
+}
+
+.language-dropdown-flags {
+    position: absolute;
+    right: 0;
+    margin-top: 8px;
+    min-width: 200px;
+    background: var(--surface-color);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    display: none;
+    z-index: 50;
+}
+
+.language-dropdown-flags.open {
+    display: block;
+}
+
+.language-option-flags {
+    display: flex;
+    gap: 10px;
+    padding: 8px 12px;
+    align-items: center;
+    cursor: pointer;
+}
+
+.language-option-flags:hover,
+.language-option-flags.active {
+    background: rgba(0,0,0,0.03);
+}
+
+.option-flag svg { width: 24px; height: 18px; }
+
+.selected-indicator { margin-left: auto; color: #2b8aef; font-weight: 700; }
+
+@media (prefers-color-scheme: dark) {
+    .language-selector-button-flags {  border-color: rgba(255,255,255,0.06); }
+    .language-dropdown-flags { border-color: rgba(255,255,255,0.04); }
+}
+/* Language Selector Component */
+.language-selector {
+    display: inline-flex;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
+
+.language-selector button {
+    background: none;
+    border: none;
+    padding: 0.375rem 0.75rem;
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.language-selector button:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.language-selector button.active {
+    background: #2563eb;
+    color: white;
+}
+
+.language-selector button:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 60%;
+    background: #e5e7eb;
+}
+
+/* Dark mode adjustments */
+.dark-mode .language-selector {
+    background: #374151;
+    border-color: #4b5563;
+}
+
+.dark-mode .language-selector button {
+    color: #d1d5db;
+}
+
+.dark-mode .language-selector button:hover {
+    background: #4b5563;
+    color: #f9fafb;
+}

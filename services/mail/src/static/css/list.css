@@ -9,7 +9,7 @@
 
 .email-header {
     display: grid;
-    grid-template-columns: 200px 1fr 150px;
+    grid-template-columns: 200px 1fr 150px 40px;
     gap: var(--spacing-md);
     padding: var(--spacing-lg);
     background-color: var(--primary-color);
@@ -19,16 +19,27 @@
 
 .email-row {
     display: grid;
-    grid-template-columns: 200px 1fr 150px;
+    grid-template-columns: 200px 1fr 150px 40px;
     gap: var(--spacing-md);
     padding: var(--spacing-md) var(--spacing-lg);
     border-bottom: 1px solid var(--border-color);
     cursor: pointer;
     transition: background-color 0.2s ease;
+    align-items: center;
 }
 
 .email-row:hover {
     background-color: var(--background-color);
+}
+
+.email-row.unread {
+    background-color: rgba(59, 130, 246, 0.05);
+    border-left: 3px solid var(--primary-color);
+    font-weight: 500;
+}
+
+.email-row.unread:hover {
+    background-color: rgba(59, 130, 246, 0.1);
 }
 
 .email-from,
@@ -49,76 +60,102 @@
     text-align: right;
 }
 
-.email-content {
-    padding: var(--spacing-lg);
-    max-height: 70vh;
-    overflow-y: auto;
+.email-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.email-content h3 {
-    margin-bottom: var(--spacing-md);
+.context-menu-icon {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background-color: transparent;
 }
 
-.email-content .email-meta {
+.context-menu-icon:hover {
+    opacity: 1;
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.empty-state p {
     margin-bottom: var(--spacing-lg);
-    padding-bottom: var(--spacing-md);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.email-content .email-meta p {
-    margin-bottom: var(--spacing-xs);
-    color: var(--text-secondary);
-}
-
-.email-content .email-body {
-    line-height: 1.6;
-    white-space: pre-wrap;
-}
-
-.no-emails {
-    text-align: center;
-    padding: var(--spacing-xl);
-    color: var(--text-secondary);
     font-style: italic;
 }
 
-/* Message notification (same as compose) */
-.message {
+/* Context menu */
+.context-menu {
     position: fixed;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%);
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
     z-index: 1000;
-    min-width: 400px;
-    max-width: 600px;
-    margin-top: var(--spacing-lg, 1rem);
-    padding: 1rem 2rem;
-    border-radius: 8px;
-    font-weight: 500;
-    text-align: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    animation: slideIn 0.3s ease-out;
+    min-width: 220px;
+    padding: var(--spacing-xs) 0;
 }
 
-.message.success {
-    background-color: #10b981;
+.context-menu-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+    cursor: pointer;
+    color: var(--text-color);
+    transition: background-color 0.2s ease;
+    font-size: 0.875rem;
+}
+
+.context-menu-item:hover {
+    background-color: var(--primary-color);
     color: white;
-    border: 2px solid #059669;
 }
 
-.message.error {
-    background-color: #ef4444;
+.context-menu-item.danger {
+    color: var(--danger-color);
+}
+
+.context-menu-item.danger:hover {
+    background-color: var(--danger-color);
     color: white;
-    border: 2px solid #dc2626;
 }
 
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translate(-50%, -20px);
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .email-row.unread {
+        background-color: rgba(59, 130, 246, 0.1);
     }
-    to {
-        opacity: 1;
-        transform: translate(-50%, 0);
+
+    .email-row.unread:hover {
+        background-color: rgba(59, 130, 246, 0.15);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .email-header,
+    .email-row {
+        grid-template-columns: 1fr 80px 30px;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+    }
+
+    .email-from {
+        display: none;
+    }
+
+    .email-date {
+        text-align: left;
+        font-size: 0.75rem;
+    }
+
+    .email-actions {
+        justify-content: flex-end;
     }
 }

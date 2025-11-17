@@ -41,9 +41,7 @@ declare -A SERVICES=(
     # are configured separately if needed.
     ["smtp"]="${SMTP_REST_PORT:-9100}"
     ["imap"]="${IMAP_REST_PORT:-9103}"
-    ["admin"]="${ADMIN_PORT:-9105}"
     ["mail"]="${MAIL_PORT:-9107}"
-    ["apidocs"]="${APIDOCS_PORT:-9110}"
 )
 
 echo -e "${BLUE}🩺 DIGiDIG Health Check - $ENVIRONMENT environment${NC}"
@@ -130,22 +128,6 @@ fi
 if [[ $HEALTHY_SERVICES -gt 0 ]]; then
     echo ""
     echo "🧪 Running functional tests..."
-    
-    # Test API documentation
-    if curl -f -s -m 10 "$BASE_URL:9110" >/dev/null 2>&1; then
-        echo -e "  ${GREEN}✅ API Documentation accessible${NC}"
-    else
-        echo -e "  ${RED}❌ API Documentation not accessible${NC}"
-        EXIT_CODE=1
-    fi
-    
-    # Test admin interface
-    if curl -f -s -m 10 "$BASE_URL:9105" >/dev/null 2>&1; then
-        echo -e "  ${GREEN}✅ Admin interface accessible${NC}"
-    else
-        echo -e "  ${RED}❌ Admin interface not accessible${NC}"
-        EXIT_CODE=1
-    fi
     
     # Test mail interface
     if curl -f -s -m 10 "$BASE_URL:9107" >/dev/null 2>&1; then

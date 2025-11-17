@@ -18,12 +18,12 @@ jobs:
           POSTGRES_PASSWORD: securepassword
           POSTGRES_DB: strategos
         options: >-
-          --health-cmd="pg_isready -U postgres" --health-interval=10s --health-timeout=5s --health-retries=5
+          --health-cmd="pg_isready -U postgres" --health-interval=3s --health-timeout=5s --health-retries=5
       mongo:
         image: mongo:6
         ports: [27017:27017]
         options: >-
-          --health-cmd="mongosh --quiet --eval 'db.runCommand(\'ping\').ok'" --health-interval=10s --health-timeout=10s --health-retries=10
+          --health-cmd="mongosh --quiet --eval 'db.runCommand(\'ping\').ok'" --health-interval=3s --health-timeout=10s --health-retries=10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,19 +36,23 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt || true
-          pip install -r services/mail/requirements.txt || true
+          pip install virtualenv
+          python -m virtualenv .venv
+          .venv/bin/pip install requests pytest
+          .venv/bin/pip install -r requirements.txt || true
+          .venv/bin/pip install -r services/mail/requirements.txt || true
 
-      - name: Start DIGiDIG stack (mail only)
+      - name: Start DIGiDIG test services
         run: |
-          docker compose up -d mail
+          docker compose up -d postgres mongo identity sso mail
+          echo "⏳ Waiting for services to be ready..."
           sleep 30
 
       - name: Run REST API tests
         run: |
-          python -m unittest discover -s _test/unit -p 'test_*.py'
+          .venv/bin/python -m pytest _test/unit/test_rest_api.py -v
 
-      - name: Tear down DIGiDIG stack
+      - name: Tear down DIGiDIG test services
         if: always()
         run: |
-          docker compose down
+          docker compose down postgres mongo identity sso mail

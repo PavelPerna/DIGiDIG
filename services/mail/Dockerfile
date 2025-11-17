@@ -4,6 +4,7 @@ WORKDIR /app
 
 # Copy lib and config files (from project root)
 COPY digidig/ ./digidig/
+COPY lib/ ./lib/
 COPY config/ ./config/
 
 # Copy service-specific files
