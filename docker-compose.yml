@@ -62,11 +62,11 @@ services:
     ports:
       - "${MONGO_PORT:-9302}:${MONGO_PORT:-27017}"
     healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 10s
       timeout: 10s
       retries: 10
-      start_period: 60s
+      start_period: 30s
     networks:
       - strategos-net
     volumes:
