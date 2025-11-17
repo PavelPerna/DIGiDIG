@@ -92,3 +92,8 @@ ssl/
 *.key
 *.crt
 *.csr
+
+letsencrypt/
+letsencrypt/*
+certbot/
+certbot/*

@@ -246,7 +246,7 @@ Response:
   "requests_total": 3500,
   "requests_successful": 3480,
   "requests_failed": 20,
-  "last_request_time": 1698765432.0,
+  "last_request_time": 1698769301.0,
   "database_stats": {
     "collections": 1,
     "indexes": 5,

@@ -31,7 +31,7 @@
 database:
   postgres:
     host: postgres
-    port: 5432
+    port: 9301
     user: strategos
     password: secure_password
 
@@ -98,7 +98,7 @@ docker compose up
 ```python
 # OLD
 DB_HOST = os.getenv("DB_HOST", "postgres")
-DB_PORT = int(os.getenv("DB_PORT", "5432"))
+DB_PORT = int(os.getenv("DB_PORT", "9301"))
 
 # NEW
 db = get_db_config("postgres")

@@ -52,7 +52,7 @@ Identity služba poskytuje:
 IDENTITY_PORT=8001                      # Port FastAPI aplikace
 IDENTITY_HOSTNAME=0.0.0.0               # Hostname pro binding
 DB_HOST=postgres                        # PostgreSQL host
-DB_PORT=5432                            # PostgreSQL port
+DB_PORT=9301                            # PostgreSQL port
 DB_NAME=strategos                       # Název databáze
 DB_USER=postgres                        # PostgreSQL username
 DB_PASS=securepassword                  # PostgreSQL heslo

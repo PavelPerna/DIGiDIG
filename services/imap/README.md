@@ -157,7 +157,7 @@ Response:
   "requests_total": 500,
   "requests_successful": 490,
   "requests_failed": 10,
-  "last_request_time": 1698765432.0,
+  "last_request_time": 1698769301.0,
   "active_sessions": 3
 }
 ```
