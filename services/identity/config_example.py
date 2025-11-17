@@ -15,12 +15,12 @@ import subprocess
 import sys
 import os
 
-from digidig.config import get_config, get_db_config, get_jwt_secret
+from digidig.config import Config
 
-config = get_config()
+config = Config.instance()
 
 # Get database configuration
-db_config = get_db_config("postgres")
+db_config = config.db_config("postgres")
 DB_HOST = db_config["host"]
 DB_PORT = db_config["port"]
 DB_USER = db_config["user"]
@@ -28,7 +28,7 @@ DB_PASS = db_config["password"]
 DB_NAME = db_config["database"]
 
 # Get JWT configuration
-JWT_SECRET = get_jwt_secret()
+JWT_SECRET = config.jwt_secret()
 JWT_ALGORITHM = config.get("security.jwt.algorithm", "HS256")
 ACCESS_TOKEN_EXPIRE = config.get("security.jwt.access_token_expire_minutes", 30)
 REFRESH_TOKEN_EXPIRE = config.get("security.jwt.refresh_token_expire_days", 7)

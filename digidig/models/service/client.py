@@ -46,33 +46,41 @@ class ServiceClient(ServiceBase):
             # mount under /static
             self.app.mount('/static', StaticFiles(directory=static_dir), name='static')
 
+        # Mount digidig assets if available
+        digidig_dir = os.path.join(os.path.dirname(__file__), '..', '..')
+        if os.path.isdir(digidig_dir):
+            self.app.mount('/digidig', StaticFiles(directory=digidig_dir), name='digidig')
+
         if templates_dir and os.path.isdir(templates_dir):
-            # Create loader that searches in both templates_dir and shared components
-            components_dir = os.path.join(os.path.dirname(__file__), '..', 'components')
+            # Copy shared component templates to templates_dir
+            import digidig
+            components_dir = os.path.join(os.path.dirname(digidig.__file__), 'models', 'components')
             if os.path.isdir(components_dir):
-                loader = ChoiceLoader([
-                    FileSystemLoader(templates_dir),
-                    FileSystemLoader(components_dir)
-                ])
-                self.templates = Jinja2Templates(directory=templates_dir)
-                self.templates.env.loader = loader
-            else:
-                self.templates = Jinja2Templates(directory=templates_dir)
+                import shutil
+                for root, dirs, files in os.walk(components_dir):
+                    for file in files:
+                        if file.endswith('.html'):
+                            rel_path = os.path.relpath(root, components_dir)
+                            dest_dir = os.path.join(templates_dir, rel_path)
+                            os.makedirs(dest_dir, exist_ok=True)
+                            shutil.copy2(os.path.join(root, file), os.path.join(dest_dir, file))
+            self.templates = Jinja2Templates(directory=templates_dir)
 
         # Add client-specific endpoints
         self._add_client_endpoints()
 
     def _add_client_endpoints(self):
         """Add client-specific endpoints like stats, metrics, and API proxies."""
-        from digidig.config import get_service_internal_url
+        from digidig.config import Config
         from fastapi.responses import JSONResponse
         
+        config = Config.instance()
         # Map of service names to their internal URLs
         service_urls = {
-            'identity': get_service_internal_url('identity'),
-            'storage': get_service_internal_url('storage'),
-            'smtp': get_service_internal_url('smtp'),
-            'imap': get_service_internal_url('imap'),
+            'identity': config.service_internal_url('identity'),
+            'storage': config.service_internal_url('storage'),
+            'smtp': config.service_internal_url('smtp'),
+            'imap': config.service_internal_url('imap'),
         }
 
         @self.app.get("/stats")
@@ -118,7 +126,9 @@ class ServiceClient(ServiceBase):
                     
                     # Forward headers (especially cookies)
                     headers = dict(request.headers)
-                    headers.pop('host', None)  # Remove host header
+                    headers.pop('host', None)
+                    # Remove cookie header since we pass cookies separately to avoid conflicts
+                    headers.pop('cookie', None)  # Remove host header
                     
                     # Extract cookies from request and forward them
                     cookies = dict(request.cookies) if request.cookies else None

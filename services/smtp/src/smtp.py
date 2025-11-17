@@ -2,11 +2,11 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from digidig.models.service.server import ServiceServer
-from digidig.config import get_config, get_service_internal_url
+from digidig.config import Config
 import httpx
 from datetime import datetime
 
-config = get_config()
+config = Config.instance()
 try:
     SMTP_PORT = int(config.get('services.smtp.rest_port', 9100))
 except Exception:
@@ -46,7 +46,7 @@ class ServerSMTP(ServiceServer):
             try:
                 # Store email in storage service
                 async with httpx.AsyncClient() as client:
-                    storage_url = get_service_internal_url('storage')
+                    storage_url = config.service_internal_url('storage')
                     response = await client.post(
                         f'{storage_url}/api/emails',
                         json=email_doc,

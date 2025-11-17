@@ -13,7 +13,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from digidig.config import load_config
+from digidig.config import Config
 
 CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "config.yaml"
 if not CONFIG_PATH.exists():
@@ -21,6 +21,9 @@ if not CONFIG_PATH.exists():
     sys.exit(1)
 
 text = CONFIG_PATH.read_text()
+
+# Load config using singleton
+config = Config(config_path=str(CONFIG_PATH))
 
 # Simple helper to find a value under a service block. This is not a full YAML parser.
 # We search for the service name and then look for common keys beneath it.
@@ -78,16 +81,8 @@ out['IMAP_PROTOCOL_PORT'] = find_service_val('imap', ['imap_port']) or '143'
 out['IMAP_PROTOCOLS_PORT'] = find_service_val('imap', ['imap_sslport']) or '993'
 out['SSO_HTTP_PORT'] = find_service_val('sso', ['http_port']) or '9106'
 out['SSO_HTTPS_PORT'] = find_service_val('sso', ['http_sslport']) or '9206'
-out['ADMIN_HTTP_PORT'] = find_service_val('admin', ['http_port']) or '9105'
-out['ADMIN_HTTPS_PORT'] = find_service_val('admin', ['http_sslport']) or '9205'
-out['CLIENT_HTTP_PORT'] = find_service_val('client', ['http_port']) or '9104'
-out['CLIENT_HTTPS_PORT'] = find_service_val('client', ['http_sslport']) or '9204'
-out['TEST_SUITE_HTTP_PORT'] = find_service_val('test-suite', ['http_port']) or '9108'
-out['TEST_SUITE_HTTPS_PORT'] = find_service_val('test-suite', ['http_sslport']) or '9208'
 out['MAIL_HTTP_PORT'] = find_service_val('mail', ['http_port']) or '9107'
 out['MAIL_HTTPS_PORT'] = find_service_val('mail', ['http_sslport']) or '9207'
-out['APIDOCS_HTTP_PORT'] = find_service_val('apidocs', ['http_port']) or '9110'
-out['APIDOCS_HTTPS_PORT'] = find_service_val('apidocs', ['http_sslport']) or '9210'
 out['SERVICES_HTTP_PORT'] = find_service_val('services', ['http_port']) or '9120'
 out['SERVICES_HTTPS_PORT'] = find_service_val('services', ['http_sslport']) or '9220'
 

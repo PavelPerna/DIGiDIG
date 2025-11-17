@@ -60,5 +60,17 @@
     "language": "Language",
     "save": "Save Changes",
     "saved": "Settings saved successfully"
+  },
+  "mail": {
+    "list": {
+      "title": "Inbox",
+      "from": "From",
+      "subject": "Subject",
+      "date": "Date",
+      "no_emails": "No emails in your inbox."
+    },
+    "view": {
+      "subject": "Email"
+    }
   }
 }

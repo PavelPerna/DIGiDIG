@@ -1,0 +1,48 @@
+name: REST API Tests
+
+on:
+  push:
+    branches: [ main, DIGIDIG-10-optimalization ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  rest-api-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install virtualenv
+          python -m virtualenv .venv
+          .venv/bin/pip install requests pytest
+          .venv/bin/pip install -r requirements.txt || true
+          .venv/bin/pip install -r services/mail/requirements.txt || true
+
+      - name: Start DIGiDIG test services
+        run: |
+          # Build and start all required services for testing
+          docker compose up -d --build postgres mongo identity storage smtp imap sso mail
+          echo "⏳ Waiting for services to be ready..."
+          sleep 60
+
+      - name: Run REST API tests
+        run: |
+          .venv/bin/python -m pytest _test/unit/test_rest_api.py -v
+        env:
+          DIGIDIG_BASE_URL: http://localhost:9107
+          DIGIDIG_IDENTITY_URL: http://localhost:9101
+          DIGIDIG_SSO_URL: http://localhost:9106
+
+      - name: Tear down DIGiDIG test services
+        if: always()
+        run: |
+          docker compose down

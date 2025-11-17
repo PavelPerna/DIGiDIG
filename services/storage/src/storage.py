@@ -11,11 +11,11 @@ from fastapi.responses import JSONResponse
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from digidig.models.service.server import ServiceServer
-from digidig.config import get_config
+from digidig.config import Config
 
 logger = logging.getLogger(__name__)
 
-config = get_config()
+config = Config.instance()
 HOST = config.get('hostname') or os.getenv('HOSTNAME') or 'localhost'
 try:
     STORAGE_PORT = int(config.get('services.storage.port', 9102))
@@ -159,29 +159,205 @@ class ServerStorage(ServiceServer):
                     status_code=500
                 )
 
-        @self.app.get('/api/health')
-        async def health_check():
-            uptime = time.time() - service_state['start_time']
+        @self.app.get('/api/emails/{email_id}')
+        async def get_email(email_id: str):
+            """Get a single email by ID"""
+            logger.info(f"Getting email {email_id}")
+            service_state['requests_total'] += 1
+            service_state['last_request_time'] = datetime.utcnow().isoformat()
             
-            # Test MongoDB connection
             try:
-                client.admin.command('ping')
-                db_status = 'connected'
+                from bson import ObjectId
+                _, _, emails_collection = get_mongo_connection()
+                
+                email = emails_collection.find_one({'_id': ObjectId(email_id)})
+                if not email:
+                    raise HTTPException(status_code=404, detail="Email not found")
+                
+                # Convert ObjectId to string
+                email['_id'] = str(email['_id'])
+                
+                service_state['requests_successful'] += 1
+                logger.info(f"Email {email_id} retrieved successfully")
+                return email
             except Exception as e:
-                db_status = f'disconnected: {str(e)}'
+                service_state['requests_failed'] += 1
+                logger.error(f"Error getting email {email_id}: {str(e)}")
+                return JSONResponse(
+                    content={'status': 'error', 'error': str(e)},
+                    status_code=500
+                )
+
+        @self.app.put('/api/emails/{email_id}/read')
+        async def mark_email_read(email_id: str, read: bool = True):
+            """Mark email as read or unread"""
+            logger.info(f"Marking email {email_id} as {'read' if read else 'unread'}")
+            service_state['requests_total'] += 1
+            service_state['last_request_time'] = datetime.utcnow().isoformat()
             
-            status = 'healthy' if service_state['config']['enabled'] and db_status == 'connected' else 'unhealthy'
+            try:
+                from bson import ObjectId
+                _, _, emails_collection = get_mongo_connection()
+                
+                result = emails_collection.update_one(
+                    {'_id': ObjectId(email_id)},
+                    {'$set': {'read': read}}
+                )
+                
+                if result.matched_count == 0:
+                    raise HTTPException(status_code=404, detail="Email not found")
+                
+                service_state['requests_successful'] += 1
+                logger.info(f"Email {email_id} marked as {'read' if read else 'unread'}")
+                return {'status': 'success', 'read': read}
+            except Exception as e:
+                service_state['requests_failed'] += 1
+                logger.error(f"Error marking email {email_id}: {str(e)}")
+                return JSONResponse(
+                    content={'status': 'error', 'error': str(e)},
+                    status_code=500
+                )
+
+        @self.app.get('/api/emails/unread/count')
+        async def get_unread_count(user_email: str):
+            """Get count of unread emails for a user"""
+            logger.info(f"Getting unread count for {user_email}")
+            service_state['requests_total'] += 1
+            service_state['last_request_time'] = datetime.utcnow().isoformat()
             
-            return {
-                'service_name': 'storage',
-                'status': status,
-                'timestamp': datetime.utcnow().isoformat(),
-                'uptime_seconds': uptime,
-                'details': {
-                    'enabled': service_state['config']['enabled'],
-                    'database_status': db_status
+            try:
+                _, _, emails_collection = get_mongo_connection()
+                
+                count = emails_collection.count_documents({
+                    'recipient': user_email,
+                    'read': False
+                })
+                
+                service_state['requests_successful'] += 1
+                logger.info(f"Found {count} unread emails for {user_email}")
+                return {'unread_count': count}
+            except Exception as e:
+                service_state['requests_failed'] += 1
+                logger.error(f"Error getting unread count for {user_email}: {str(e)}")
+                return JSONResponse(
+                    content={'status': 'error', 'error': str(e)},
+                    status_code=500
+                )
+
+        @self.app.delete('/api/emails/{email_id}')
+        async def delete_email(email_id: str):
+            """Delete an email"""
+            logger.info(f"Deleting email {email_id}")
+            service_state['requests_total'] += 1
+            service_state['last_request_time'] = datetime.utcnow().isoformat()
+            
+            try:
+                from bson import ObjectId
+                _, _, emails_collection = get_mongo_connection()
+                
+                result = emails_collection.delete_one({'_id': ObjectId(email_id)})
+                
+                if result.deleted_count == 0:
+                    raise HTTPException(status_code=404, detail="Email not found")
+                
+                service_state['requests_successful'] += 1
+                logger.info(f"Email {email_id} deleted successfully")
+                return {'status': 'deleted'}
+            except Exception as e:
+                service_state['requests_failed'] += 1
+                logger.error(f"Error deleting email {email_id}: {str(e)}")
+                return JSONResponse(
+                    content={'status': 'error', 'error': str(e)},
+                    status_code=500
+                )
+
+        @self.app.post('/api/emails/{email_id}/reply')
+        async def reply_to_email(email_id: str, reply_data: Dict[str, Any]):
+            """Create a reply to an email"""
+            logger.info(f"Creating reply to email {email_id}")
+            service_state['requests_total'] += 1
+            service_state['last_request_time'] = datetime.utcnow().isoformat()
+            
+            try:
+                from bson import ObjectId
+                _, _, emails_collection = get_mongo_connection()
+                
+                # Get original email
+                original = emails_collection.find_one({'_id': ObjectId(email_id)})
+                if not original:
+                    raise HTTPException(status_code=404, detail="Original email not found")
+                
+                # Create reply email
+                reply_email = {
+                    'sender': reply_data['from'],
+                    'recipient': original['sender'],
+                    'subject': f"Re: {original['subject']}",
+                    'body': reply_data['body'],
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'read': False,
+                    'folder': 'INBOX'
                 }
-            }
+                
+                result = emails_collection.insert_one(reply_email)
+                
+                service_state['requests_successful'] += 1
+                logger.info(f"Reply to email {email_id} created successfully")
+                return JSONResponse(
+                    content={'status': 'sent', 'id': str(result.inserted_id)},
+                    status_code=201
+                )
+            except Exception as e:
+                service_state['requests_failed'] += 1
+                logger.error(f"Error creating reply to email {email_id}: {str(e)}")
+                return JSONResponse(
+                    content={'status': 'error', 'error': str(e)},
+                    status_code=500
+                )
+
+        @self.app.post('/api/emails/{email_id}/forward')
+        async def forward_email(email_id: str, forward_data: Dict[str, Any]):
+            """Forward an email"""
+            logger.info(f"Forwarding email {email_id}")
+            service_state['requests_total'] += 1
+            service_state['last_request_time'] = datetime.utcnow().isoformat()
+            
+            try:
+                from bson import ObjectId
+                _, _, emails_collection = get_mongo_connection()
+                
+                # Get original email
+                original = emails_collection.find_one({'_id': ObjectId(email_id)})
+                if not original:
+                    raise HTTPException(status_code=404, detail="Original email not found")
+                
+                # Create forwarded email
+                forward_body = f"---------- Forwarded message ----------\nFrom: {original['sender']}\nTo: {original['recipient']}\nSubject: {original['subject']}\n\n{original['body']}\n\n{forward_data.get('message', '')}"
+                
+                forward_email = {
+                    'sender': forward_data['from'],
+                    'recipient': forward_data['to'],
+                    'subject': f"Fwd: {original['subject']}",
+                    'body': forward_body,
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'read': False,
+                    'folder': 'INBOX'
+                }
+                
+                result = emails_collection.insert_one(forward_email)
+                
+                service_state['requests_successful'] += 1
+                logger.info(f"Email {email_id} forwarded successfully")
+                return JSONResponse(
+                    content={'status': 'sent', 'id': str(result.inserted_id)},
+                    status_code=201
+                )
+            except Exception as e:
+                service_state['requests_failed'] += 1
+                logger.error(f"Error forwarding email {email_id}: {str(e)}")
+                return JSONResponse(
+                    content={'status': 'error', 'error': str(e)},
+                    status_code=500
+                )
 
 
 # Create service instance

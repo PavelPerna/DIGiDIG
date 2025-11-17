@@ -1,0 +1,78 @@
+<div class="page-header">
+    <div class="page-header-left">
+        <button class="btn btn-secondary" onclick="goBack()">
+            ← {{ i18n.get('common.back', 'Back') }}
+        </button>
+        <h1 id="email-subject">{{ i18n.get('mail.view.subject', 'Email') }}</h1>
+    </div>
+    <div class="page-actions">
+        <button class="btn btn-secondary" id="mark-read-btn" onclick="markAsRead()">
+            {{ i18n.get('mail.mark_read', 'Mark as Read') }}
+        </button>
+        <button class="btn btn-secondary" onclick="replyToEmail()">
+            {{ i18n.get('mail.reply', 'Reply') }}
+        </button>
+        <button class="btn btn-secondary" onclick="forwardEmail()">
+            {{ i18n.get('mail.forward', 'Forward') }}
+        </button>
+        <button class="btn btn-danger" onclick="deleteEmail()">
+            {{ i18n.get('common.delete', 'Delete') }}
+        </button>
+    </div>
+</div>
+
+<div class="email-view">
+    <div class="email-content">
+        <div class="email-meta">
+            <div class="meta-row">
+                <span class="meta-label">{{ i18n.get('mail.view.from', 'From') }}:</span>
+                <span class="meta-value" id="email-from"></span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">{{ i18n.get('mail.view.to', 'To') }}:</span>
+                <span class="meta-value" id="email-to"></span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">{{ i18n.get('mail.view.date', 'Date') }}:</span>
+                <span class="meta-value" id="email-date"></span>
+            </div>
+        </div>
+        <div class="email-body" id="email-body">
+            <!-- Email content will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Reply/Forward modal -->
+<div id="compose-modal" class="modal" style="display: none;">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h2 id="compose-modal-title">{{ i18n.get('mail.compose.title', 'Compose') }}</h2>
+            <button class="modal-close" onclick="closeComposeModal()">&times;</button>
+        </div>
+        <div id="compose-modal-content">
+            <form id="reply-form" onsubmit="sendReply(event)">
+                <div class="form-group">
+                    <label for="reply-to">{{ i18n.get('mail.compose.to', 'To') }}</label>
+                    <input type="email" id="reply-to" name="to" required>
+                </div>
+                <div class="form-group">
+                    <label for="reply-subject">{{ i18n.get('mail.compose.subject', 'Subject') }}</label>
+                    <input type="text" id="reply-subject" name="subject" required>
+                </div>
+                <div class="form-group">
+                    <label for="reply-body">{{ i18n.get('mail.compose.body', 'Message') }}</label>
+                    <textarea id="reply-body" name="body" rows="10" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeComposeModal()">
+                        {{ i18n.get('common.cancel', 'Cancel') }}
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        {{ i18n.get('mail.compose.send', 'Send') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

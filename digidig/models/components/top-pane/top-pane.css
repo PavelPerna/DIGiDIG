@@ -7,13 +7,31 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border-color);
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Dark mode top-bar styling */
+.dark-mode .top-bar {
+    background: #374151;
+    border-bottom-color: #4b5563;
 }
 
 .top-bar-left {
     display: flex;
     gap: 1rem;
+}
+
+.top-bar-left h1 {
+    color: var(--text-color);
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* Dark mode logo styling */
+.dark-mode .top-bar-left h1 {
+    color: #ffffff;
 }
 
 .top-bar-right {

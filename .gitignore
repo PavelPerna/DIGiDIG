@@ -82,13 +82,14 @@ Thumbs.db
 # Logs
 *.log
 
-# Coverage
-htmlcov/
-.coverage
-
 # SSL certificates and keys
 ssl/
 *.pem
 *.key
 *.crt
 *.csr
+
+letsencrypt/
+letsencrypt/*
+certbot/
+certbot/*

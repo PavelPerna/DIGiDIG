@@ -18,10 +18,10 @@ import asyncpg
 async def main():
     import sys
     sys.path.insert(0, '/app')
-    from digidig.config import get_config, get_db_config, get_jwt_secret
+    from digidig.config import Config
 
-    config = get_config()
-    db_config = get_db_config("postgres")
+    config = Config.instance()
+    db_config = config.db_config("postgres")
 
     admin_password = config.get("security.admin.password", "admin")
     admin_email = config.get("security.admin.email", "admin@example.com")

@@ -1,0 +1,59 @@
+
+/* Minimalistický language-selector (unified theme via CSS variables) */
+.language-selector-flags {
+  position: relative;
+  display: inline-block;
+}
+.language-selector-button-flags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 13px;
+}
+.language-dropdown-flags {
+  position: absolute;
+  right: 0;
+  margin-top: 6px;
+  min-width: 160px;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  display: none;
+  z-index: 10;
+}
+.language-dropdown-flags.open {
+  display: block;
+}
+.language-option-flags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+  background: transparent;
+}
+.language-option-flags:last-child {
+  border-bottom: none;
+}
+.language-option-flags:hover,
+.language-option-flags.active {
+  background: var(--surface-hover);
+}
+.option-flag svg {
+  width: 20px;
+  height: 15px;
+}
+.selected-indicator {
+  margin-left: auto;
+  color: var(--primary-color);
+  font-weight: bold;
+}

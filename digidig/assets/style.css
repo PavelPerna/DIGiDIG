@@ -1,31 +1,94 @@
-body {
-  font-family: Helvetica, Arial, sans-serif;
-  font-size: 12px;
-  /* do not increase min-width as some may use split screens */
-  min-width: 800px;
-  color: #999;
+
+:root {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --secondary-color: #6b7280;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --background-color: #ffffff;
+    --surface-color: #f9fafb;
+    --surface: var(--surface-color); /* Alias for compatibility with shared components */
+  --surface-hover: rgba(0,0,0,0.04);
+    --text-color: #111827;
+    --text-secondary: #6b7280;
+    --border-color: #e5e7eb;
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --border-radius: 8px;
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --top-pane-height: 5rem; /* Height of the sticky top pane */
 }
 
-h1 {
-  font-size: 24px;
-  color: black;
+/* Dark mode variables */
+.dark-mode {
+    --background-color: #1f2937;
+    --surface-color: #374151;
+    --surface: var(--surface-color); /* Alias for compatibility with shared components */
+    --text-color: #f9fafb;
+    --text-secondary: #d1d5db;
+    --border-color: #4b5563;
+  --surface-hover: rgba(255,255,255,0.03);
 }
-
-h2 {
-  font-size: 16px;
-  color: black;
+/* Minimalistický základní styl */
+html, body {
+  font-family: system-ui, Arial, sans-serif;
+  font-size: 15px;
+  margin: 0;
+  padding: 0;
 }
-
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-color);
+  margin: 0 0 0.5em 0;
+}
 p {
-  color: black;
+  color: var(--text-secondary);
+  margin: 0 0 1em 0;
 }
-
 a {
-  color: #999;
+  color: var(--primary-color);
+  text-decoration: none;
 }
-
+a:hover {
+  text-decoration: underline;
+}
 table {
   border-collapse: collapse;
+}
+th, td {
+  padding: 0.5em 1em;
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode, body.dark-mode, html.dark-mode {
+  background: #181a20 !important;
+  color: #e2e2e2 !important;
+}
+.dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4, .dark-mode h5, .dark-mode h6 {
+  color: #fff !important;
+}
+
+
+/* Ztmavení centrálního boxu (login panel apod.) v dark mode */
+.dark-mode .card, .dark-mode .panel, .dark-mode .login-box, .dark-mode .center-box, .dark-mode .auth-panel {
+  background: #23242a !important;
+  color: #e2e2e2 !important;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.7) !important;
+}
+
+/* Ztmavení inputů v dark mode */
+.dark-mode input, .dark-mode input[type="text"], .dark-mode input[type="password"], .dark-mode input[type="email"], .dark-mode textarea {
+  background: #23242a !important;
+  color: #fff !important;
+  border: 1px solid #444 !important;
+}
+.dark-mode input:focus, .dark-mode textarea:focus {
+  border-color: #4fa3ff !important;
+  outline: none !important;
 }
 
 /******************************

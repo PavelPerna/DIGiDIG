@@ -51,34 +51,10 @@ services:
     http_sslport: 9206
     external_url: digidig.cz
 
-  client:
-    host: client
-    http_port: 9104
-    http_sslport: 9204
-    external_url: digidig.cz
-
-  admin:
-    host: admin
-    http_port: 9105
-    http_sslport: 9205
-    external_url: digidig.cz
-
   mail:
     host: mail
     http_port: 9107
     http_sslport: 9207
-    external_url: digidig.cz
-
-  apidocs:
-    host: apidocs
-    http_port: 9110
-    http_sslport: 9210
-    external_url: digidig.cz
-
-  test-suite:
-    host: test-suite
-    http_port: 9108
-    http_sslport: 9208
     external_url: digidig.cz
 
   services:

@@ -72,6 +72,29 @@
   "lang": {
     "en": "English",
     "cs": "Čeština"
+  },
+  "mail": {
+    "menu": {
+      "inbox": "Inbox",
+      "compose": "Compose"
+    },
+    "list": {
+      "title": "Inbox",
+      "from": "From",
+      "subject": "Subject",
+      "date": "Date",
+      "no_emails": "No emails in your inbox."
+    },
+    "compose": {
+      "title": "Compose Email",
+      "to": "To",
+      "subject": "Subject",
+      "body": "Message",
+      "send": "Send Email"
+    },
+    "view": {
+      "subject": "Email"
+    }
   }
 }
 

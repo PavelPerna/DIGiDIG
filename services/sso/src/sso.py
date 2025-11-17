@@ -2,17 +2,84 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from digidig.models.service.client import ServiceClient
-from digidig.config import get_config, get_service_url
+from digidig.language import I18n
+from digidig.config import Config
 from fastapi import Request, Form, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
 import httpx
 
 # SSO service configuration - handles login and redirects to apps
-config = get_config()
+config = Config.instance()
 SSO_PORT = int(config.get('services.sso.http_port', 9106))
 HOST = config.get('services.sso.external_url', 'localhost')
 # External URL for user display in templates
-IDENTITY_URL = get_service_url('identity', ssl=True)
+IDENTITY_URL = config.service_url('identity', ssl=True)
+
+
+async def check_session(request: Request):
+    """Check if user has valid session, return user info or None"""
+    access_token = request.cookies.get("access_token")
+    
+    if not access_token:
+        return None
+    
+    try:
+        # Use proxy endpoint - call ourselves, ServiceClient routes to identity
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"http://localhost:{SSO_PORT}/api/identity/session/verify",
+                cookies={"access_token": access_token}
+            )
+            if response.status_code == 200:
+                user_info = response.json()
+                return user_info if user_info else None
+            return None
+    except Exception as e:
+        return None
+
+
+async def get_user_preferences(username: str, access_token: str):
+    """Get user preferences from identity service"""
+    try:
+        # Use proxy endpoint - call ourselves, ServiceClient routes to identity
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"http://localhost:{SSO_PORT}/api/identity/users/{username}/preferences",
+                cookies={"access_token": access_token}
+            )
+            if response.status_code == 200:
+                prefs = response.json()
+                return prefs
+            else:
+                return {"language": "en", "dark_mode": False}  # defaults
+    except Exception as e:
+        return {"language": "en", "dark_mode": False}  # defaults
+
+
+async def get_i18n_for_user(request: Request, user_info=None):
+    """Get i18n instance for user based on their language preference"""
+    # For SSO, we don't have authenticated user yet, so check if there's a session
+    if not user_info:
+        user_info = await check_session(request)
+    
+    if not user_info or not user_info.get("username"):
+        # No user or no username - use default English
+        return I18n("en"), False  # Return tuple: (i18n, dark_mode)
+    
+    username = user_info["username"]
+    access_token = request.cookies.get("access_token")
+    
+    if not access_token:
+        return I18n("en"), False  # Return tuple: (i18n, dark_mode)
+    
+    try:
+        # Get preferences asynchronously
+        prefs = await get_user_preferences(username, access_token)
+        language = prefs.get("language", "en")
+        dark_mode = prefs.get("dark_mode", False)
+        return I18n(language), dark_mode
+    except Exception as e:
+        return I18n("en"), False  # Return tuple: (i18n, dark_mode)
 
 
 class ClientSSO(ServiceClient):
@@ -40,11 +107,16 @@ class ClientSSO(ServiceClient):
             app_name = request.query_params.get('app', 'client')  # Default to client app
             error_msg = request.query_params.get('error', '')
             
+            # Get i18n and dark_mode for user (if logged in)
+            i18n, dark_mode = await get_i18n_for_user(request)
+            
             return self.templates.TemplateResponse('login.html', {
                 'request': request,
                 'app_name': app_name,
                 'error': error_msg,
-                'identity_url': IDENTITY_URL
+                'identity_url': IDENTITY_URL,
+                'i18n': i18n,
+                'dark_mode': dark_mode
             })
 
         @self.app.post('/login')
@@ -64,7 +136,7 @@ class ClientSSO(ServiceClient):
                         access_token = data.get('access_token')
                         
                         # Get app home URL from config
-                        app_url = get_service_url(app_name, ssl=True)
+                        app_url = config.service_url(app_name, ssl=True)
                         
                         # Create redirect response and set cookie
                         redirect_response = RedirectResponse(url=app_url, status_code=303)

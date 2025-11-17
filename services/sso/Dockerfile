@@ -5,6 +5,9 @@ WORKDIR /app
 # Copy shared library code first
 COPY digidig/ /app/digidig/
 
+# Copy shared components
+COPY lib/ /app/lib/
+
 # Copy service requirements and install
 COPY services/sso/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

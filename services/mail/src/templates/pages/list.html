@@ -1,8 +1,13 @@
 <div class="page-header">
-    <h1>{{ i18n.get('mail.list.title', 'Inbox') }}</h1>
-    <button class="btn btn-primary" onclick="refreshEmails()">
-        {{ i18n.get('common.refresh', 'Refresh') }}
-    </button>
+    <h1>{{ i18n.get('mail.list.title', 'Inbox') }} <span id="unread-count"></span></h1>
+    <div class="page-actions">
+        <button class="btn btn-secondary" onclick="refreshEmails()">
+            {{ i18n.get('common.refresh', 'Refresh') }}
+        </button>
+        <button class="btn btn-primary" onclick="composeEmail()">
+            {{ i18n.get('mail.compose.new', 'Compose') }}
+        </button>
+    </div>
 </div>
 
 <div class="emails-list">
@@ -14,29 +19,36 @@
                 <div class="email-date">{{ i18n.get('mail.list.date', 'Date') }}</div>
             </div>
             {% for email in emails %}
-            <div class="email-row" onclick="viewEmail('{{ email.id }}')">
-                <div class="email-from">{{ email.from or 'Unknown' }}</div>
+            <div class="email-row {% if not email.read %}unread{% endif %}" data-email-id="{{ email._id }}" onclick="viewEmail('{{ email._id }}')">
+                <div class="email-from">{{ email.sender or 'Unknown' }}</div>
                 <div class="email-subject">{{ email.subject or 'No subject' }}</div>
-                <div class="email-date">{{ email.date or 'Unknown' }}</div>
+                <div class="email-date">{{ email.timestamp | strftime('%Y-%m-%d %H:%M') if email.timestamp else 'Unknown' }}</div>
+                <div class="email-actions">
+                    <span class="context-menu-icon" title="Click for options" onclick="showContextMenu(event, '{{ email._id }}', {{ email.read | lower }})">⋮</span>
+                </div>
             </div>
             {% endfor %}
         </div>
     {% else %}
         <div class="empty-state">
             <p>{{ i18n.get('mail.list.no_emails', 'No emails in your inbox.') }}</p>
+            <button class="btn btn-primary" onclick="composeEmail()">{{ i18n.get('mail.compose.new', 'Compose New Email') }}</button>
         </div>
     {% endif %}
 </div>
 
-<!-- Email viewer modal -->
-<div id="email-modal" class="modal" style="display: none;">
-    <div class="modal-content large">
-        <div class="modal-header">
-            <h2 id="email-subject">{{ i18n.get('mail.view.subject', 'Email') }}</h2>
-            <button class="modal-close" onclick="closeEmailModal()">&times;</button>
-        </div>
-        <div id="email-content" class="email-content">
-            <!-- Email content will be loaded here -->
-        </div>
+<!-- Context menu (moved outside emails-list so it doesn't get removed) -->
+<div id="context-menu" class="context-menu" style="display: none;">
+    <div class="context-menu-item" onclick="markAsReadFromMenu()">
+        <span id="mark-read-text">{{ i18n.get('mail.mark_read', 'Mark as Read') }}</span>
+    </div>
+    <div class="context-menu-item" onclick="replyToEmailFromMenu()">
+        {{ i18n.get('mail.reply', 'Reply') }}
+    </div>
+    <div class="context-menu-item" onclick="forwardEmailFromMenu()">
+        {{ i18n.get('mail.forward', 'Forward') }}
+    </div>
+    <div class="context-menu-item danger" onclick="deleteEmailFromMenu()">
+        {{ i18n.get('common.delete', 'Delete') }}
     </div>
 </div>

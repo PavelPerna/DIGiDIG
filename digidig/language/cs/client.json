@@ -60,5 +60,17 @@
     "language": "Jazyk",
     "save": "Uložit změny",
     "saved": "Nastavení bylo úspěšně uloženo"
+  },
+  "mail": {
+    "list": {
+      "title": "Doručená pošta",
+      "from": "Od",
+      "subject": "Předmět",
+      "date": "Datum",
+      "no_emails": "Žádné emaily ve vaší doručené poště."
+    },
+    "view": {
+      "subject": "Email"
+    }
   }
 }

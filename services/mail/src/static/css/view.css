@@ -1,0 +1,93 @@
+/* View page specific styles */
+
+.page-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex: 1;
+}
+
+.page-header-left h1 {
+    margin: 0;
+    flex: 1;
+}
+
+.page-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.email-view {
+    background-color: var(--surface-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.email-content {
+    padding: var(--spacing-xl);
+}
+
+.email-meta {
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.meta-row {
+    display: flex;
+    margin-bottom: var(--spacing-sm);
+    align-items: baseline;
+}
+
+.meta-label {
+    font-weight: 600;
+    min-width: 60px;
+    color: var(--text-secondary);
+}
+
+.meta-value {
+    color: var(--text-color);
+    flex: 1;
+}
+
+.email-body {
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: var(--text-color);
+    font-family: 'Courier New', monospace;
+    background-color: var(--background-color);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .email-body {
+        background-color: var(--surface-color);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .page-header-left {
+        width: 100%;
+    }
+
+    .page-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .email-content {
+        padding: var(--spacing-lg);
+    }
+}

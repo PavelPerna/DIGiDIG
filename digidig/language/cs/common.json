@@ -62,5 +62,28 @@
     "en": "Angličtina",
     "current": "Aktuální jazyk",
     "select": "Vyberte jazyk"
+  },
+  "mail": {
+    "menu": {
+      "inbox": "Schránka",
+      "compose": "Napsat"
+    },
+    "list": {
+      "title": "Schránka",
+      "from": "Od",
+      "subject": "Předmět",
+      "date": "Datum",
+      "no_emails": "Žádné emaily ve vaší schránce."
+    },
+    "compose": {
+      "title": "Napsat email",
+      "to": "Komu",
+      "subject": "Předmět",
+      "body": "Zpráva",
+      "send": "Odeslat email"
+    },
+    "view": {
+      "subject": "Email"
+    }
   }
 }

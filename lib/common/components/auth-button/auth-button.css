@@ -1,16 +1,16 @@
-/* Auth Button - jednoduchý styling */
-.auth-button {
-    padding: 0.5rem 1rem;
-    background: #007ACC;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: background 0.2s;
-}
 
+/* Minimalistický auth-button */
+.auth-button {
+    padding: 0.5rem 1.1rem;
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.18s;
+}
 .auth-button:hover {
-    background: #005A9E;
+    background: var(--primary-hover);
 }
