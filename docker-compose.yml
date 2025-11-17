@@ -62,7 +62,7 @@ services:
     ports:
       - "${MONGO_PORT:-9302}:${MONGO_PORT:-9302}"
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand('ping').ok"]
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 10s
       retries: 10

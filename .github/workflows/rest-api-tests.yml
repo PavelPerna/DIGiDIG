@@ -44,7 +44,7 @@ jobs:
 
       - name: Start DIGiDIG test services
         run: |
-          docker compose up -d postgres mongo identity sso mail
+          docker compose up -d identity sso mail
           echo "⏳ Waiting for services to be ready..."
           sleep 30
 
@@ -55,4 +55,4 @@ jobs:
       - name: Tear down DIGiDIG test services
         if: always()
         run: |
-          docker compose down postgres mongo identity sso mail
+          docker compose down identity sso mail
