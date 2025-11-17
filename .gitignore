@@ -82,9 +82,8 @@ Thumbs.db
 # Logs
 *.log
 
-# Coverage
-htmlcov/
-.coverage
+# Test artifacts
+.test_services_started
 
 # SSL certificates and keys
 ssl/

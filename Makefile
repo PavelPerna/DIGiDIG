@@ -122,10 +122,12 @@ test-services-up:
 	done; \
 	if [ -z "$$SERVICES_TO_START" ]; then \
 		echo "✅ All test services are already running!"; \
+		echo "" > .test_services_started; \
 		exit 0; \
 	fi; \
 	echo "Starting missing services:$$SERVICES_TO_START"; \
 	docker compose up -d $$SERVICES_TO_START; \
+	echo $$SERVICES_TO_START > .test_services_started; \
 	echo "⏳ Waiting for services to be ready..."; \
 	sleep 10; \
 	echo "✅ Test services started!"; \
@@ -134,9 +136,21 @@ test-services-up:
 	echo "Stop services with: make test-services-down"
 
 test-services-down:
-	@echo "Stopping test services..."
-	docker compose down postgres mongo identity sso mail
-	@echo "✅ Test services stopped"
+	@echo "Checking which services were started by tests..."
+	@if [ -f .test_services_started ]; then \
+		SERVICES_TO_STOP=$$(cat .test_services_started); \
+		if [ -z "$$SERVICES_TO_STOP" ]; then \
+			echo "✅ No services were started by tests - leaving existing services running"; \
+		else \
+			echo "Stopping services that were started by tests:$$SERVICES_TO_STOP"; \
+			docker compose down $$SERVICES_TO_STOP; \
+			echo "✅ Test-started services stopped"; \
+		fi; \
+		rm -f .test_services_started; \
+	else \
+		echo "⚠️  No test services tracking file found - stopping all test services as fallback"; \
+		docker compose down postgres mongo identity sso mail; \
+	fi
 
 test-api:
 	@echo "Running REST API tests..."
