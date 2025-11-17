@@ -29,8 +29,8 @@ jobs:
 
       - name: Start DIGiDIG test services
         run: |
-          # Start all required services for testing
-          docker compose up -d postgres mongo identity storage smtp imap sso mail
+          # Build and start all required services for testing
+          docker compose up -d --build postgres mongo identity storage smtp imap sso mail
           echo "⏳ Waiting for services to be ready..."
           sleep 60
 
