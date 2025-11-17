@@ -110,21 +110,22 @@ install:
 
 # Test services management
 test-services-up:
-	@echo "Checking if test services are already running..."
-	@SERVICES_RUNNING=true; \
+	@echo "Checking test services status..."
+	@SERVICES_TO_START=""; \
 	for service in postgres mongo identity sso mail; do \
-		if ! docker compose ps $$service | grep -q "Up"; then \
-			echo "Service $$service is not running"; \
-			SERVICES_RUNNING=false; \
-			break; \
+		if docker compose ps $$service | grep -q "Up"; then \
+			echo "✅ $$service is already running"; \
+		else \
+			echo "❌ $$service is not running - will start it"; \
+			SERVICES_TO_START="$$SERVICES_TO_START $$service"; \
 		fi; \
 	done; \
-	if [ "$$SERVICES_RUNNING" = "true" ]; then \
+	if [ -z "$$SERVICES_TO_START" ]; then \
 		echo "✅ All test services are already running!"; \
 		exit 0; \
 	fi; \
-	echo "Starting test services (postgres, mongo, identity, sso, mail)..."; \
-	docker compose up -d postgres mongo identity sso mail; \
+	echo "Starting missing services:$$SERVICES_TO_START"; \
+	docker compose up -d $$SERVICES_TO_START; \
 	echo "⏳ Waiting for services to be ready..."; \
 	sleep 10; \
 	echo "✅ Test services started!"; \
