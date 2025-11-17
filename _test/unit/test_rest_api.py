@@ -45,6 +45,10 @@ class TestRestAPI(unittest.TestCase):
         self.session = requests.Session()
         # No SSL verification needed for HTTP
 
+    def tearDown(self):
+        """Clean up test session"""
+        self.session.close()
+
     def test_01_health_check(self):
         """Test that mail service health endpoint works"""
         response = self.session.get(f"{self.BASE_URL}/health")
