@@ -168,17 +168,13 @@ fi
 echo ""
 echo "=== Docker Images Setup ==="
 echo "Options:"
-echo "1. Pull pre-built images from GHCR (fast, recommended)"
-echo "2. Build locally (slower, for development)"
+echo "1. Build locally (recommended for development)"
+echo "2. Pull pre-built images from GHCR (fast, for production)"
 echo ""
 echo "Choose option [1/2] (default: 1):"
 read -r build_choice
 case $build_choice in
 2)
-    echo "Building all services locally..."
-    BUILD_METHOD="build"
-    ;;
-*)
     echo "Attempting to pull images from GHCR..."
     echo ""
     if ! make pull-all; then
@@ -190,6 +186,10 @@ case $build_choice in
         echo "✅ Images pulled successfully"
         BUILD_METHOD="pulled"
     fi
+    ;;
+*)
+    echo "Building all services locally..."
+    BUILD_METHOD="build"
     ;;
 esac
 
