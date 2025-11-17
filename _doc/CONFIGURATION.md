@@ -90,7 +90,7 @@ database:
   
   mongodb:
     host: mongo
-    port: 27017
+    port: 9302
     database: strategos_storage
 ```
 

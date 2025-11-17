@@ -62,7 +62,7 @@ if out['POSTGRES_PORT'] is None:
     if m:
         out['POSTGRES_PORT'] = m.group(1)
 
-out['MONGO_PORT'] = find_service_val('mongo', ['port']) or '27017'
+out['MONGO_PORT'] = find_service_val('mongo', ['port']) or '9302'
 
 # Services - HTTP and HTTPS ports
 out['IDENTITY_HTTP_PORT'] = find_service_val('identity', ['http_port']) or '9101'

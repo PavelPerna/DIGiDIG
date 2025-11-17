@@ -43,7 +43,7 @@ class StorageConfig(ServiceConfig):
     """Storage service configuration"""
     service_name: str = "storage"
     port: int = 9102
-    mongo_uri: str = Field(default="mongodb://mongo:27017", description="MongoDB connection URI")
+    mongo_uri: str = Field(default="mongodb://mongo:9302", description="MongoDB connection URI")
     database_name: str = Field(default="strategos", description="Database name")
     max_document_size: int = Field(default=16777216, description="Max document size in bytes (16MB)")
 

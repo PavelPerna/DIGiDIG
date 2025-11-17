@@ -64,7 +64,7 @@ Storage služba poskytuje:
 STORAGE_PORT=8002                       # Port FastAPI aplikace
 STORAGE_HOSTNAME=0.0.0.0                # Hostname pro binding
 STORAGE_TIMEOUT=30                      # Request timeout (sekundy)
-MONGO_URI=mongodb://mongo:27017         # MongoDB connection string
+MONGO_URI=mongodb://mongo:9302         # MongoDB connection string
 DB_NAME=strategos                       # Název databáze
 STORAGE_MAX_DOC_SIZE=16777216          # Max velikost dokumentu (16MB)
 ```
