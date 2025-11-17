@@ -82,9 +82,6 @@ Thumbs.db
 # Logs
 *.log
 
-# Test artifacts
-.test_services_started
-
 # SSL certificates and keys
 ssl/
 *.pem

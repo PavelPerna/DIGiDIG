@@ -110,47 +110,21 @@ install:
 
 # Test services management
 test-services-up:
-	@echo "Checking test services status..."
-	@SERVICES_TO_START=""; \
-	for service in postgres mongo identity sso mail; do \
-		if docker compose ps $$service | grep -q "Up"; then \
-			echo "✅ $$service is already running"; \
-		else \
-			echo "❌ $$service is not running - will start it"; \
-			SERVICES_TO_START="$$SERVICES_TO_START $$service"; \
-		fi; \
-	done; \
-	if [ -z "$$SERVICES_TO_START" ]; then \
-		echo "✅ All test services are already running!"; \
-		echo "" > .test_services_started; \
-		exit 0; \
-	fi; \
-	echo "Starting missing services:$$SERVICES_TO_START"; \
-	docker compose up -d $$SERVICES_TO_START; \
-	echo $$SERVICES_TO_START > .test_services_started; \
-	echo "⏳ Waiting for services to be ready..."; \
-	sleep 10; \
-	echo "✅ Test services started!"; \
-	echo ""; \
-	echo "Run tests with: make test-api"; \
-	echo "Stop services with: make test-services-down"
+	@echo "Stopping any existing test services..."
+	@docker compose down postgres mongo identity sso mail >/dev/null 2>&1 || true
+	@echo "Starting all test services..."
+	@docker compose up -d postgres mongo identity sso mail
+	@echo "⏳ Waiting for services to be ready..."
+	@sleep 10
+	@echo "✅ Test services started!"
+	@echo ""
+	@echo "Run tests with: make test-api"
+	@echo "Stop services with: make test-services-down"
 
 test-services-down:
-	@echo "Checking which services were started by tests..."
-	@if [ -f .test_services_started ]; then \
-		SERVICES_TO_STOP=$$(cat .test_services_started); \
-		if [ -z "$$SERVICES_TO_STOP" ]; then \
-			echo "✅ No services were started by tests - leaving existing services running"; \
-		else \
-			echo "Stopping services that were started by tests:$$SERVICES_TO_STOP"; \
-			docker compose down $$SERVICES_TO_STOP; \
-			echo "✅ Test-started services stopped"; \
-		fi; \
-		rm -f .test_services_started; \
-	else \
-		echo "⚠️  No test services tracking file found - stopping all test services as fallback"; \
-		docker compose down postgres mongo identity sso mail; \
-	fi
+	@echo "Stopping all test services..."
+	@docker compose down postgres mongo identity sso mail
+	@echo "✅ Test services stopped"
 
 test-api:
 	@echo "Running REST API tests..."
