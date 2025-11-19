@@ -1,3 +1,44 @@
+# DIGiDIG Storage Service
+
+Storage microservice for the DIGiDIG platform that handles email data persistence using MongoDB.
+
+## Installation
+
+### As a Python Package
+```bash
+pip install -e .
+```
+
+### Dependencies
+- `digidig-core>=1.0.0` - Shared DIGiDIG infrastructure
+- `fastapi>=0.104.0` - Web framework
+- `uvicorn[standard]>=0.24.0` - ASGI server
+- `pymongo>=4.6.0` - MongoDB driver
+- `pydantic>=2.5.0` - Data validation
+
+## Usage
+
+### As a package
+```bash
+digidig-storage
+```
+
+### As a module
+```python
+from storage.src.storage import main
+main()
+```
+
+### Configuration
+The service uses the DIGiDIG configuration system. Key settings:
+- `services.storage.port` - Service port (default: 9102)
+- MongoDB connection settings via environment variables:
+  - `MONGO_URI` - MongoDB connection string
+  - `DB_NAME` - Database name
+  - `STORAGE_MAX_DOC_SIZE` - Maximum document size
+
+---
+
 # Storage Service
 
 Centralizovaná úložná služba pro persistenci e-mailů v DIGiDIG systému.

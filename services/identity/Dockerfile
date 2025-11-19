@@ -6,11 +6,14 @@ WORKDIR /app
 COPY digidig/ ./digidig/
 COPY config/ ./config/
 
-# Copy service-specific requirements and install ONLY service-specific dependencies
-COPY services/identity/requirements.txt .
-RUN pip install --quiet --no-cache-dir -r requirements.txt
+# Copy and install digidig-core package
+COPY lib/digidig-core/ ./digidig-core/
+RUN pip install --quiet --no-cache-dir -e ./digidig-core
 
-COPY services/identity/src/ ./src/
+# Copy and install identity service as package
+COPY services/identity/ ./identity-service/
+RUN pip install --quiet --no-cache-dir -e ./identity-service
+
 COPY services/identity/scripts/ ./scripts/
 
 ENV PYTHONPATH=/app

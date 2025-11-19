@@ -16,8 +16,8 @@ from typing import Optional, List
 from fastapi import FastAPI, Header, Request
 from contextlib import asynccontextmanager
 import asyncpg
-from digidig.models.service.server import ServiceServer
-from digidig.config import Config
+from digidig_core.models.service.server import ServiceServer
+from digidig_core.config import Config
 
 # RSA encryption for passwords
 try:
@@ -2076,3 +2076,18 @@ async def oauth_callback(provider: str, code: str, state: str):
             "provider": provider
         }
     }
+
+
+def main():
+    """Main entry point for running the identity service"""
+    import uvicorn
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=IDENTITY_PORT,
+        log_level="info"
+    )
+
+
+if __name__ == "__main__":
+    main()

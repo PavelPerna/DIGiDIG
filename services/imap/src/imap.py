@@ -11,8 +11,15 @@ import asyncio
 from typing import Dict, Any
 from pydantic import BaseModel
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
-from digidig.models.service.server import ServiceServer
-from digidig.config import Config
+
+# Try to import from digidig_core package first, fallback to local digidig
+try:
+    from digidig_core.service.server import ServiceServer
+    from digidig_core.config import Config
+except ImportError:
+    # Fallback to local imports for backward compatibility
+    from digidig.models.service.server import ServiceServer
+    from digidig.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -251,3 +258,20 @@ class ServerIMAP(ServiceServer):
 # Create service instance
 imap_service = ServerIMAP()
 app = imap_service.get_app()
+
+
+def main():
+    """Main entry point for running the IMAP service"""
+    import uvicorn
+    
+    logger.info(f"Starting IMAP Service on 0.0.0.0:{IMAP_REST_PORT}")
+    uvicorn.run(
+        app,
+        host='0.0.0.0',
+        port=IMAP_REST_PORT,
+        log_level="info"
+    )
+
+
+if __name__ == "__main__":
+    main()

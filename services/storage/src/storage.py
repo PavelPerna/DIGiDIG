@@ -10,8 +10,15 @@ from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
-from digidig.models.service.server import ServiceServer
-from digidig.config import Config
+
+# Try to import from digidig_core package first, fallback to local digidig
+try:
+    from digidig_core.service.server import ServiceServer
+    from digidig_core.config import Config
+except ImportError:
+    # Fallback to local imports for backward compatibility
+    from digidig.models.service.server import ServiceServer
+    from digidig.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -363,3 +370,20 @@ class ServerStorage(ServiceServer):
 # Create service instance
 storage_service = ServerStorage()
 app = storage_service.get_app()
+
+
+def main():
+    """Main entry point for running the storage service"""
+    import uvicorn
+    
+    logger.info(f"Starting Storage Service on {HOST}:{STORAGE_PORT}")
+    uvicorn.run(
+        app,
+        host=HOST,
+        port=STORAGE_PORT,
+        log_level="info"
+    )
+
+
+if __name__ == "__main__":
+    main()

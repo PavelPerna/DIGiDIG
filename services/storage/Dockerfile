@@ -6,11 +6,14 @@ WORKDIR /app
 COPY digidig/ ./digidig/
 COPY config/ ./config/
 
-# Copy service-specific files
-COPY services/storage/requirements.txt .
-RUN pip install --quiet --no-cache-dir -r requirements.txt
+# Copy and install digidig-core package
+COPY lib/digidig-core/ ./digidig-core/
+RUN pip install --quiet --no-cache-dir -e ./digidig-core
 
-COPY services/storage/src/storage.py .
+# Copy and install storage service as package
+COPY services/storage/ ./storage-service/
+RUN pip install --quiet --no-cache-dir -e ./storage-service
+
 COPY services/storage/start.sh /start.sh
 RUN chmod +x /start.sh
 
