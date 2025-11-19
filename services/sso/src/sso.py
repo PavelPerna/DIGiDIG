@@ -1,9 +1,17 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
-from digidig.models.service.client import ServiceClient
-from digidig.language import I18n
-from digidig.config import Config
+
+# Try to import from digidig_core package first, fallback to local digidig
+try:
+    from digidig_core.service.client import ServiceClient
+    from digidig_core.language import I18n
+    from digidig_core.config import Config
+except ImportError:
+    # Fallback to local imports for backward compatibility
+    from digidig.models.service.client import ServiceClient
+    from digidig.language import I18n
+    from digidig.config import Config
 from fastapi import Request, Form, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
 import httpx
@@ -24,10 +32,11 @@ async def check_session(request: Request):
         return None
     
     try:
-        # Use proxy endpoint - call ourselves, ServiceClient routes to identity
+        # Use internal service URL for identity service
+        identity_url = config.service_internal_url('identity')
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"http://localhost:{SSO_PORT}/api/identity/session/verify",
+                f"{identity_url}/session/verify",
                 cookies={"access_token": access_token}
             )
             if response.status_code == 200:
@@ -41,10 +50,11 @@ async def check_session(request: Request):
 async def get_user_preferences(username: str, access_token: str):
     """Get user preferences from identity service"""
     try:
-        # Use proxy endpoint - call ourselves, ServiceClient routes to identity
+        # Use internal service URL for identity service
+        identity_url = config.service_internal_url('identity')
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"http://localhost:{SSO_PORT}/api/identity/users/{username}/preferences",
+                f"{identity_url}/users/{username}/preferences",
                 cookies={"access_token": access_token}
             )
             if response.status_code == 200:
@@ -127,8 +137,9 @@ class ClientSSO(ServiceClient):
             # Authenticate via Identity service using proxy
             async with httpx.AsyncClient() as client:
                 try:
+                    identity_url = config.service_internal_url('identity')
                     response = await client.post(
-                        f"http://localhost:{SSO_PORT}/api/identity/login",
+                        f"{identity_url}/login",
                         json={"email": email, "password": password}
                     )
                     if response.status_code == 200:
@@ -170,17 +181,29 @@ app = client.get_app()
 templates = client.templates
 
 
-if __name__ == '__main__':
+def main():
+    """Main entry point for running the SSO service"""
     import uvicorn
-
+    
+    logger = config.get_logger('sso')
+    
     # Check for SSL certificates
     hostname = config.get('hostname') or os.getenv('HOSTNAME') or 'localhost'
     ssl_cert = f'/app/ssl/{hostname}.pem'
     ssl_key = f'/app/ssl/{hostname}-key.pem'
 
     if os.path.exists(ssl_cert) and os.path.exists(ssl_key):
-        print(f"Starting SSO service with SSL on 0.0.0.0:{SSO_PORT}")
+        logger.info(f"Starting SSO service with SSL on 0.0.0.0:{SSO_PORT}")
         uvicorn.run(app, host='0.0.0.0', port=SSO_PORT, ssl_certfile=ssl_cert, ssl_keyfile=ssl_key)
     else:
-        print(f"Starting SSO service without SSL on 0.0.0.0:{SSO_PORT} (SSL certificates not found)")
-        uvicorn.run(app, host='0.0.0.0', port=SSO_PORT)
+        logger.info(f"Starting SSO service without SSL on 0.0.0.0:{SSO_PORT} (SSL certificates not found)")
+        uvicorn.run(
+            app,
+            host='0.0.0.0',
+            port=SSO_PORT,
+            log_level="info"
+        )
+
+
+if __name__ == "__main__":
+    main()

@@ -4,10 +4,16 @@ import sys
 # Ensure project root is importable
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
-from digidig.models.service.client import ServiceClient
-from digidig.language import I18n
-
-from digidig.config import Config
+# Try to import from digidig_core package first, fallback to local digidig
+try:
+    from digidig_core.service.client import ServiceClient
+    from digidig_core.language import I18n
+    from digidig_core.config import Config
+except ImportError:
+    # Fallback to local imports for backward compatibility
+    from digidig.models.service.client import ServiceClient
+    from digidig.language import I18n
+    from digidig.config import Config
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi import Request
 import httpx
@@ -32,10 +38,11 @@ async def check_session(request: Request):
         return None
     
     try:
-        # Use proxy endpoint - call ourselves, ServiceClient routes to identity
+        # Use internal service URL for identity service
+        identity_url = config.service_internal_url('identity')
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"http://localhost:{MAIL_PORT}/api/identity/session/verify",
+                f"{identity_url}/session/verify",
                 cookies={"access_token": access_token}
             )
             print(f"[DEBUG] Identity response status: {response.status_code}")
@@ -52,10 +59,11 @@ async def check_session(request: Request):
 async def get_user_preferences(username: str, access_token: str):
     """Get user preferences from identity service"""
     try:
-        # Use proxy endpoint - call ourselves, ServiceClient routes to identity
+        # Use internal service URL for identity service
+        identity_url = config.service_internal_url('identity')
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"http://localhost:{MAIL_PORT}/api/identity/users/{username}/preferences",
+                f"{identity_url}/users/{username}/preferences",
                 cookies={"access_token": access_token}
             )
             if response.status_code == 200:
@@ -216,6 +224,20 @@ client = ClientMail()
 app = client.get_app()
 templates = client.templates
 
-if __name__ == '__main__':
+
+def main():
+    """Main entry point for running the mail service"""
     import uvicorn
-    uvicorn.run(app, host='0.0.0.0', port=MAIL_PORT)
+    
+    logger = config.get_logger('mail')
+    logger.info(f"Starting Mail Service on 0.0.0.0:{MAIL_PORT}")
+    uvicorn.run(
+        app,
+        host='0.0.0.0',
+        port=MAIL_PORT,
+        log_level="info"
+    )
+
+
+if __name__ == "__main__":
+    main()

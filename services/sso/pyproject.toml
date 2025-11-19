@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "digidig-imap"
+name = "digidig-sso"
 version = "1.0.0"
-description = "IMAP microservice for DIGiDIG platform"
+description = "SSO authentication service for DIGiDIG platform"
 authors = [
     {name = "DIGiDIG Team", email = "team@digidig.cz"}
 ]
@@ -13,22 +13,23 @@ dependencies = [
     "digidig-core>=1.0.0",
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
-    "aiohttp>=3.9.0",
-    "requests>=2.31.0",
+    "httpx>=0.25.0",
+    "jinja2>=3.0.0",
+    "python-multipart>=0.0.6",
     "pydantic>=2.5.0"
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 readme = "README.md"
 
 [project.scripts]
-digidig-imap = "imap.src.imap:main"
+digidig-sso = "sso.src.sso:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["imap*"]
+include = ["sso*"]
 
 [tool.setuptools.package-dir]
 "" = "src"
 
 [tool.setuptools.package-data]
-imap = ["*.yaml", "*.yml", "*.json"]
+sso = ["*.yaml", "*.yml", "*.json", "static/**/*", "templates/**/*"]

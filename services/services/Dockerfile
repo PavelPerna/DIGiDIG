@@ -1,16 +1,12 @@
 FROM ghcr.io/pavelperna/digidig-base:latest
 WORKDIR /app
 
-# Install service-specific requirements
-COPY services/services/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install the services manager package
+RUN pip install --no-cache-dir -e services/services
 
 # Copy shared library and configuration from project root
 COPY digidig/ ./digidig/
 COPY config/ ./config/
-
-# Copy service-specific files from repository
-COPY services/services/src/ /app/
 
 # Copy start script
 COPY services/services/start.sh /start.sh

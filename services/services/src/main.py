@@ -2,23 +2,55 @@ import os
 import sys
 import subprocess
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+
+# Try to import from digidig_core package first, fallback to local digidig
+try:
+    from digidig_core.config import Config
+except ImportError:
+    # Fallback to local imports for backward compatibility
+    from digidig.config import Config
+
 from fastapi import FastAPI, HTTPException
 from typing import List, Dict, Any
 
 app = FastAPI(title="DIGiDIG Services Manager")
 
-SERVICES = {
-    "identity": {"name": "identity", "description": "Identity service", "port": 9101, "compose_name": "identity", "make_target": "identity"},
-    "smtp": {"name": "smtp", "description": "SMTP service", "port": 9100, "compose_name": "smtp", "make_target": "smtp"},
-    "imap": {"name": "imap", "description": "IMAP service", "port": 9103, "compose_name": "imap", "make_target": "imap"},
-    "storage": {"name": "storage", "description": "Storage service", "port": 9102, "compose_name": "storage", "make_target": "storage"},
-    "admin": {"name": "admin", "description": "Admin service", "port": 9105, "compose_name": "admin", "make_target": "admin"},
-    "client": {"name": "client", "description": "Client app", "port": 9104, "compose_name": "client", "make_target": "client", "frontend_url": "/", "user_count": 0},
-    "test-suite": {"name": "test-suite", "description": "Test suite", "port": 9108, "compose_name": "test-suite", "make_target": "test-suite"},
-    "mail": {"name": "mail", "description": "Mail service", "port": 9107, "compose_name": "mail", "make_target": "mail"},
-    "apidocs": {"name": "apidocs", "description": "API Docs service", "port": 9110, "compose_name": "apidocs", "make_target": "apidocs"},
-    "sso": {"name": "sso", "description": "SSO service", "port": 9106, "compose_name": "sso", "make_target": "sso"},
-}
+config = Config.instance()
+
+def get_services_config():
+    """Get services configuration from config system"""
+    services_config = {}
+    
+    # Define all known services
+    service_names = ['identity', 'smtp', 'imap', 'storage', 'mail', 'sso', 'services']
+    
+    for service_name in service_names:
+        try:
+            port = config.service_http_port(service_name)
+            services_config[service_name] = {
+                "name": service_name,
+                "description": f"{service_name.title()} service",
+                "port": port,
+                "compose_name": service_name,
+                "make_target": service_name
+            }
+        except:
+            # Fallback to hardcoded values if config fails
+            port_map = {
+                'identity': 9101, 'smtp': 9100, 'imap': 9103, 'storage': 9102,
+                'mail': 9107, 'sso': 9106, 'services': 9120
+            }
+            services_config[service_name] = {
+                "name": service_name,
+                "description": f"{service_name.title()} service",
+                "port": port_map.get(service_name, 9100),
+                "compose_name": service_name,
+                "make_target": service_name
+            }
+    
+    return services_config
+
+SERVICES = get_services_config()
 
 @app.get("/services")
 def list_services() -> List[Dict[str, Any]]:
@@ -59,3 +91,21 @@ def get_service_status(service_name: str):
 @app.get("/health")
 def health():
     return {"status": "healthy", "service": "services", "version": "0.1.0"}
+
+
+def main():
+    """Main entry point for running the services manager"""
+    import uvicorn
+    
+    port = config.get('services.services.http_port', 9120)
+    print(f"Starting Services Manager on 0.0.0.0:{port}")
+    uvicorn.run(
+        app,
+        host='0.0.0.0',
+        port=port,
+        log_level="info"
+    )
+
+
+if __name__ == "__main__":
+    main()

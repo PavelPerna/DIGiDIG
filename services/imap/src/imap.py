@@ -71,9 +71,10 @@ class Email(BaseModel):
 async def verify_user(token: str) -> bool:
     logger.info("Ověřování uživatele přes Identity Service")
     try:
+        identity_url = config.service_internal_url('identity')
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                "http://identity:8001/verify",
+                f"{identity_url}/verify",
                 headers={"Authorization": f"Bearer {token}"}
             ) as response:
                 if response.status != 200:
@@ -90,8 +91,9 @@ def _fetch_emails_sync(user_id: str):
     """Synchronous email fetching for thread pool"""
     try:
         import requests
+        storage_url = config.service_internal_url('storage')
         response = requests.get(
-            f"http://storage:8002/emails?user_id={user_id}",
+            f"{storage_url}/api/emails?user_email={user_id}",
             timeout=service_state["config"]["timeout"]
         )
         

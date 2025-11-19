@@ -8,12 +8,8 @@ COPY digidig/ /app/digidig/
 # Copy shared components
 COPY lib/ /app/lib/
 
-# Copy service requirements and install
-COPY services/sso/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy service application code
-COPY services/sso/src/ /app/
+# Install the SSO service package
+RUN pip install --no-cache-dir -e services/sso
 
 # Copy configuration files
 COPY config/ /app/config/

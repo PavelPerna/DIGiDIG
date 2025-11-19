@@ -2,6 +2,43 @@
 
 A client-side web application for DIGiDIG email management.
 
+## Installation
+
+### As a Python Package
+```bash
+pip install -e .
+```
+
+### Dependencies
+- `digidig-core>=1.0.0` - Shared DIGiDIG infrastructure
+- `fastapi>=0.104.0` - Web framework
+- `uvicorn[standard]>=0.24.0` - ASGI server
+- `httpx>=0.25.0` - Async HTTP client
+- `jinja2>=3.0.0` - Template engine
+- `python-multipart>=0.0.6` - Form data handling
+- `pydantic>=2.5.0` - Data validation
+
+## Usage
+
+### As a package
+```bash
+digidig-mail
+```
+
+### As a module
+```python
+from app import main
+main()
+```
+
+### Configuration
+The service uses the DIGiDIG configuration system. Key settings:
+- `services.mail.http_port` - Service port (default: 9107)
+
+---
+
+# DIGiDIG Mail Client App
+
 ## Features
 
 - **Email Composition**: Write and send new emails

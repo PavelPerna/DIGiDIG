@@ -7,11 +7,8 @@ COPY digidig/ ./digidig/
 COPY lib/ ./lib/
 COPY config/ ./config/
 
-# Copy service-specific files
-COPY services/mail/requirements.txt .
-RUN pip install --quiet --no-cache-dir -r requirements.txt
-
-COPY services/mail/src/ .
+# Install the mail service package
+RUN pip install --quiet --no-cache-dir -e services/mail
 
 # Copy start script
 COPY services/mail/start.sh /start.sh
